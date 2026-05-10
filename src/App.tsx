@@ -39,6 +39,7 @@ function App() {
   const [isCreating, setIsCreating] = useState(false)
   const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null)
   const [updatingPriorityTaskId, setUpdatingPriorityTaskId] = useState<string | null>(null)
+  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [taskTitle, setTaskTitle] = useState('')
   const [taskDescription, setTaskDescription] = useState('')
@@ -120,7 +121,6 @@ function App() {
     await loadProjectAndTasks()
   }
 
-
   async function updateTaskStatus(taskId: string, status: string) {
     setUpdatingTaskId(taskId)
     setErrorMessage(null)
@@ -165,6 +165,31 @@ function App() {
       ),
     )
     setUpdatingPriorityTaskId(null)
+  }
+
+  async function deleteTask(taskId: string) {
+    const shouldDelete = window.confirm('Delete this task? This cannot be undone.')
+
+    if (!shouldDelete) {
+      return
+    }
+
+    setDeletingTaskId(taskId)
+    setErrorMessage(null)
+
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', taskId)
+
+    if (error) {
+      setErrorMessage(error.message)
+      setDeletingTaskId(null)
+      return
+    }
+
+    setTasks((currentTasks) => currentTasks.filter((task) => task.id !== taskId))
+    setDeletingTaskId(null)
   }
 
   return (
@@ -218,9 +243,11 @@ function App() {
               onChange={(event) => setTaskPriority(event.target.value)}
               className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
             >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
+              {priorityOptions.map((priority) => (
+                <option key={priority.value} value={priority.value} className="bg-[#181b1f] text-white">
+                  {priority.label}
+                </option>
+              ))}
             </select>
 
             <button
@@ -259,7 +286,7 @@ function App() {
                   key={task.id}
                   className="rounded-2xl border border-white/10 bg-[#181b1f] p-5 transition hover:border-violet-300/40 hover:bg-[#1d2026]"
                 >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                       <h3 className="text-lg font-medium">{task.title}</h3>
                       {task.description && (
@@ -267,7 +294,7 @@ function App() {
                       )}
                     </div>
 
-                    <div className="flex shrink-0 gap-2">
+                    <div className="flex shrink-0 flex-wrap gap-2">
                       <label className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-violet-300/40">
                         <span className="text-zinc-500">Status</span>
                         <select
@@ -284,6 +311,7 @@ function App() {
                           ))}
                         </select>
                       </label>
+
                       {task.priority && (
                         <label className="flex items-center gap-2 rounded-full border border-violet-300/10 bg-violet-400/10 px-3 py-1.5 text-xs font-medium text-violet-200 transition hover:border-violet-300/40">
                           <span className="text-violet-200/60">Priority</span>
@@ -302,6 +330,15 @@ function App() {
                           </select>
                         </label>
                       )}
+
+                      <button
+                        type="button"
+                        disabled={deletingTaskId === task.id}
+                        onClick={() => deleteTask(task.id)}
+                        className="rounded-full border border-red-300/10 bg-red-400/10 px-3 py-1.5 text-xs font-semibold text-red-200 transition hover:border-red-300/40 hover:bg-red-400/15 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {deletingTaskId === task.id ? 'Deleting…' : 'Delete'}
+                      </button>
                     </div>
                   </div>
                 </article>
