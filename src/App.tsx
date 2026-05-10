@@ -11,18 +11,34 @@ type Task = {
   position: number | null
 }
 
-const statusLabels: Record<string, string> = {
-  not_started: 'Not started',
-  in_progress: 'In progress',
-  blocked: 'Blocked',
-  done: 'Done',
-}
+const statusOptions = [
+  { value: 'not_started', label: 'Not started' },
+  { value: 'planning', label: 'Planning' },
+  { value: 'in_progress', label: 'In progress' },
+  { value: 'awaiting_response', label: 'Awaiting response' },
+  { value: 'approval_requested', label: 'Approval requested' },
+  { value: 'blocked', label: 'Blocked' },
+  { value: 'stalled_internal', label: 'Stalled - Internal' },
+  { value: 'stalled_external', label: 'Stalled - External' },
+  { value: 'done', label: 'Done' },
+]
+
+const priorityOptions = [
+  { value: 'critical', label: 'Critical' },
+  { value: 'overdue', label: 'Overdue' },
+  { value: 'high', label: 'High' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'low', label: 'Low' },
+  { value: 'need_to_scope', label: 'Need to Scope' },
+]
 
 function App() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [projectId, setProjectId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
+  const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null)
+  const [updatingPriorityTaskId, setUpdatingPriorityTaskId] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [taskTitle, setTaskTitle] = useState('')
   const [taskDescription, setTaskDescription] = useState('')
@@ -102,6 +118,53 @@ function App() {
     setTaskPriority('medium')
     setIsCreating(false)
     await loadProjectAndTasks()
+  }
+
+
+  async function updateTaskStatus(taskId: string, status: string) {
+    setUpdatingTaskId(taskId)
+    setErrorMessage(null)
+
+    const { error } = await supabase
+      .from('tasks')
+      .update({ status })
+      .eq('id', taskId)
+
+    if (error) {
+      setErrorMessage(error.message)
+      setUpdatingTaskId(null)
+      return
+    }
+
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === taskId ? { ...task, status } : task,
+      ),
+    )
+    setUpdatingTaskId(null)
+  }
+
+  async function updateTaskPriority(taskId: string, priority: string) {
+    setUpdatingPriorityTaskId(taskId)
+    setErrorMessage(null)
+
+    const { error } = await supabase
+      .from('tasks')
+      .update({ priority })
+      .eq('id', taskId)
+
+    if (error) {
+      setErrorMessage(error.message)
+      setUpdatingPriorityTaskId(null)
+      return
+    }
+
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === taskId ? { ...task, priority } : task,
+      ),
+    )
+    setUpdatingPriorityTaskId(null)
   }
 
   return (
@@ -205,13 +268,39 @@ function App() {
                     </div>
 
                     <div className="flex shrink-0 gap-2">
-                      <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-zinc-200">
-                        {statusLabels[task.status] ?? task.status}
-                      </span>
+                      <label className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-violet-300/40">
+                        <span className="text-zinc-500">Status</span>
+                        <select
+                          aria-label={`Status for ${task.title}`}
+                          value={task.status}
+                          disabled={updatingTaskId === task.id}
+                          onChange={(event) => updateTaskStatus(task.id, event.target.value)}
+                          className="cursor-pointer appearance-auto bg-transparent text-xs font-semibold text-zinc-100 outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {statusOptions.map((status) => (
+                            <option key={status.value} value={status.value} className="bg-[#181b1f] text-white">
+                              {status.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
                       {task.priority && (
-                        <span className="rounded-full bg-violet-400/10 px-3 py-1 text-xs font-medium text-violet-200">
-                          {task.priority}
-                        </span>
+                        <label className="flex items-center gap-2 rounded-full border border-violet-300/10 bg-violet-400/10 px-3 py-1.5 text-xs font-medium text-violet-200 transition hover:border-violet-300/40">
+                          <span className="text-violet-200/60">Priority</span>
+                          <select
+                            aria-label={`Priority for ${task.title}`}
+                            value={task.priority}
+                            disabled={updatingPriorityTaskId === task.id}
+                            onChange={(event) => updateTaskPriority(task.id, event.target.value)}
+                            className="cursor-pointer appearance-auto bg-transparent text-xs font-semibold text-violet-100 outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {priorityOptions.map((priority) => (
+                              <option key={priority.value} value={priority.value} className="bg-[#181b1f] text-white">
+                                {priority.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
                       )}
                     </div>
                   </div>
