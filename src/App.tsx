@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import './App.css'
 
@@ -20,28 +20,89 @@ const statusLabels: Record<string, string> = {
 
 function App() {
   const [tasks, setTasks] = useState<Task[]>([])
+  const [projectId, setProjectId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isCreating, setIsCreating] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [taskTitle, setTaskTitle] = useState('')
+  const [taskDescription, setTaskDescription] = useState('')
+  const [taskPriority, setTaskPriority] = useState('medium')
 
-  useEffect(() => {
-    async function loadTasks() {
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('id, title, description, status, priority, position')
-        .order('position', { ascending: true })
+  async function loadProjectAndTasks() {
+    setErrorMessage(null)
+    setIsLoading(true)
 
-      if (error) {
-        setErrorMessage(error.message)
-        setIsLoading(false)
-        return
-      }
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('name', 'Finito Build')
+      .single()
 
-      setTasks(data ?? [])
+    if (projectError) {
+      setErrorMessage(projectError.message)
       setIsLoading(false)
+      return
     }
 
-    loadTasks()
+    setProjectId(project.id)
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('id, title, description, status, priority, position')
+      .eq('project_id', project.id)
+      .order('position', { ascending: true })
+
+    if (error) {
+      setErrorMessage(error.message)
+      setIsLoading(false)
+      return
+    }
+
+    setTasks(data ?? [])
+    setIsLoading(false)
+  }
+
+  useEffect(() => {
+    loadProjectAndTasks()
   }, [])
+
+  async function createTask(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (!taskTitle.trim()) {
+      setErrorMessage('Task title is required.')
+      return
+    }
+
+    if (!projectId) {
+      setErrorMessage('Project not loaded yet. Refresh and try again.')
+      return
+    }
+
+    setIsCreating(true)
+    setErrorMessage(null)
+
+    const { error } = await supabase.from('tasks').insert({
+      project_id: projectId,
+      title: taskTitle.trim(),
+      description: taskDescription.trim() || null,
+      status: 'not_started',
+      priority: taskPriority,
+      position: tasks.length + 1,
+    })
+
+    if (error) {
+      setErrorMessage(error.message)
+      setIsCreating(false)
+      return
+    }
+
+    setTaskTitle('')
+    setTaskDescription('')
+    setTaskPriority('medium')
+    setIsCreating(false)
+    await loadProjectAndTasks()
+  }
 
   return (
     <main className="min-h-screen bg-[#111315] px-6 py-8 text-white">
@@ -65,6 +126,50 @@ function App() {
           </div>
         </div>
 
+        <form
+          onSubmit={createTask}
+          className="mb-6 rounded-3xl border border-white/10 bg-white/[0.03] p-4 shadow-2xl shadow-black/20"
+        >
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold">Create task</h2>
+            <p className="text-sm text-zinc-400">Add a new task directly into Supabase.</p>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-[1.2fr_1.6fr_0.8fr_auto]">
+            <input
+              value={taskTitle}
+              onChange={(event) => setTaskTitle(event.target.value)}
+              placeholder="Task title"
+              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-violet-300/60"
+            />
+
+            <input
+              value={taskDescription}
+              onChange={(event) => setTaskDescription(event.target.value)}
+              placeholder="Description"
+              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-violet-300/60"
+            />
+
+            <select
+              value={taskPriority}
+              onChange={(event) => setTaskPriority(event.target.value)}
+              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+
+            <button
+              type="submit"
+              disabled={isCreating}
+              className="rounded-2xl bg-violet-300 px-5 py-3 text-sm font-semibold text-[#111315] transition hover:bg-violet-200 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isCreating ? 'Adding…' : 'Add task'}
+            </button>
+          </div>
+        </form>
+
         <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4 shadow-2xl shadow-black/30">
           <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-4">
             <div>
@@ -79,7 +184,7 @@ function App() {
           {isLoading && <p className="py-8 text-zinc-400">Loading tasks…</p>}
 
           {errorMessage && (
-            <div className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">
+            <div className="mb-4 rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">
               {errorMessage}
             </div>
           )}
