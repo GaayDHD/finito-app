@@ -40,6 +40,10 @@ function App() {
   const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null)
   const [updatingPriorityTaskId, setUpdatingPriorityTaskId] = useState<string | null>(null)
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null)
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
+  const [savingTaskId, setSavingTaskId] = useState<string | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDescription, setEditDescription] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [taskTitle, setTaskTitle] = useState('')
   const [taskDescription, setTaskDescription] = useState('')
@@ -167,6 +171,54 @@ function App() {
     setUpdatingPriorityTaskId(null)
   }
 
+  function startEditingTask(task: Task) {
+    setEditingTaskId(task.id)
+    setEditTitle(task.title)
+    setEditDescription(task.description ?? '')
+    setErrorMessage(null)
+  }
+
+  function cancelEditingTask() {
+    setEditingTaskId(null)
+    setEditTitle('')
+    setEditDescription('')
+  }
+
+  async function saveTaskEdits(taskId: string) {
+    if (!editTitle.trim()) {
+      setErrorMessage('Task title is required.')
+      return
+    }
+
+    setSavingTaskId(taskId)
+    setErrorMessage(null)
+
+    const updatedTask = {
+      title: editTitle.trim(),
+      description: editDescription.trim() || null,
+    }
+
+    const { error } = await supabase
+      .from('tasks')
+      .update(updatedTask)
+      .eq('id', taskId)
+
+    if (error) {
+      setErrorMessage(error.message)
+      setSavingTaskId(null)
+      return
+    }
+
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === taskId ? { ...task, ...updatedTask } : task,
+      ),
+    )
+
+    setSavingTaskId(null)
+    cancelEditingTask()
+  }
+
   async function deleteTask(taskId: string) {
     const shouldDelete = window.confirm('Delete this task? This cannot be undone.')
 
@@ -281,68 +333,119 @@ function App() {
 
           {!isLoading && !errorMessage && (
             <div className="space-y-3">
-              {tasks.map((task) => (
-                <article
-                  key={task.id}
-                  className="rounded-2xl border border-white/10 bg-[#181b1f] p-5 transition hover:border-violet-300/40 hover:bg-[#1d2026]"
-                >
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div>
-                      <h3 className="text-lg font-medium">{task.title}</h3>
-                      {task.description && (
-                        <p className="mt-2 text-sm leading-6 text-zinc-400">{task.description}</p>
-                      )}
-                    </div>
+              {tasks.map((task) => {
+                const isEditing = editingTaskId === task.id
 
-                    <div className="flex shrink-0 flex-wrap gap-2">
-                      <label className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-violet-300/40">
-                        <span className="text-zinc-500">Status</span>
-                        <select
-                          aria-label={`Status for ${task.title}`}
-                          value={task.status}
-                          disabled={updatingTaskId === task.id}
-                          onChange={(event) => updateTaskStatus(task.id, event.target.value)}
-                          className="cursor-pointer appearance-auto bg-transparent text-xs font-semibold text-zinc-100 outline-none disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {statusOptions.map((status) => (
-                            <option key={status.value} value={status.value} className="bg-[#181b1f] text-white">
-                              {status.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                return (
+                  <article
+                    key={task.id}
+                    className="rounded-2xl border border-white/10 bg-[#181b1f] p-5 transition hover:border-violet-300/40 hover:bg-[#1d2026]"
+                  >
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0 flex-1">
+                        {isEditing ? (
+                          <div className="space-y-3">
+                            <input
+                              value={editTitle}
+                              onChange={(event) => setEditTitle(event.target.value)}
+                              className="w-full rounded-2xl border border-white/10 bg-[#111315] px-4 py-3 text-sm font-semibold text-white outline-none transition placeholder:text-zinc-500 focus:border-violet-300/60"
+                            />
+                            <textarea
+                              value={editDescription}
+                              onChange={(event) => setEditDescription(event.target.value)}
+                              rows={3}
+                              placeholder="Description"
+                              className="w-full resize-none rounded-2xl border border-white/10 bg-[#111315] px-4 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-zinc-500 focus:border-violet-300/60"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <h3 className="text-lg font-medium">{task.title}</h3>
+                            {task.description && (
+                              <p className="mt-2 text-sm leading-6 text-zinc-400">{task.description}</p>
+                            )}
+                          </>
+                        )}
+                      </div>
 
-                      {task.priority && (
-                        <label className="flex items-center gap-2 rounded-full border border-violet-300/10 bg-violet-400/10 px-3 py-1.5 text-xs font-medium text-violet-200 transition hover:border-violet-300/40">
-                          <span className="text-violet-200/60">Priority</span>
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <label className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-violet-300/40">
+                          <span className="text-zinc-500">Status</span>
                           <select
-                            aria-label={`Priority for ${task.title}`}
-                            value={task.priority}
-                            disabled={updatingPriorityTaskId === task.id}
-                            onChange={(event) => updateTaskPriority(task.id, event.target.value)}
-                            className="cursor-pointer appearance-auto bg-transparent text-xs font-semibold text-violet-100 outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                            aria-label={`Status for ${task.title}`}
+                            value={task.status}
+                            disabled={updatingTaskId === task.id}
+                            onChange={(event) => updateTaskStatus(task.id, event.target.value)}
+                            className="cursor-pointer appearance-auto bg-transparent text-xs font-semibold text-zinc-100 outline-none disabled:cursor-not-allowed disabled:opacity-60"
                           >
-                            {priorityOptions.map((priority) => (
-                              <option key={priority.value} value={priority.value} className="bg-[#181b1f] text-white">
-                                {priority.label}
+                            {statusOptions.map((status) => (
+                              <option key={status.value} value={status.value} className="bg-[#181b1f] text-white">
+                                {status.label}
                               </option>
                             ))}
                           </select>
                         </label>
-                      )}
 
-                      <button
-                        type="button"
-                        disabled={deletingTaskId === task.id}
-                        onClick={() => deleteTask(task.id)}
-                        className="rounded-full border border-red-300/10 bg-red-400/10 px-3 py-1.5 text-xs font-semibold text-red-200 transition hover:border-red-300/40 hover:bg-red-400/15 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {deletingTaskId === task.id ? 'Deleting…' : 'Delete'}
-                      </button>
+                        {task.priority && (
+                          <label className="flex items-center gap-2 rounded-full border border-violet-300/10 bg-violet-400/10 px-3 py-1.5 text-xs font-medium text-violet-200 transition hover:border-violet-300/40">
+                            <span className="text-violet-200/60">Priority</span>
+                            <select
+                              aria-label={`Priority for ${task.title}`}
+                              value={task.priority}
+                              disabled={updatingPriorityTaskId === task.id}
+                              onChange={(event) => updateTaskPriority(task.id, event.target.value)}
+                              className="cursor-pointer appearance-auto bg-transparent text-xs font-semibold text-violet-100 outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {priorityOptions.map((priority) => (
+                                <option key={priority.value} value={priority.value} className="bg-[#181b1f] text-white">
+                                  {priority.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        )}
+
+                        {isEditing ? (
+                          <>
+                            <button
+                              type="button"
+                              disabled={savingTaskId === task.id}
+                              onClick={() => saveTaskEdits(task.id)}
+                              className="rounded-full border border-emerald-300/10 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition hover:border-emerald-300/40 hover:bg-emerald-400/15 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {savingTaskId === task.id ? 'Saving…' : 'Save'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelEditingTask}
+                              className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-white/30"
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => startEditingTask(task)}
+                            className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-violet-300/40"
+                          >
+                            Edit
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          disabled={deletingTaskId === task.id}
+                          onClick={() => deleteTask(task.id)}
+                          className="rounded-full border border-red-300/10 bg-red-400/10 px-3 py-1.5 text-xs font-semibold text-red-200 transition hover:border-red-300/40 hover:bg-red-400/15 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {deletingTaskId === task.id ? 'Deleting…' : 'Delete'}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                )
+              })}
             </div>
           )}
         </div>
