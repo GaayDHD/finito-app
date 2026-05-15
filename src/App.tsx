@@ -27,6 +27,13 @@ type TaskDependency = {
   depends_on_task_id: string
 }
 
+type TaskComment = {
+  id: string
+  task_id: string
+  body: string
+  created_at: string | null
+}
+
 const statusOptions = [
   { value: 'not_started', label: 'Not started' },
   { value: 'planning', label: 'Planning' },
@@ -88,6 +95,7 @@ function App() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [sections, setSections] = useState<Section[]>([])
   const [dependencies, setDependencies] = useState<TaskDependency[]>([])
+  const [comments, setComments] = useState<TaskComment[]>([])
   const [projectId, setProjectId] = useState<string | null>(null)
 
   const [isLoading, setIsLoading] = useState(true)
@@ -100,8 +108,16 @@ function App() {
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null)
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
   const [savingTaskId, setSavingTaskId] = useState<string | null>(null)
+  const [creatingSection, setCreatingSection] = useState(false)
+  const [renamingSectionId, setRenamingSectionId] = useState<string | null>(null)
+  const [deletingSectionId, setDeletingSectionId] = useState<string | null>(null)
+  const [addingCommentTaskId, setAddingCommentTaskId] = useState<string | null>(null)
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null)
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [newSectionName, setNewSectionName] = useState('')
+  const [sectionDraftNames, setSectionDraftNames] = useState<Record<string, string>>({})
+  const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({})
 
   const [taskTitle, setTaskTitle] = useState('')
   const [taskDescription, setTaskDescription] = useState('')
@@ -225,6 +241,19 @@ function App() {
     }
 
     setDependencies(dependencyData ?? [])
+
+    const { data: commentData, error: commentError } = await supabase
+      .from('comments')
+      .select('id, task_id, body, created_at')
+      .order('created_at', { ascending: true })
+
+    if (commentError) {
+      setErrorMessage(commentError.message)
+      setIsLoading(false)
+      return
+    }
+
+    setComments(commentData ?? [])
     setIsLoading(false)
   }
 
@@ -456,6 +485,174 @@ function App() {
       .filter((item) => item.task)
   }
 
+  function getTaskComments(taskId: string) {
+    return comments.filter((comment) => comment.task_id === taskId)
+  }
+
+  async function createSection(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (!newSectionName.trim()) {
+      setErrorMessage('Section name is required.')
+      return
+    }
+
+    if (!projectId) {
+      setErrorMessage('Project not loaded yet. Refresh and try again.')
+      return
+    }
+
+    setCreatingSection(true)
+    setErrorMessage(null)
+
+    const { data, error } = await supabase
+      .from('sections')
+      .insert({
+        project_id: projectId,
+        name: newSectionName.trim(),
+        position: sections.length + 1,
+      })
+      .select('id, name, position')
+      .single()
+
+    if (error) {
+      setErrorMessage(error.message)
+      setCreatingSection(false)
+      return
+    }
+
+    setSections((currentSections) => [...currentSections, data])
+    setNewSectionName('')
+    setCreatingSection(false)
+  }
+
+  async function renameSection(sectionId: string) {
+    const draftName = sectionDraftNames[sectionId]?.trim()
+
+    if (!draftName) {
+      setErrorMessage('Section name is required.')
+      return
+    }
+
+    setRenamingSectionId(sectionId)
+    setErrorMessage(null)
+
+    const { error } = await supabase
+      .from('sections')
+      .update({ name: draftName })
+      .eq('id', sectionId)
+
+    if (error) {
+      setErrorMessage(error.message)
+      setRenamingSectionId(null)
+      return
+    }
+
+    setSections((currentSections) =>
+      currentSections.map((section) =>
+        section.id === sectionId ? { ...section, name: draftName } : section,
+      ),
+    )
+
+    setSectionDraftNames((currentDrafts) => {
+      const nextDrafts = { ...currentDrafts }
+      delete nextDrafts[sectionId]
+      return nextDrafts
+    })
+
+    setRenamingSectionId(null)
+  }
+
+  async function deleteSection(sectionId: string) {
+    const section = sections.find((currentSection) => currentSection.id === sectionId)
+    const sectionTaskCount = tasks.filter((task) => task.section_id === sectionId).length
+
+    if (sectionTaskCount > 0) {
+      setErrorMessage('Move or delete the tasks in this section before deleting it.')
+      return
+    }
+
+    const shouldDelete = window.confirm(`Delete the section “${section?.name ?? 'this section'}”?`)
+
+    if (!shouldDelete) {
+      return
+    }
+
+    setDeletingSectionId(sectionId)
+    setErrorMessage(null)
+
+    const { error } = await supabase
+      .from('sections')
+      .delete()
+      .eq('id', sectionId)
+
+    if (error) {
+      setErrorMessage(error.message)
+      setDeletingSectionId(null)
+      return
+    }
+
+    setSections((currentSections) =>
+      currentSections.filter((currentSection) => currentSection.id !== sectionId),
+    )
+    setDeletingSectionId(null)
+  }
+
+  async function addComment(taskId: string) {
+    const body = commentDrafts[taskId]?.trim()
+
+    if (!body) {
+      setErrorMessage('Comment cannot be empty.')
+      return
+    }
+
+    setAddingCommentTaskId(taskId)
+    setErrorMessage(null)
+
+    const { data, error } = await supabase
+      .from('comments')
+      .insert({
+        task_id: taskId,
+        body,
+      })
+      .select('id, task_id, body, created_at')
+      .single()
+
+    if (error) {
+      setErrorMessage(error.message)
+      setAddingCommentTaskId(null)
+      return
+    }
+
+    setComments((currentComments) => [...currentComments, data])
+    setCommentDrafts((currentDrafts) => ({
+      ...currentDrafts,
+      [taskId]: '',
+    }))
+    setAddingCommentTaskId(null)
+  }
+
+  async function deleteComment(commentId: string) {
+    setDeletingCommentId(commentId)
+    setErrorMessage(null)
+
+    const { error } = await supabase
+      .from('comments')
+      .delete()
+      .eq('id', commentId)
+
+    if (error) {
+      setErrorMessage(error.message)
+      setDeletingCommentId(null)
+      return
+    }
+
+    setComments((currentComments) =>
+      currentComments.filter((comment) => comment.id !== commentId),
+    )
+    setDeletingCommentId(null)
+  }
+
   function startEditingTask(task: Task) {
     setEditingTaskId(task.id)
     setEditTitle(task.title)
@@ -545,6 +742,7 @@ function App() {
         !linkedBlockerIds.includes(candidateTask.id),
     )
     const taskIsOverdue = isTaskOverdue(task)
+    const taskComments = getTaskComments(task.id)
 
     return (
       <article
@@ -626,6 +824,9 @@ function App() {
                   <span className={`rounded-full px-3 py-1 ${taskIsOverdue ? 'bg-red-400/10 text-red-200' : 'bg-white/5 text-zinc-400'}`}>
                     Due: {formatDate(task.due_date)}
                   </span>
+                  <span className="rounded-full bg-white/5 px-3 py-1 text-zinc-400">
+                    Comments: {taskComments.length}
+                  </span>
                 </div>
 
                 {blockingTasks.length > 0 && (
@@ -674,6 +875,71 @@ function App() {
                 )}
               </>
             )}
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                Comments
+              </p>
+              <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-zinc-400">
+                {taskComments.length}
+              </span>
+            </div>
+
+            {taskComments.length > 0 && (
+              <div className="mb-3 space-y-2">
+                {taskComments.map((comment) => (
+                  <div
+                    key={comment.id}
+                    className="flex items-start justify-between gap-3 rounded-2xl bg-[#111315] px-4 py-3"
+                  >
+                    <div>
+                      <p className="text-sm leading-6 text-zinc-200">{comment.body}</p>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        {comment.created_at
+                          ? new Intl.DateTimeFormat('en-AU', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                            }).format(new Date(comment.created_at))
+                          : 'No date'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={deletingCommentId === comment.id}
+                      onClick={() => deleteComment(comment.id)}
+                      className="shrink-0 text-xs font-semibold text-red-200/70 transition hover:text-red-100 disabled:opacity-50"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                value={commentDrafts[task.id] ?? ''}
+                onChange={(event) =>
+                  setCommentDrafts((currentDrafts) => ({
+                    ...currentDrafts,
+                    [task.id]: event.target.value,
+                  }))
+                }
+                placeholder="Add a comment"
+                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-[#111315] px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-violet-300/60"
+              />
+              <button
+                type="button"
+                disabled={addingCommentTaskId === task.id}
+                onClick={() => addComment(task.id)}
+                className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {addingCommentTaskId === task.id ? 'Adding…' : 'Comment'}
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
@@ -973,6 +1239,75 @@ function App() {
                 </option>
               ))}
             </select>
+          </div>
+        </div>
+
+        <div className="mb-6 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold">Manage sections</h2>
+            <p className="text-sm text-zinc-400">Create, rename and delete empty project sections.</p>
+          </div>
+
+          <form onSubmit={createSection} className="mb-4 flex flex-col gap-3 sm:flex-row">
+            <input
+              value={newSectionName}
+              onChange={(event) => setNewSectionName(event.target.value)}
+              placeholder="New section name"
+              className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-violet-300/60"
+            />
+            <button
+              type="submit"
+              disabled={creatingSection}
+              className="rounded-2xl bg-violet-300 px-5 py-3 text-sm font-semibold text-[#111315] transition hover:bg-violet-200 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {creatingSection ? 'Creating…' : 'Create section'}
+            </button>
+          </form>
+
+          <div className="space-y-2">
+            {sections.map((section) => {
+              const sectionTaskCount = tasks.filter((task) => task.section_id === section.id).length
+
+              return (
+                <div
+                  key={section.id}
+                  className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-[#181b1f] p-3 sm:flex-row sm:items-center"
+                >
+                  <input
+                    value={sectionDraftNames[section.id] ?? section.name}
+                    onChange={(event) =>
+                      setSectionDraftNames((currentDrafts) => ({
+                        ...currentDrafts,
+                        [section.id]: event.target.value,
+                      }))
+                    }
+                    className="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#111315] px-3 py-2 text-sm text-white outline-none transition focus:border-violet-300/60"
+                  />
+
+                  <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-zinc-400">
+                    {sectionTaskCount} tasks
+                  </span>
+
+                  <button
+                    type="button"
+                    disabled={renamingSectionId === section.id}
+                    onClick={() => renameSection(section.id)}
+                    className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-xs font-semibold text-zinc-100 transition hover:border-violet-300/40 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {renamingSectionId === section.id ? 'Saving…' : 'Rename'}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={deletingSectionId === section.id || sectionTaskCount > 0}
+                    onClick={() => deleteSection(section.id)}
+                    className="rounded-xl border border-red-300/10 bg-red-400/10 px-3 py-2 text-xs font-semibold text-red-200 transition hover:border-red-300/40 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )
+            })}
           </div>
         </div>
 
