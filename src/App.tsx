@@ -329,6 +329,16 @@ function App() {
       .filter((item) => item.task)
   }
 
+  function getBlockedTasks(taskId: string) {
+    return dependencies
+      .filter((dependency) => dependency.depends_on_task_id === taskId)
+      .map((dependency) => ({
+        dependency,
+        task: tasks.find((task) => task.id === dependency.task_id),
+      }))
+      .filter((item) => item.task)
+  }
+
   function startEditingTask(task: Task) {
     setEditingTaskId(task.id)
     setEditTitle(task.title)
@@ -405,7 +415,15 @@ function App() {
   function renderTask(task: Task) {
     const isEditing = editingTaskId === task.id
     const blockingTasks = getBlockingTasks(task.id)
-    const availableBlockers = tasks.filter((candidateTask) => candidateTask.id !== task.id)
+    const blockedTasks = getBlockedTasks(task.id)
+    const linkedBlockerIds = dependencies
+      .filter((dependency) => dependency.task_id === task.id)
+      .map((dependency) => dependency.depends_on_task_id)
+    const availableBlockers = tasks.filter(
+      (candidateTask) =>
+        candidateTask.id !== task.id &&
+        !linkedBlockerIds.includes(candidateTask.id),
+    )
 
     return (
       <article
@@ -457,6 +475,24 @@ function App() {
                           >
                             ×
                           </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {blockedTasks.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-200/70">
+                      Blocks
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {blockedTasks.map(({ dependency, task: blockedTask }) => (
+                        <span
+                          key={dependency.id}
+                          className="inline-flex items-center gap-2 rounded-full border border-violet-300/10 bg-violet-400/10 px-3 py-1.5 text-xs font-medium text-violet-100"
+                        >
+                          {blockedTask?.title}
                         </span>
                       ))}
                     </div>
