@@ -8,6 +8,9 @@ type Task = {
   description: string | null
   status: string
   priority: string | null
+  difficulty: string | null
+  start_date: string | null
+  due_date: string | null
   section_id: string | null
   position: number | null
 }
@@ -45,11 +48,48 @@ const priorityOptions = [
   { value: 'need_to_scope', label: 'Need to Scope' },
 ]
 
+const difficultyOptions = [
+  { value: 'not_scoped', label: 'Not scoped' },
+  { value: 'easy', label: 'Easy' },
+  { value: 'moderate', label: 'Moderate' },
+  { value: 'hard', label: 'Hard' },
+  { value: 'complex', label: 'Complex' },
+]
+
+function formatDate(date: string | null) {
+  if (!date) return 'No date'
+
+  return new Intl.DateTimeFormat('en-AU', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(`${date}T00:00:00`))
+}
+
+function isTaskOverdue(task: Task) {
+  if (!task.due_date || task.status === 'done') {
+    return false
+  }
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const dueDate = new Date(`${task.due_date}T00:00:00`)
+  dueDate.setHours(0, 0, 0, 0)
+
+  return dueDate < today
+}
+
+function getLabel(options: { value: string; label: string }[], value: string | null) {
+  return options.find((option) => option.value === value)?.label ?? value ?? 'None'
+}
+
 function App() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [sections, setSections] = useState<Section[]>([])
   const [dependencies, setDependencies] = useState<TaskDependency[]>([])
   const [projectId, setProjectId] = useState<string | null>(null)
+
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
   const [updatingStatusTaskId, setUpdatingStatusTaskId] = useState<string | null>(null)
@@ -60,26 +100,69 @@ function App() {
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null)
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
   const [savingTaskId, setSavingTaskId] = useState<string | null>(null)
-  const [editTitle, setEditTitle] = useState('')
-  const [editDescription, setEditDescription] = useState('')
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
   const [taskTitle, setTaskTitle] = useState('')
   const [taskDescription, setTaskDescription] = useState('')
   const [taskPriority, setTaskPriority] = useState('medium')
+  const [taskDifficulty, setTaskDifficulty] = useState('not_scoped')
   const [taskSectionId, setTaskSectionId] = useState('')
+  const [taskStartDate, setTaskStartDate] = useState('')
+  const [taskDueDate, setTaskDueDate] = useState('')
+
+  const [editTitle, setEditTitle] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [editDifficulty, setEditDifficulty] = useState('not_scoped')
+  const [editStartDate, setEditStartDate] = useState('')
+  const [editDueDate, setEditDueDate] = useState('')
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [priorityFilter, setPriorityFilter] = useState('all')
+  const [sectionFilter, setSectionFilter] = useState('all')
 
   const fallbackSectionId = sections[0]?.id ?? ''
+
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      const query = searchQuery.trim().toLowerCase()
+      const matchesSearch =
+        !query ||
+        task.title.toLowerCase().includes(query) ||
+        task.description?.toLowerCase().includes(query)
+
+      const matchesStatus = statusFilter === 'all' || task.status === statusFilter
+      const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter
+      const matchesSection = sectionFilter === 'all' || task.section_id === sectionFilter
+
+      return matchesSearch && matchesStatus && matchesPriority && matchesSection
+    })
+  }, [priorityFilter, searchQuery, sectionFilter, statusFilter, tasks])
 
   const tasksBySection = useMemo(() => {
     return sections.map((section) => ({
       ...section,
-      tasks: tasks.filter((task) => task.section_id === section.id),
+      tasks: filteredTasks.filter((task) => task.section_id === section.id),
     }))
-  }, [sections, tasks])
+  }, [filteredTasks, sections])
 
   const unsectionedTasks = useMemo(() => {
-    return tasks.filter((task) => !task.section_id)
-  }, [tasks])
+    return filteredTasks.filter((task) => !task.section_id)
+  }, [filteredTasks])
+
+  const stats = useMemo(() => {
+    const blockedTaskIds = new Set(dependencies.map((dependency) => dependency.task_id))
+    const overdueCount = tasks.filter(isTaskOverdue).length
+
+    return {
+      total: tasks.length,
+      done: tasks.filter((task) => task.status === 'done').length,
+      blocked: blockedTaskIds.size,
+      overdue: overdueCount,
+      visible: filteredTasks.length,
+    }
+  }, [dependencies, filteredTasks.length, tasks])
 
   async function loadProjectAndTasks() {
     setErrorMessage(null)
@@ -119,7 +202,7 @@ function App() {
 
     const { data, error } = await supabase
       .from('tasks')
-      .select('id, title, description, status, priority, section_id, position')
+      .select('id, title, description, status, priority, difficulty, start_date, due_date, section_id, position')
       .eq('project_id', project.id)
       .order('position', { ascending: true })
 
@@ -147,6 +230,7 @@ function App() {
 
   useEffect(() => {
     loadProjectAndTasks()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function createTask(event: FormEvent<HTMLFormElement>) {
@@ -172,6 +256,9 @@ function App() {
       description: taskDescription.trim() || null,
       status: 'not_started',
       priority: taskPriority,
+      difficulty: taskDifficulty,
+      start_date: taskStartDate || null,
+      due_date: taskDueDate || null,
       position: tasks.length + 1,
     })
 
@@ -184,7 +271,10 @@ function App() {
     setTaskTitle('')
     setTaskDescription('')
     setTaskPriority('medium')
+    setTaskDifficulty('not_scoped')
     setTaskSectionId(taskSectionId || fallbackSectionId)
+    setTaskStartDate('')
+    setTaskDueDate('')
     setIsCreating(false)
     await loadProjectAndTasks()
   }
@@ -193,10 +283,7 @@ function App() {
     setUpdatingStatusTaskId(taskId)
     setErrorMessage(null)
 
-    const { error } = await supabase
-      .from('tasks')
-      .update({ status })
-      .eq('id', taskId)
+    const { error } = await supabase.from('tasks').update({ status }).eq('id', taskId)
 
     if (error) {
       setErrorMessage(error.message)
@@ -205,9 +292,7 @@ function App() {
     }
 
     setTasks((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === taskId ? { ...task, status } : task,
-      ),
+      currentTasks.map((task) => (task.id === taskId ? { ...task, status } : task)),
     )
     setUpdatingStatusTaskId(null)
   }
@@ -216,10 +301,7 @@ function App() {
     setUpdatingPriorityTaskId(taskId)
     setErrorMessage(null)
 
-    const { error } = await supabase
-      .from('tasks')
-      .update({ priority })
-      .eq('id', taskId)
+    const { error } = await supabase.from('tasks').update({ priority }).eq('id', taskId)
 
     if (error) {
       setErrorMessage(error.message)
@@ -228,9 +310,7 @@ function App() {
     }
 
     setTasks((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === taskId ? { ...task, priority } : task,
-      ),
+      currentTasks.map((task) => (task.id === taskId ? { ...task, priority } : task)),
     )
     setUpdatingPriorityTaskId(null)
   }
@@ -239,10 +319,7 @@ function App() {
     setUpdatingSectionTaskId(taskId)
     setErrorMessage(null)
 
-    const { error } = await supabase
-      .from('tasks')
-      .update({ section_id: sectionId })
-      .eq('id', taskId)
+    const { error } = await supabase.from('tasks').update({ section_id: sectionId }).eq('id', taskId)
 
     if (error) {
       setErrorMessage(error.message)
@@ -251,13 +328,32 @@ function App() {
     }
 
     setTasks((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === taskId ? { ...task, section_id: sectionId } : task,
-      ),
+      currentTasks.map((task) => (task.id === taskId ? { ...task, section_id: sectionId } : task)),
     )
     setUpdatingSectionTaskId(null)
   }
 
+  function wouldCreateCircularDependency(taskId: string, dependsOnTaskId: string) {
+    const visited = new Set<string>()
+
+    function visit(currentTaskId: string): boolean {
+      if (currentTaskId === taskId) {
+        return true
+      }
+
+      if (visited.has(currentTaskId)) {
+        return false
+      }
+
+      visited.add(currentTaskId)
+
+      return dependencies
+        .filter((dependency) => dependency.task_id === currentTaskId)
+        .some((dependency) => visit(dependency.depends_on_task_id))
+    }
+
+    return visit(dependsOnTaskId)
+  }
 
   async function addTaskDependency(taskId: string, dependsOnTaskId: string) {
     if (!dependsOnTaskId || taskId === dependsOnTaskId) {
@@ -272,6 +368,11 @@ function App() {
 
     if (alreadyExists) {
       setErrorMessage('That blocker is already linked to this task.')
+      return
+    }
+
+    if (wouldCreateCircularDependency(taskId, dependsOnTaskId)) {
+      setErrorMessage('That blocker would create a circular dependency.')
       return
     }
 
@@ -294,7 +395,23 @@ function App() {
       return
     }
 
+    const { error: statusError } = await supabase
+      .from('tasks')
+      .update({ status: 'blocked' })
+      .eq('id', taskId)
+
+    if (statusError) {
+      setErrorMessage(statusError.message)
+      setAddingDependencyTaskId(null)
+      return
+    }
+
     setDependencies((currentDependencies) => [...currentDependencies, data])
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === taskId ? { ...task, status: 'blocked' } : task,
+      ),
+    )
     setAddingDependencyTaskId(null)
   }
 
@@ -343,6 +460,9 @@ function App() {
     setEditingTaskId(task.id)
     setEditTitle(task.title)
     setEditDescription(task.description ?? '')
+    setEditDifficulty(task.difficulty ?? 'not_scoped')
+    setEditStartDate(task.start_date ?? '')
+    setEditDueDate(task.due_date ?? '')
     setErrorMessage(null)
   }
 
@@ -350,6 +470,9 @@ function App() {
     setEditingTaskId(null)
     setEditTitle('')
     setEditDescription('')
+    setEditDifficulty('not_scoped')
+    setEditStartDate('')
+    setEditDueDate('')
   }
 
   async function saveTaskEdits(taskId: string) {
@@ -364,12 +487,12 @@ function App() {
     const updatedTask = {
       title: editTitle.trim(),
       description: editDescription.trim() || null,
+      difficulty: editDifficulty,
+      start_date: editStartDate || null,
+      due_date: editDueDate || null,
     }
 
-    const { error } = await supabase
-      .from('tasks')
-      .update(updatedTask)
-      .eq('id', taskId)
+    const { error } = await supabase.from('tasks').update(updatedTask).eq('id', taskId)
 
     if (error) {
       setErrorMessage(error.message)
@@ -397,10 +520,7 @@ function App() {
     setDeletingTaskId(taskId)
     setErrorMessage(null)
 
-    const { error } = await supabase
-      .from('tasks')
-      .delete()
-      .eq('id', taskId)
+    const { error } = await supabase.from('tasks').delete().eq('id', taskId)
 
     if (error) {
       setErrorMessage(error.message)
@@ -424,11 +544,16 @@ function App() {
         candidateTask.id !== task.id &&
         !linkedBlockerIds.includes(candidateTask.id),
     )
+    const taskIsOverdue = isTaskOverdue(task)
 
     return (
       <article
         key={task.id}
-        className="rounded-2xl border border-white/10 bg-[#181b1f] p-5 transition hover:border-violet-300/40 hover:bg-[#1d2026]"
+        className={`rounded-2xl border bg-[#181b1f] p-5 transition hover:bg-[#1d2026] ${
+          blockingTasks.length > 0 || taskIsOverdue
+            ? 'border-red-300/30 hover:border-red-300/50'
+            : 'border-white/10 hover:border-violet-300/40'
+        }`}
       >
         <div className="space-y-4">
           <div className="min-w-0">
@@ -439,6 +564,7 @@ function App() {
                   onChange={(event) => setEditTitle(event.target.value)}
                   className="w-full rounded-2xl border border-white/10 bg-[#111315] px-4 py-3 text-sm font-semibold text-white outline-none transition placeholder:text-zinc-500 focus:border-violet-300/60"
                 />
+
                 <textarea
                   value={editDescription}
                   onChange={(event) => setEditDescription(event.target.value)}
@@ -446,13 +572,61 @@ function App() {
                   placeholder="Description"
                   className="w-full resize-none rounded-2xl border border-white/10 bg-[#111315] px-4 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-zinc-500 focus:border-violet-300/60"
                 />
+
+                <div className="grid gap-3 md:grid-cols-3">
+                  <select
+                    value={editDifficulty}
+                    onChange={(event) => setEditDifficulty(event.target.value)}
+                    className="rounded-2xl border border-white/10 bg-[#111315] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
+                  >
+                    {difficultyOptions.map((difficulty) => (
+                      <option key={difficulty.value} value={difficulty.value} className="bg-[#181b1f] text-white">
+                        {difficulty.label}
+                      </option>
+                    ))}
+                  </select>
+
+                  <input
+                    type="date"
+                    value={editStartDate}
+                    onChange={(event) => setEditStartDate(event.target.value)}
+                    className="rounded-2xl border border-white/10 bg-[#111315] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
+                  />
+
+                  <input
+                    type="date"
+                    value={editDueDate}
+                    onChange={(event) => setEditDueDate(event.target.value)}
+                    className="rounded-2xl border border-white/10 bg-[#111315] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
+                  />
+                </div>
               </div>
             ) : (
               <>
-                <h3 className="text-lg font-medium">{task.title}</h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-lg font-medium">{task.title}</h3>
+                  {taskIsOverdue && (
+                    <span className="rounded-full border border-red-300/20 bg-red-400/10 px-3 py-1 text-xs font-semibold text-red-200">
+                      Overdue
+                    </span>
+                  )}
+                </div>
+
                 {task.description && (
                   <p className="mt-2 text-sm leading-6 text-zinc-400">{task.description}</p>
                 )}
+
+                <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                  <span className="rounded-full bg-white/5 px-3 py-1 text-zinc-400">
+                    Difficulty: {getLabel(difficultyOptions, task.difficulty)}
+                  </span>
+                  <span className="rounded-full bg-white/5 px-3 py-1 text-zinc-400">
+                    Start: {formatDate(task.start_date)}
+                  </span>
+                  <span className={`rounded-full px-3 py-1 ${taskIsOverdue ? 'bg-red-400/10 text-red-200' : 'bg-white/5 text-zinc-400'}`}>
+                    Due: {formatDate(task.due_date)}
+                  </span>
+                </div>
 
                 {blockingTasks.length > 0 && (
                   <div className="mt-4 space-y-2">
@@ -643,6 +817,29 @@ function App() {
           </div>
         </div>
 
+        <div className="mb-6 grid gap-3 md:grid-cols-5">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Total</p>
+            <p className="mt-2 text-2xl font-semibold">{stats.total}</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Visible</p>
+            <p className="mt-2 text-2xl font-semibold">{stats.visible}</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Done</p>
+            <p className="mt-2 text-2xl font-semibold">{stats.done}</p>
+          </div>
+          <div className="rounded-2xl border border-red-300/10 bg-red-400/10 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-red-200/70">Blocked</p>
+            <p className="mt-2 text-2xl font-semibold text-red-100">{stats.blocked}</p>
+          </div>
+          <div className="rounded-2xl border border-red-300/10 bg-red-400/10 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-red-200/70">Overdue</p>
+            <p className="mt-2 text-2xl font-semibold text-red-100">{stats.overdue}</p>
+          </div>
+        </div>
+
         <form
           onSubmit={createTask}
           className="mb-6 rounded-3xl border border-white/10 bg-white/[0.03] p-4 shadow-2xl shadow-black/20"
@@ -652,7 +849,7 @@ function App() {
             <p className="text-sm text-zinc-400">Add a new task directly into a project section.</p>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-[1.1fr_1.4fr_0.8fr_0.8fr_auto]">
+          <div className="grid gap-3 md:grid-cols-[1.1fr_1.4fr_0.8fr_0.8fr]">
             <input
               value={taskTitle}
               onChange={(event) => setTaskTitle(event.target.value)}
@@ -690,6 +887,34 @@ function App() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="mt-3 grid gap-3 md:grid-cols-[0.8fr_0.8fr_0.8fr_auto]">
+            <select
+              value={taskDifficulty}
+              onChange={(event) => setTaskDifficulty(event.target.value)}
+              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
+            >
+              {difficultyOptions.map((difficulty) => (
+                <option key={difficulty.value} value={difficulty.value} className="bg-[#181b1f] text-white">
+                  {difficulty.label}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="date"
+              value={taskStartDate}
+              onChange={(event) => setTaskStartDate(event.target.value)}
+              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
+            />
+
+            <input
+              type="date"
+              value={taskDueDate}
+              onChange={(event) => setTaskDueDate(event.target.value)}
+              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
+            />
 
             <button
               type="submit"
@@ -701,6 +926,56 @@ function App() {
           </div>
         </form>
 
+        <div className="mb-6 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="grid gap-3 md:grid-cols-[1.5fr_0.8fr_0.8fr_0.8fr]">
+            <input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search tasks"
+              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-violet-300/60"
+            />
+
+            <select
+              value={sectionFilter}
+              onChange={(event) => setSectionFilter(event.target.value)}
+              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
+            >
+              <option value="all" className="bg-[#181b1f] text-white">All sections</option>
+              {sections.map((section) => (
+                <option key={section.id} value={section.id} className="bg-[#181b1f] text-white">
+                  {section.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
+            >
+              <option value="all" className="bg-[#181b1f] text-white">All statuses</option>
+              {statusOptions.map((status) => (
+                <option key={status.value} value={status.value} className="bg-[#181b1f] text-white">
+                  {status.label}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={priorityFilter}
+              onChange={(event) => setPriorityFilter(event.target.value)}
+              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
+            >
+              <option value="all" className="bg-[#181b1f] text-white">All priorities</option>
+              {priorityOptions.map((priority) => (
+                <option key={priority.value} value={priority.value} className="bg-[#181b1f] text-white">
+                  {priority.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4 shadow-2xl shadow-black/30">
           <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-4">
             <div>
@@ -708,7 +983,7 @@ function App() {
               <p className="text-sm text-zinc-400">Tasks grouped by project section.</p>
             </div>
             <span className="rounded-full bg-violet-400/10 px-3 py-1 text-sm font-medium text-violet-200">
-              {tasks.length} tasks
+              {filteredTasks.length} visible
             </span>
           </div>
 
@@ -739,7 +1014,7 @@ function App() {
                     </div>
                   ) : (
                     <div className="rounded-2xl border border-dashed border-white/10 px-5 py-6 text-sm text-zinc-500">
-                      No tasks in this section yet.
+                      No matching tasks in this section.
                     </div>
                   )}
                 </section>
