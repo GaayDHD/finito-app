@@ -18,6 +18,12 @@ type Section = {
   position: number | null
 }
 
+type TaskDependency = {
+  id: string
+  task_id: string
+  depends_on_task_id: string
+}
+
 const statusOptions = [
   { value: 'not_started', label: 'Not started' },
   { value: 'planning', label: 'Planning' },
@@ -42,12 +48,15 @@ const priorityOptions = [
 function App() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [sections, setSections] = useState<Section[]>([])
+  const [dependencies, setDependencies] = useState<TaskDependency[]>([])
   const [projectId, setProjectId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
   const [updatingStatusTaskId, setUpdatingStatusTaskId] = useState<string | null>(null)
   const [updatingPriorityTaskId, setUpdatingPriorityTaskId] = useState<string | null>(null)
   const [updatingSectionTaskId, setUpdatingSectionTaskId] = useState<string | null>(null)
+  const [addingDependencyTaskId, setAddingDependencyTaskId] = useState<string | null>(null)
+  const [removingDependencyId, setRemovingDependencyId] = useState<string | null>(null)
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null)
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
   const [savingTaskId, setSavingTaskId] = useState<string | null>(null)
@@ -121,6 +130,18 @@ function App() {
     }
 
     setTasks(data ?? [])
+
+    const { data: dependencyData, error: dependencyError } = await supabase
+      .from('task_dependencies')
+      .select('id, task_id, depends_on_task_id')
+
+    if (dependencyError) {
+      setErrorMessage(dependencyError.message)
+      setIsLoading(false)
+      return
+    }
+
+    setDependencies(dependencyData ?? [])
     setIsLoading(false)
   }
 
@@ -237,6 +258,77 @@ function App() {
     setUpdatingSectionTaskId(null)
   }
 
+
+  async function addTaskDependency(taskId: string, dependsOnTaskId: string) {
+    if (!dependsOnTaskId || taskId === dependsOnTaskId) {
+      return
+    }
+
+    const alreadyExists = dependencies.some(
+      (dependency) =>
+        dependency.task_id === taskId &&
+        dependency.depends_on_task_id === dependsOnTaskId,
+    )
+
+    if (alreadyExists) {
+      setErrorMessage('That blocker is already linked to this task.')
+      return
+    }
+
+    setAddingDependencyTaskId(taskId)
+    setErrorMessage(null)
+
+    const { data, error } = await supabase
+      .from('task_dependencies')
+      .insert({
+        task_id: taskId,
+        depends_on_task_id: dependsOnTaskId,
+        dependency_type: 'blocks',
+      })
+      .select('id, task_id, depends_on_task_id')
+      .single()
+
+    if (error) {
+      setErrorMessage(error.message)
+      setAddingDependencyTaskId(null)
+      return
+    }
+
+    setDependencies((currentDependencies) => [...currentDependencies, data])
+    setAddingDependencyTaskId(null)
+  }
+
+  async function removeTaskDependency(dependencyId: string) {
+    setRemovingDependencyId(dependencyId)
+    setErrorMessage(null)
+
+    const { error } = await supabase
+      .from('task_dependencies')
+      .delete()
+      .eq('id', dependencyId)
+
+    if (error) {
+      setErrorMessage(error.message)
+      setRemovingDependencyId(null)
+      return
+    }
+
+    setDependencies((currentDependencies) =>
+      currentDependencies.filter((dependency) => dependency.id !== dependencyId),
+    )
+    setRemovingDependencyId(null)
+  }
+
+  function getBlockingTasks(taskId: string) {
+    return dependencies
+      .filter((dependency) => dependency.task_id === taskId)
+      .map((dependency) => ({
+        dependency,
+        task: tasks.find((task) => task.id === dependency.depends_on_task_id),
+      }))
+      .filter((item) => item.task)
+  }
+
   function startEditingTask(task: Task) {
     setEditingTaskId(task.id)
     setEditTitle(task.title)
@@ -312,14 +404,16 @@ function App() {
 
   function renderTask(task: Task) {
     const isEditing = editingTaskId === task.id
+    const blockingTasks = getBlockingTasks(task.id)
+    const availableBlockers = tasks.filter((candidateTask) => candidateTask.id !== task.id)
 
     return (
       <article
         key={task.id}
         className="rounded-2xl border border-white/10 bg-[#181b1f] p-5 transition hover:border-violet-300/40 hover:bg-[#1d2026]"
       >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0 flex-1">
+        <div className="space-y-4">
+          <div className="min-w-0">
             {isEditing ? (
               <div className="space-y-3">
                 <input
@@ -341,11 +435,38 @@ function App() {
                 {task.description && (
                   <p className="mt-2 text-sm leading-6 text-zinc-400">{task.description}</p>
                 )}
+
+                {blockingTasks.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-200/70">
+                      Blocked by
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {blockingTasks.map(({ dependency, task: blockingTask }) => (
+                        <span
+                          key={dependency.id}
+                          className="inline-flex items-center gap-2 rounded-full border border-red-300/10 bg-red-400/10 px-3 py-1.5 text-xs font-medium text-red-100"
+                        >
+                          {blockingTask?.title}
+                          <button
+                            type="button"
+                            disabled={removingDependencyId === dependency.id}
+                            onClick={() => removeTaskDependency(dependency.id)}
+                            className="text-red-200/70 transition hover:text-red-100 disabled:opacity-50"
+                            aria-label={`Remove blocker ${blockingTask?.title}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
 
-          <div className="flex shrink-0 flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
             <label className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:border-violet-300/40">
               <span className="text-zinc-500">Section</span>
               <select
@@ -398,6 +519,29 @@ function App() {
                 </select>
               </label>
             )}
+
+            <label className="flex items-center gap-2 rounded-full border border-red-300/10 bg-red-400/10 px-3 py-1.5 text-xs font-medium text-red-200 transition hover:border-red-300/40">
+              <span className="text-red-200/60">Blocked by</span>
+              <select
+                aria-label={`Add blocker for ${task.title}`}
+                defaultValue=""
+                disabled={addingDependencyTaskId === task.id || availableBlockers.length === 0}
+                onChange={(event) => {
+                  addTaskDependency(task.id, event.target.value)
+                  event.currentTarget.value = ''
+                }}
+                className="cursor-pointer appearance-auto bg-transparent text-xs font-semibold text-red-100 outline-none disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <option value="" className="bg-[#181b1f] text-white">
+                  Add blocker
+                </option>
+                {availableBlockers.map((candidateTask) => (
+                  <option key={candidateTask.id} value={candidateTask.id} className="bg-[#181b1f] text-white">
+                    {candidateTask.title}
+                  </option>
+                ))}
+              </select>
+            </label>
 
             {isEditing ? (
               <>
