@@ -35,6 +35,15 @@ type TaskComment = {
   created_at: string | null
 }
 
+type ActivityLog = {
+  id: string
+  project_id: string | null
+  task_id: string | null
+  action: string
+  details: string | null
+  created_at: string | null
+}
+
 const statusOptions = [
   { value: 'not_started', label: 'Not started' },
   { value: 'planning', label: 'Planning' },
@@ -97,6 +106,7 @@ function App() {
   const [sections, setSections] = useState<Section[]>([])
   const [dependencies, setDependencies] = useState<TaskDependency[]>([])
   const [comments, setComments] = useState<TaskComment[]>([])
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([])
   const [projectId, setProjectId] = useState<string | null>(null)
 
   const [isLoading, setIsLoading] = useState(true)
@@ -189,6 +199,27 @@ function App() {
     }
   }, [dependencies, filteredTasks.length, tasks])
 
+  async function logActivity(action: string, details?: string, taskId?: string | null) {
+    if (!projectId) {
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('activity_logs')
+      .insert({
+        project_id: projectId,
+        task_id: taskId ?? null,
+        action,
+        details: details ?? null,
+      })
+      .select('id, project_id, task_id, action, details, created_at')
+      .single()
+
+    if (!error && data) {
+      setActivityLogs((currentLogs) => [data, ...currentLogs].slice(0, 20))
+    }
+  }
+
   async function loadProjectAndTasks(options: { showLoading?: boolean } = {}) {
     const shouldShowLoading = options.showLoading ?? true
 
@@ -268,6 +299,21 @@ function App() {
     }
 
     setComments(commentData ?? [])
+
+    const { data: activityData, error: activityError } = await supabase
+      .from('activity_logs')
+      .select('id, project_id, task_id, action, details, created_at')
+      .eq('project_id', project.id)
+      .order('created_at', { ascending: false })
+      .limit(20)
+
+    if (activityError) {
+      setErrorMessage(activityError.message)
+      setIsLoading(false)
+      return
+    }
+
+    setActivityLogs(activityData ?? [])
     setIsLoading(false)
   }
 
@@ -320,6 +366,7 @@ function App() {
     setTaskStartDate('')
     setTaskDueDate('')
     setIsCreating(false)
+    await logActivity('Created task', taskTitle.trim())
     await loadProjectAndTasks()
   }
 
@@ -335,9 +382,18 @@ function App() {
       return
     }
 
+    const updatedTask = tasks.find((task) => task.id === taskId)
+
     setTasks((currentTasks) =>
       currentTasks.map((task) => (task.id === taskId ? { ...task, status } : task)),
     )
+
+    await logActivity(
+      'Updated task status',
+      `${updatedTask?.title ?? 'Task'} → ${getLabel(statusOptions, status)}`,
+      taskId,
+    )
+
     setUpdatingStatusTaskId(null)
   }
 
@@ -355,9 +411,18 @@ function App() {
       return
     }
 
+    const updatedTask = tasks.find((task) => task.id === taskId)
+
     setTasks((currentTasks) =>
       currentTasks.map((task) => (task.id === taskId ? { ...task, priority: nextPriority } : task)),
     )
+
+    await logActivity(
+      'Updated task priority',
+      `${updatedTask?.title ?? 'Task'} → ${nextPriority ? getLabel(priorityOptions, nextPriority) : 'No priority'}`,
+      taskId,
+    )
+
     setUpdatingPriorityTaskId(null)
   }
 
@@ -641,11 +706,16 @@ function App() {
       return
     }
 
+    const commentedTask = tasks.find((task) => task.id === taskId)
+
     setComments((currentComments) => [...currentComments, data])
     setCommentDrafts((currentDrafts) => ({
       ...currentDrafts,
       [taskId]: '',
     }))
+
+    await logActivity('Added comment', commentedTask?.title ?? 'Task', taskId)
+
     setAddingCommentTaskId(null)
   }
 
@@ -1623,6 +1693,50 @@ function App() {
               )
             })}
           </div>
+        </div>
+
+        <div className="mb-6 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Recent activity</h2>
+              <p className="text-sm text-zinc-400">Latest changes across this project.</p>
+            </div>
+            <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-zinc-400">
+              {activityLogs.length} logs
+            </span>
+          </div>
+
+          {activityLogs.length > 0 ? (
+            <div className="space-y-2">
+              {activityLogs.slice(0, 8).map((log) => (
+                <div
+                  key={log.id}
+                  className="flex flex-col gap-1 rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-zinc-100">{log.action}</p>
+                    {log.details && (
+                      <p className="mt-1 text-sm text-zinc-400">{log.details}</p>
+                    )}
+                  </div>
+                  <p className="shrink-0 text-xs text-zinc-500">
+                    {log.created_at
+                      ? new Intl.DateTimeFormat('en-AU', {
+                          day: '2-digit',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        }).format(new Date(log.created_at))
+                      : 'No date'}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-white/10 px-5 py-6 text-sm text-zinc-500">
+              No activity yet.
+            </div>
+          )}
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4 shadow-2xl shadow-black/30">
