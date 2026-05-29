@@ -189,9 +189,14 @@ function App() {
     }
   }, [dependencies, filteredTasks.length, tasks])
 
-  async function loadProjectAndTasks() {
+  async function loadProjectAndTasks(options: { showLoading?: boolean } = {}) {
+    const shouldShowLoading = options.showLoading ?? true
+
     setErrorMessage(null)
-    setIsLoading(true)
+
+    if (shouldShowLoading) {
+      setIsLoading(true)
+    }
 
     const { data: project, error: projectError } = await supabase
       .from('projects')
@@ -789,7 +794,7 @@ function App() {
       return
     }
 
-    await loadProjectAndTasks()
+    await loadProjectAndTasks({ showLoading: false })
     setMovingTaskId(null)
   }
 
@@ -807,7 +812,7 @@ function App() {
       return
     }
 
-    await loadProjectAndTasks()
+    await loadProjectAndTasks({ showLoading: false })
     setDuplicatingTaskId(null)
   }
 
@@ -1038,11 +1043,16 @@ function App() {
 
             {subtasks.length > 0 && (
               <div className="mb-3 space-y-2">
-                {subtasks.map((subtask) => (
-                  <div
-                    key={subtask.id}
-                    className="rounded-2xl border border-white/10 bg-[#111315] p-3"
-                  >
+                {subtasks.map((subtask) => {
+                  const subtaskIndex = subtasks.findIndex((currentSubtask) => currentSubtask.id === subtask.id)
+                  const canMoveSubtaskUp = subtaskIndex > 0
+                  const canMoveSubtaskDown = subtaskIndex >= 0 && subtaskIndex < subtasks.length - 1
+
+                  return (
+                    <div
+                      key={subtask.id}
+                      className="rounded-2xl border border-white/10 bg-[#111315] p-3"
+                    >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="text-sm font-semibold text-zinc-100">{subtask.title}</p>
@@ -1052,6 +1062,24 @@ function App() {
                       </div>
 
                       <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          disabled={!canMoveSubtaskUp || movingTaskId === subtask.id}
+                          onClick={() => moveTask(subtask.id, 'up')}
+                          className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-violet-300/40 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Move up
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={!canMoveSubtaskDown || movingTaskId === subtask.id}
+                          onClick={() => moveTask(subtask.id, 'down')}
+                          className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-violet-300/40 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Move down
+                        </button>
+
                         <label className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-medium text-zinc-200">
                           <span className="text-zinc-500">Status</span>
                           <select
@@ -1100,7 +1128,8 @@ function App() {
                       </div>
                     </div>
                   </div>
-                ))}
+                )
+                })}
               </div>
             )}
 
