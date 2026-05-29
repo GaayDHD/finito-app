@@ -6,6 +6,7 @@ type Task = {
   id: string
   title: string
   description: string | null
+  parent_task_id: string | null
   status: string
   priority: string | null
   difficulty: string | null
@@ -108,6 +109,7 @@ function App() {
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null)
   const [movingTaskId, setMovingTaskId] = useState<string | null>(null)
   const [duplicatingTaskId, setDuplicatingTaskId] = useState<string | null>(null)
+  const [creatingSubtaskTaskId, setCreatingSubtaskTaskId] = useState<string | null>(null)
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
   const [savingTaskId, setSavingTaskId] = useState<string | null>(null)
   const [creatingSection, setCreatingSection] = useState(false)
@@ -120,6 +122,7 @@ function App() {
   const [newSectionName, setNewSectionName] = useState('')
   const [sectionDraftNames, setSectionDraftNames] = useState<Record<string, string>>({})
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({})
+  const [subtaskDrafts, setSubtaskDrafts] = useState<Record<string, string>>({})
 
   const [taskTitle, setTaskTitle] = useState('')
   const [taskDescription, setTaskDescription] = useState('')
@@ -162,14 +165,14 @@ function App() {
     return sections.map((section) => ({
       ...section,
       tasks: filteredTasks
-        .filter((task) => task.section_id === section.id)
+        .filter((task) => task.section_id === section.id && !task.parent_task_id)
         .sort((a, b) => (a.position ?? 0) - (b.position ?? 0)),
     }))
   }, [filteredTasks, sections])
 
   const unsectionedTasks = useMemo(() => {
     return filteredTasks
-      .filter((task) => !task.section_id)
+      .filter((task) => !task.section_id && !task.parent_task_id)
       .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
   }, [filteredTasks])
 
@@ -224,7 +227,7 @@ function App() {
 
     const { data, error } = await supabase
       .from('tasks')
-      .select('id, title, description, status, priority, difficulty, start_date, due_date, section_id, position')
+      .select('id, title, description, parent_task_id, status, priority, difficulty, start_date, due_date, section_id, position')
       .eq('project_id', project.id)
       .order('position', { ascending: true })
 
@@ -287,6 +290,7 @@ function App() {
     const { error } = await supabase.from('tasks').insert({
       project_id: projectId,
       section_id: taskSectionId || fallbackSectionId || null,
+      parent_task_id: null,
       title: taskTitle.trim(),
       description: taskDescription.trim() || null,
       status: 'not_started',
@@ -333,10 +337,12 @@ function App() {
   }
 
   async function updateTaskPriority(taskId: string, priority: string) {
+    const nextPriority = priority || null
+
     setUpdatingPriorityTaskId(taskId)
     setErrorMessage(null)
 
-    const { error } = await supabase.from('tasks').update({ priority }).eq('id', taskId)
+    const { error } = await supabase.from('tasks').update({ priority: nextPriority }).eq('id', taskId)
 
     if (error) {
       setErrorMessage(error.message)
@@ -345,7 +351,7 @@ function App() {
     }
 
     setTasks((currentTasks) =>
-      currentTasks.map((task) => (task.id === taskId ? { ...task, priority } : task)),
+      currentTasks.map((task) => (task.id === taskId ? { ...task, priority: nextPriority } : task)),
     )
     setUpdatingPriorityTaskId(null)
   }
@@ -659,6 +665,61 @@ function App() {
     setDeletingCommentId(null)
   }
 
+  function getSubtasks(taskId: string) {
+    return tasks
+      .filter((task) => task.parent_task_id === taskId)
+      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+  }
+
+  async function createSubtask(parentTask: Task) {
+    const title = subtaskDrafts[parentTask.id]?.trim()
+
+    if (!title) {
+      return
+    }
+
+    if (!projectId) {
+      setErrorMessage('Project not loaded yet. Refresh and try again.')
+      return
+    }
+
+    setCreatingSubtaskTaskId(parentTask.id)
+    setErrorMessage(null)
+
+    const siblingSubtasks = getSubtasks(parentTask.id)
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert({
+        project_id: projectId,
+        section_id: parentTask.section_id,
+        parent_task_id: parentTask.id,
+        title,
+        description: null,
+        status: 'not_started',
+        priority: null,
+        difficulty: 'not_scoped',
+        start_date: null,
+        due_date: parentTask.due_date,
+        position: siblingSubtasks.length + 1,
+      })
+      .select('id, title, description, parent_task_id, status, priority, difficulty, start_date, due_date, section_id, position')
+      .single()
+
+    if (error) {
+      setErrorMessage(error.message)
+      setCreatingSubtaskTaskId(null)
+      return
+    }
+
+    setTasks((currentTasks) => [...currentTasks, data])
+    setSubtaskDrafts((currentDrafts) => ({
+      ...currentDrafts,
+      [parentTask.id]: '',
+    }))
+    setCreatingSubtaskTaskId(null)
+  }
+
   function startEditingTask(task: Task) {
     setEditingTaskId(task.id)
     setEditTitle(task.title)
@@ -793,8 +854,10 @@ function App() {
     )
     const taskIsOverdue = isTaskOverdue(task)
     const taskComments = getTaskComments(task.id)
+    const subtasks = getSubtasks(task.id)
+    const completedSubtasks = subtasks.filter((subtask) => subtask.status === 'done').length
     const sectionTaskOrder = tasks
-      .filter((currentTask) => currentTask.section_id === task.section_id)
+      .filter((currentTask) => currentTask.section_id === task.section_id && currentTask.parent_task_id === task.parent_task_id)
       .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
     const taskOrderIndex = sectionTaskOrder.findIndex((currentTask) => currentTask.id === task.id)
     const canMoveUp = taskOrderIndex > 0
@@ -910,6 +973,9 @@ function App() {
                   <span className="rounded-full bg-white/5 px-3 py-1 text-zinc-400">
                     Comments: {taskComments.length}
                   </span>
+                  <span className="rounded-full bg-white/5 px-3 py-1 text-zinc-400">
+                    Subtasks: {completedSubtasks}/{subtasks.length}
+                  </span>
                 </div>
 
                 {blockingTasks.length > 0 && (
@@ -958,6 +1024,107 @@ function App() {
                 )}
               </>
             )}
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                Subtasks
+              </p>
+              <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-zinc-400">
+                {completedSubtasks}/{subtasks.length}
+              </span>
+            </div>
+
+            {subtasks.length > 0 && (
+              <div className="mb-3 space-y-2">
+                {subtasks.map((subtask) => (
+                  <div
+                    key={subtask.id}
+                    className="rounded-2xl border border-white/10 bg-[#111315] p-3"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-zinc-100">{subtask.title}</p>
+                        <p className="mt-1 text-xs text-zinc-500">
+                          {getLabel(statusOptions, subtask.status)} · {subtask.priority ? getLabel(priorityOptions, subtask.priority) : 'No priority'}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <label className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-medium text-zinc-200">
+                          <span className="text-zinc-500">Status</span>
+                          <select
+                            aria-label={`Status for ${subtask.title}`}
+                            value={subtask.status}
+                            disabled={updatingStatusTaskId === subtask.id}
+                            onChange={(event) => updateTaskStatus(subtask.id, event.target.value)}
+                            className="cursor-pointer appearance-auto bg-transparent text-xs font-semibold text-zinc-100 outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {statusOptions.map((status) => (
+                              <option key={status.value} value={status.value} className="bg-[#181b1f] text-white">
+                                {status.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label className="flex items-center gap-2 rounded-full border border-violet-300/10 bg-violet-400/10 px-3 py-1.5 text-xs font-medium text-violet-200">
+                          <span className="text-violet-200/60">Priority</span>
+                          <select
+                            aria-label={`Priority for ${subtask.title}`}
+                            value={subtask.priority ?? ''}
+                            disabled={updatingPriorityTaskId === subtask.id}
+                            onChange={(event) => updateTaskPriority(subtask.id, event.target.value)}
+                            className="cursor-pointer appearance-auto bg-transparent text-xs font-semibold text-violet-100 outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            <option value="" className="bg-[#181b1f] text-white">
+                              No priority
+                            </option>
+                            {priorityOptions.map((priority) => (
+                              <option key={priority.value} value={priority.value} className="bg-[#181b1f] text-white">
+                                {priority.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <button
+                          type="button"
+                          disabled={deletingTaskId === subtask.id}
+                          onClick={() => deleteTask(subtask.id)}
+                          className="rounded-full border border-red-300/10 bg-red-400/10 px-3 py-1.5 text-xs font-semibold text-red-200 transition hover:border-red-300/40 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {deletingTaskId === subtask.id ? 'Deleting…' : 'Delete'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                value={subtaskDrafts[task.id] ?? ''}
+                onChange={(event) =>
+                  setSubtaskDrafts((currentDrafts) => ({
+                    ...currentDrafts,
+                    [task.id]: event.target.value,
+                  }))
+                }
+                placeholder="Add a subtask"
+                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-[#111315] px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-violet-300/60"
+              />
+              <button
+                type="button"
+                disabled={creatingSubtaskTaskId === task.id || !(subtaskDrafts[task.id] ?? '').trim()}
+                onClick={() => createSubtask(task)}
+                className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {creatingSubtaskTaskId === task.id ? 'Adding…' : 'Add subtask'}
+              </button>
+            </div>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
