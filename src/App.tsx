@@ -713,113 +713,32 @@ function App() {
     cancelEditingTask()
   }
 
-  async function saveTaskOrder(orderedTasks: Task[]) {
-    for (const [index, task] of orderedTasks.entries()) {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ position: index + 1 })
-        .eq('id', task.id)
-
-      if (error) {
-        throw error
-      }
-    }
-  }
-
   async function moveTask(taskId: string, direction: 'up' | 'down') {
-    const task = tasks.find((currentTask) => currentTask.id === taskId)
-
-    if (!task) {
-      return
-    }
-
-    const taskGroup = tasks
-      .filter((currentTask) => currentTask.section_id === task.section_id)
-      .sort((a, b) => {
-        const positionDifference = (a.position ?? 0) - (b.position ?? 0)
-
-        if (positionDifference !== 0) {
-          return positionDifference
-        }
-
-        return a.title.localeCompare(b.title)
-      })
-
-    const currentIndex = taskGroup.findIndex((currentTask) => currentTask.id === taskId)
-    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
-
-    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= taskGroup.length) {
-      return
-    }
-
-    const reorderedGroup = [...taskGroup]
-    const [movedTask] = reorderedGroup.splice(currentIndex, 1)
-    reorderedGroup.splice(targetIndex, 0, movedTask)
-
-    const normalisedGroup = reorderedGroup.map((currentTask, index) => ({
-      ...currentTask,
-      position: index + 1,
-    }))
-
     setMovingTaskId(taskId)
     setErrorMessage(null)
 
-    try {
-      await saveTaskOrder(normalisedGroup)
+    const { error } = await supabase.rpc('finito_move_task', {
+      p_task_id: taskId,
+      p_direction: direction,
+    })
 
-      setTasks((currentTasks) =>
-        currentTasks.map((currentTask) => {
-          const updatedTask = normalisedGroup.find((taskInGroup) => taskInGroup.id === currentTask.id)
-          return updatedTask ?? currentTask
-        }),
-      )
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Could not save task order.')
+    if (error) {
+      setErrorMessage(error.message)
+      setMovingTaskId(null)
+      return
     }
 
+    await loadProjectAndTasks()
     setMovingTaskId(null)
   }
 
   async function duplicateTask(task: Task) {
-    if (!projectId) {
-      setErrorMessage('Project not loaded yet. Refresh and try again.')
-      return
-    }
-
     setDuplicatingTaskId(task.id)
     setErrorMessage(null)
 
-    const taskGroup = tasks
-      .filter((currentTask) => currentTask.section_id === task.section_id)
-      .sort((a, b) => {
-        const positionDifference = (a.position ?? 0) - (b.position ?? 0)
-
-        if (positionDifference !== 0) {
-          return positionDifference
-        }
-
-        return a.title.localeCompare(b.title)
-      })
-
-    const sourceIndex = taskGroup.findIndex((currentTask) => currentTask.id === task.id)
-    const insertIndex = sourceIndex >= 0 ? sourceIndex + 1 : taskGroup.length
-
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert({
-        project_id: projectId,
-        section_id: task.section_id,
-        title: `${task.title} copy`,
-        description: task.description,
-        status: 'not_started',
-        priority: task.priority ?? 'medium',
-        difficulty: task.difficulty ?? 'not_scoped',
-        start_date: task.start_date,
-        due_date: task.due_date,
-        position: insertIndex + 1,
-      })
-      .select('id, title, description, status, priority, difficulty, start_date, due_date, section_id, position')
-      .single()
+    const { error } = await supabase.rpc('finito_duplicate_task', {
+      p_task_id: task.id,
+    })
 
     if (error) {
       setErrorMessage(error.message)
@@ -827,29 +746,7 @@ function App() {
       return
     }
 
-    const reorderedGroup = [...taskGroup]
-    reorderedGroup.splice(insertIndex, 0, data)
-
-    const normalisedGroup = reorderedGroup.map((currentTask, index) => ({
-      ...currentTask,
-      position: index + 1,
-    }))
-
-    try {
-      await saveTaskOrder(normalisedGroup)
-
-      setTasks((currentTasks) => {
-        const otherTasks = currentTasks.filter(
-          (currentTask) => currentTask.section_id !== task.section_id,
-        )
-
-        return [...otherTasks, ...normalisedGroup]
-      })
-    } catch (orderError) {
-      setErrorMessage(orderError instanceof Error ? orderError.message : 'Could not save duplicated task order.')
-      await loadProjectAndTasks()
-    }
-
+    await loadProjectAndTasks()
     setDuplicatingTaskId(null)
   }
 
