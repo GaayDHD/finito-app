@@ -106,6 +106,8 @@ function App() {
   const [addingDependencyTaskId, setAddingDependencyTaskId] = useState<string | null>(null)
   const [removingDependencyId, setRemovingDependencyId] = useState<string | null>(null)
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null)
+  const [movingTaskId, setMovingTaskId] = useState<string | null>(null)
+  const [duplicatingTaskId, setDuplicatingTaskId] = useState<string | null>(null)
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
   const [savingTaskId, setSavingTaskId] = useState<string | null>(null)
   const [creatingSection, setCreatingSection] = useState(false)
@@ -159,12 +161,16 @@ function App() {
   const tasksBySection = useMemo(() => {
     return sections.map((section) => ({
       ...section,
-      tasks: filteredTasks.filter((task) => task.section_id === section.id),
+      tasks: filteredTasks
+        .filter((task) => task.section_id === section.id)
+        .sort((a, b) => (a.position ?? 0) - (b.position ?? 0)),
     }))
   }, [filteredTasks, sections])
 
   const unsectionedTasks = useMemo(() => {
-    return filteredTasks.filter((task) => !task.section_id)
+    return filteredTasks
+      .filter((task) => !task.section_id)
+      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
   }, [filteredTasks])
 
   const stats = useMemo(() => {
@@ -707,6 +713,153 @@ function App() {
     cancelEditingTask()
   }
 
+  async function saveTaskOrder(orderedTasks: Task[]) {
+    for (const [index, task] of orderedTasks.entries()) {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ position: index + 1 })
+        .eq('id', task.id)
+
+      if (error) {
+        throw error
+      }
+    }
+  }
+
+  async function moveTask(taskId: string, direction: 'up' | 'down') {
+    const task = tasks.find((currentTask) => currentTask.id === taskId)
+
+    if (!task) {
+      return
+    }
+
+    const taskGroup = tasks
+      .filter((currentTask) => currentTask.section_id === task.section_id)
+      .sort((a, b) => {
+        const positionDifference = (a.position ?? 0) - (b.position ?? 0)
+
+        if (positionDifference !== 0) {
+          return positionDifference
+        }
+
+        return a.title.localeCompare(b.title)
+      })
+
+    const currentIndex = taskGroup.findIndex((currentTask) => currentTask.id === taskId)
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+
+    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= taskGroup.length) {
+      return
+    }
+
+    const reorderedGroup = [...taskGroup]
+    const [movedTask] = reorderedGroup.splice(currentIndex, 1)
+    reorderedGroup.splice(targetIndex, 0, movedTask)
+
+    const normalisedGroup = reorderedGroup.map((currentTask, index) => ({
+      ...currentTask,
+      position: index + 1,
+    }))
+
+    setMovingTaskId(taskId)
+    setErrorMessage(null)
+
+    try {
+      await saveTaskOrder(normalisedGroup)
+
+      setTasks((currentTasks) =>
+        currentTasks.map((currentTask) => {
+          const updatedTask = normalisedGroup.find((taskInGroup) => taskInGroup.id === currentTask.id)
+          return updatedTask ?? currentTask
+        }),
+      )
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Could not save task order.')
+    }
+
+    setMovingTaskId(null)
+  }
+
+  async function duplicateTask(task: Task) {
+    if (!projectId) {
+      setErrorMessage('Project not loaded yet. Refresh and try again.')
+      return
+    }
+
+    setDuplicatingTaskId(task.id)
+    setErrorMessage(null)
+
+    const taskGroup = tasks
+      .filter((currentTask) => currentTask.section_id === task.section_id)
+      .sort((a, b) => {
+        const positionDifference = (a.position ?? 0) - (b.position ?? 0)
+
+        if (positionDifference !== 0) {
+          return positionDifference
+        }
+
+        return a.title.localeCompare(b.title)
+      })
+
+    const sourceIndex = taskGroup.findIndex((currentTask) => currentTask.id === task.id)
+    const insertIndex = sourceIndex >= 0 ? sourceIndex + 1 : taskGroup.length
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert({
+        project_id: projectId,
+        section_id: task.section_id,
+        title: `${task.title} copy`,
+        description: task.description,
+        status: 'not_started',
+        priority: task.priority ?? 'medium',
+        difficulty: task.difficulty ?? 'not_scoped',
+        start_date: task.start_date,
+        due_date: task.due_date,
+        position: insertIndex + 1,
+      })
+      .select('id, title, description, status, priority, difficulty, start_date, due_date, section_id, position')
+      .single()
+
+    if (error) {
+      setErrorMessage(error.message)
+      setDuplicatingTaskId(null)
+      return
+    }
+
+    const reorderedGroup = [...taskGroup]
+    reorderedGroup.splice(insertIndex, 0, data)
+
+    const normalisedGroup = reorderedGroup.map((currentTask, index) => ({
+      ...currentTask,
+      position: index + 1,
+    }))
+
+    try {
+      await saveTaskOrder(normalisedGroup)
+
+      setTasks((currentTasks) => {
+        const otherTasks = currentTasks.filter(
+          (currentTask) => currentTask.section_id !== task.section_id,
+        )
+
+        return [...otherTasks, ...normalisedGroup]
+      })
+    } catch (orderError) {
+      setErrorMessage(orderError instanceof Error ? orderError.message : 'Could not save duplicated task order.')
+      await loadProjectAndTasks()
+    }
+
+    setDuplicatingTaskId(null)
+  }
+
+  function clearFilters() {
+    setSearchQuery('')
+    setStatusFilter('all')
+    setPriorityFilter('all')
+    setSectionFilter('all')
+  }
+
   async function deleteTask(taskId: string) {
     const shouldDelete = window.confirm('Delete this task? This cannot be undone.')
 
@@ -743,6 +896,12 @@ function App() {
     )
     const taskIsOverdue = isTaskOverdue(task)
     const taskComments = getTaskComments(task.id)
+    const sectionTaskOrder = tasks
+      .filter((currentTask) => currentTask.section_id === task.section_id)
+      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+    const taskOrderIndex = sectionTaskOrder.findIndex((currentTask) => currentTask.id === task.id)
+    const canMoveUp = taskOrderIndex > 0
+    const canMoveDown = taskOrderIndex >= 0 && taskOrderIndex < sectionTaskOrder.length - 1
 
     return (
       <article
@@ -755,6 +914,33 @@ function App() {
       >
         <div className="space-y-4">
           <div className="min-w-0">
+            <button
+              type="button"
+              disabled={!canMoveUp || movingTaskId === task.id}
+              onClick={() => moveTask(task.id, 'up')}
+              className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-violet-300/40 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Move up
+            </button>
+
+            <button
+              type="button"
+              disabled={!canMoveDown || movingTaskId === task.id}
+              onClick={() => moveTask(task.id, 'down')}
+              className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-violet-300/40 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Move down
+            </button>
+
+            <button
+              type="button"
+              disabled={duplicatingTaskId === task.id}
+              onClick={() => duplicateTask(task)}
+              className="rounded-full border border-violet-300/10 bg-violet-400/10 px-3 py-1.5 text-xs font-semibold text-violet-100 transition hover:border-violet-300/40 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {duplicatingTaskId === task.id ? 'Duplicating…' : 'Duplicate'}
+            </button>
+
             {isEditing ? (
               <div className="space-y-3">
                 <input
@@ -1019,6 +1205,33 @@ function App() {
               </select>
             </label>
 
+            <button
+              type="button"
+              disabled={!canMoveUp || movingTaskId === task.id}
+              onClick={() => moveTask(task.id, 'up')}
+              className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-violet-300/40 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Move up
+            </button>
+
+            <button
+              type="button"
+              disabled={!canMoveDown || movingTaskId === task.id}
+              onClick={() => moveTask(task.id, 'down')}
+              className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-violet-300/40 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Move down
+            </button>
+
+            <button
+              type="button"
+              disabled={duplicatingTaskId === task.id}
+              onClick={() => duplicateTask(task)}
+              className="rounded-full border border-violet-300/10 bg-violet-400/10 px-3 py-1.5 text-xs font-semibold text-violet-100 transition hover:border-violet-300/40 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {duplicatingTaskId === task.id ? 'Duplicating…' : 'Duplicate'}
+            </button>
+
             {isEditing ? (
               <>
                 <button
@@ -1193,7 +1406,7 @@ function App() {
         </form>
 
         <div className="mb-6 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-          <div className="grid gap-3 md:grid-cols-[1.5fr_0.8fr_0.8fr_0.8fr]">
+          <div className="grid gap-3 md:grid-cols-[1.5fr_0.8fr_0.8fr_0.8fr_auto]">
             <input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
@@ -1239,6 +1452,14 @@ function App() {
                 </option>
               ))}
             </select>
+
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:border-violet-300/40"
+            >
+              Clear filters
+            </button>
           </div>
         </div>
 
