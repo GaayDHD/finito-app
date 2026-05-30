@@ -12,6 +12,7 @@ type Task = {
   difficulty: string | null
   start_date: string | null
   due_date: string | null
+  archived_at: string | null
   section_id: string | null
   position: number | null
 }
@@ -117,6 +118,7 @@ function App() {
   const [addingDependencyTaskId, setAddingDependencyTaskId] = useState<string | null>(null)
   const [removingDependencyId, setRemovingDependencyId] = useState<string | null>(null)
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null)
+  const [archivingTaskId, setArchivingTaskId] = useState<string | null>(null)
   const [movingTaskId, setMovingTaskId] = useState<string | null>(null)
   const [duplicatingTaskId, setDuplicatingTaskId] = useState<string | null>(null)
   const [creatingSubtaskTaskId, setCreatingSubtaskTaskId] = useState<string | null>(null)
@@ -152,6 +154,7 @@ function App() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
   const [sectionFilter, setSectionFilter] = useState('all')
+  const [visibilityFilter, setVisibilityFilter] = useState<'active' | 'archived' | 'all'>('active')
   const [groupBy, setGroupBy] = useState<'status' | 'priority' | 'scope'>('status')
 
   const fallbackSectionId = sections[0]?.id ?? ''
@@ -167,10 +170,14 @@ function App() {
       const matchesStatus = statusFilter === 'all' || task.status === statusFilter
       const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter
       const matchesSection = sectionFilter === 'all' || task.section_id === sectionFilter
+      const matchesVisibility =
+        visibilityFilter === 'all' ||
+        (visibilityFilter === 'active' && !task.archived_at) ||
+        (visibilityFilter === 'archived' && Boolean(task.archived_at))
 
-      return matchesSearch && matchesStatus && matchesPriority && matchesSection
+      return matchesSearch && matchesStatus && matchesPriority && matchesSection && matchesVisibility
     })
-  }, [priorityFilter, searchQuery, sectionFilter, statusFilter, tasks])
+  }, [priorityFilter, searchQuery, sectionFilter, statusFilter, tasks, visibilityFilter])
 
   const groupedTasks = useMemo(() => {
     const parentTasks = filteredTasks
@@ -223,6 +230,7 @@ function App() {
       done: tasks.filter((task) => task.status === 'done').length,
       blocked: blockedTaskIds.size,
       overdue: overdueCount,
+      archived: tasks.filter((task) => task.archived_at).length,
       visible: filteredTasks.length,
     }
   }, [dependencies, filteredTasks.length, tasks])
@@ -291,7 +299,7 @@ function App() {
 
     const { data, error } = await supabase
       .from('tasks')
-      .select('id, title, description, parent_task_id, status, priority, difficulty, start_date, due_date, section_id, position')
+      .select('id, title, description, parent_task_id, status, priority, difficulty, start_date, due_date, archived_at, section_id, position')
       .eq('project_id', project.id)
       .order('position', { ascending: true })
 
@@ -377,6 +385,7 @@ function App() {
       difficulty: taskDifficulty,
       start_date: taskStartDate || null,
       due_date: taskDueDate || null,
+      archived_at: null,
       position: tasks.length + 1,
     })
 
@@ -804,9 +813,10 @@ function App() {
         difficulty: 'not_scoped',
         start_date: null,
         due_date: parentTask.due_date,
+        archived_at: null,
         position: siblingSubtasks.length + 1,
       })
-      .select('id, title, description, parent_task_id, status, priority, difficulty, start_date, due_date, section_id, position')
+      .select('id, title, description, parent_task_id, status, priority, difficulty, start_date, due_date, archived_at, section_id, position')
       .single()
 
     if (error) {
@@ -920,6 +930,7 @@ function App() {
     setPriorityFilter('all')
     setSectionFilter('all')
     setGroupBy('status')
+    setVisibilityFilter('active')
   }
 
   async function quickSetTaskDone(task: Task) {
@@ -941,6 +952,98 @@ function App() {
 
   async function quickReopenTask(task: Task) {
     await updateTaskStatus(task.id, 'in_progress')
+  }
+
+  async function archiveTask(task: Task) {
+    setArchivingTaskId(task.id)
+    setErrorMessage(null)
+
+    const archivedAt = new Date().toISOString()
+
+    const { error } = await supabase
+      .from('tasks')
+      .update({ archived_at: archivedAt })
+      .eq('id', task.id)
+
+    if (error) {
+      setErrorMessage(error.message)
+      setArchivingTaskId(null)
+      return
+    }
+
+    setTasks((currentTasks) =>
+      currentTasks.map((currentTask) =>
+        currentTask.id === task.id ? { ...currentTask, archived_at: archivedAt } : currentTask,
+      ),
+    )
+
+    await logActivity('Archived task', task.title, task.id)
+    setArchivingTaskId(null)
+  }
+
+  async function restoreTask(task: Task) {
+    setArchivingTaskId(task.id)
+    setErrorMessage(null)
+
+    const { error } = await supabase
+      .from('tasks')
+      .update({ archived_at: null })
+      .eq('id', task.id)
+
+    if (error) {
+      setErrorMessage(error.message)
+      setArchivingTaskId(null)
+      return
+    }
+
+    setTasks((currentTasks) =>
+      currentTasks.map((currentTask) =>
+        currentTask.id === task.id ? { ...currentTask, archived_at: null } : currentTask,
+      ),
+    )
+
+    await logActivity('Restored task', task.title, task.id)
+    setArchivingTaskId(null)
+  }
+
+  async function archiveCompletedTasks() {
+    const completedTasks = tasks.filter((task) => task.status === 'done' && !task.archived_at)
+
+    if (completedTasks.length === 0) {
+      setErrorMessage('There are no completed tasks to archive.')
+      return
+    }
+
+    const shouldArchive = window.confirm(`Archive ${completedTasks.length} completed task${completedTasks.length === 1 ? '' : 's'}?`)
+
+    if (!shouldArchive) {
+      return
+    }
+
+    setErrorMessage(null)
+    const archivedAt = new Date().toISOString()
+
+    for (const task of completedTasks) {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ archived_at: archivedAt })
+        .eq('id', task.id)
+
+      if (error) {
+        setErrorMessage(error.message)
+        return
+      }
+    }
+
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.status === 'done' && !task.archived_at
+          ? { ...task, archived_at: archivedAt }
+          : task,
+      ),
+    )
+
+    await logActivity('Archived completed tasks', `${completedTasks.length} task${completedTasks.length === 1 ? '' : 's'}`)
   }
 
   async function deleteTask(taskId: string) {
@@ -1092,6 +1195,11 @@ function App() {
               <>
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-lg font-medium">{task.title}</h3>
+                  {task.archived_at && (
+                    <span className="rounded-full border border-zinc-300/10 bg-white/10 px-3 py-1 text-xs font-semibold text-zinc-300">
+                      Archived
+                    </span>
+                  )}
                   {taskIsOverdue && (
                     <span className="rounded-full border border-red-300/20 bg-red-400/10 px-3 py-1 text-xs font-semibold text-red-200">
                       Overdue
@@ -1509,6 +1617,26 @@ function App() {
               </button>
             )}
 
+            {task.archived_at ? (
+              <button
+                type="button"
+                disabled={archivingTaskId === task.id}
+                onClick={() => restoreTask(task)}
+                className="rounded-full border border-emerald-300/10 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:border-emerald-300/40 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {archivingTaskId === task.id ? 'Restoring…' : 'Restore'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={archivingTaskId === task.id}
+                onClick={() => archiveTask(task)}
+                className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition hover:border-violet-300/40 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {archivingTaskId === task.id ? 'Archiving…' : 'Archive'}
+              </button>
+            )}
+
             <button
               type="button"
               disabled={deletingTaskId === task.id}
@@ -1545,7 +1673,7 @@ function App() {
           </div>
         </div>
 
-        <div className="mb-6 grid gap-3 md:grid-cols-5">
+        <div className="mb-6 grid gap-3 md:grid-cols-6">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Total</p>
             <p className="mt-2 text-2xl font-semibold">{stats.total}</p>
@@ -1565,6 +1693,10 @@ function App() {
           <div className="rounded-2xl border border-red-300/10 bg-red-400/10 p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-red-200/70">Overdue</p>
             <p className="mt-2 text-2xl font-semibold text-red-100">{stats.overdue}</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Archived</p>
+            <p className="mt-2 text-2xl font-semibold">{stats.archived}</p>
           </div>
         </div>
 
@@ -1655,7 +1787,7 @@ function App() {
         </form>
 
         <div className="mb-6 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-          <div className="grid gap-3 md:grid-cols-[1.3fr_0.75fr_0.75fr_0.75fr_0.75fr_auto]">
+          <div className="grid gap-3 md:grid-cols-[1.2fr_0.7fr_0.7fr_0.7fr_0.7fr_0.7fr_auto_auto]">
             <input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
@@ -1687,6 +1819,16 @@ function App() {
             </select>
 
             <select
+              value={visibilityFilter}
+              onChange={(event) => setVisibilityFilter(event.target.value as 'active' | 'archived' | 'all')}
+              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
+            >
+              <option value="active" className="bg-[#181b1f] text-white">Active tasks</option>
+              <option value="archived" className="bg-[#181b1f] text-white">Archived tasks</option>
+              <option value="all" className="bg-[#181b1f] text-white">All tasks</option>
+            </select>
+
+            <select
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
               className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
@@ -1711,6 +1853,14 @@ function App() {
                 </option>
               ))}
             </select>
+
+            <button
+              type="button"
+              onClick={archiveCompletedTasks}
+              className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:border-violet-300/40"
+            >
+              Archive done
+            </button>
 
             <button
               type="button"
