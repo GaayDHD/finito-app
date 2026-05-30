@@ -19,6 +19,9 @@ type TaskFiltersProps = {
   archiveCompletedTasks: () => void
 }
 
+const controlClass =
+  'h-9 rounded-lg border border-[var(--outline)] bg-[var(--background-paper)] px-3 text-sm text-[var(--text-primary)] shadow-sm outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--primary-main)] focus:ring-4 focus:ring-[var(--primary-main)]/10'
+
 export function TaskFilters({
   searchQuery,
   setSearchQuery,
@@ -37,96 +40,52 @@ export function TaskFilters({
   archiveCompletedTasks,
 }: TaskFiltersProps) {
   return (
-    <div className="mb-6 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-      <div className="grid gap-3 md:grid-cols-[1.2fr_0.7fr_0.7fr_0.7fr_0.7fr_0.7fr_auto_auto]">
+    <section className="mb-4 rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-3 shadow-sm">
+      <div className="flex flex-wrap items-center gap-2">
         <input
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Search tasks"
-          className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-violet-300/60"
+          placeholder="Search tasks..."
+          className={`${controlClass} min-w-[220px] flex-1`}
         />
 
-        <select
-          value={sectionFilter}
-          onChange={(event) => setSectionFilter(event.target.value)}
-          className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
-        >
-          <option value="all" className="bg-[#181b1f] text-white">
-            All sections
-          </option>
+        <select value={groupBy} onChange={(event) => setGroupBy(event.target.value as 'status' | 'priority' | 'scope')} className={controlClass}>
+          <option value="status">Group by status</option>
+          <option value="priority">Group by priority</option>
+          <option value="scope">Group by scope</option>
+        </select>
+
+        <select value={visibilityFilter} onChange={(event) => setVisibilityFilter(event.target.value as 'active' | 'archived' | 'all')} className={controlClass}>
+          <option value="active">Active</option>
+          <option value="archived">Archived</option>
+          <option value="all">All</option>
+        </select>
+
+        <select value={sectionFilter} onChange={(event) => setSectionFilter(event.target.value)} className={controlClass}>
+          <option value="all">All sections</option>
           {sections.map((section) => (
-            <option key={section.id} value={section.id} className="bg-[#181b1f] text-white">
-              {section.name}
-            </option>
+            <option key={section.id} value={section.id}>{section.name}</option>
           ))}
         </select>
 
-        <select
-          value={groupBy}
-          onChange={(event) => setGroupBy(event.target.value as 'status' | 'priority' | 'scope')}
-          className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
-        >
-          <option value="status" className="bg-[#181b1f] text-white">
-            Group by status
-          </option>
-          <option value="priority" className="bg-[#181b1f] text-white">
-            Group by priority
-          </option>
-          <option value="scope" className="bg-[#181b1f] text-white">
-            Group by scope
-          </option>
-        </select>
-
-        <select
-          value={visibilityFilter}
-          onChange={(event) => setVisibilityFilter(event.target.value as 'active' | 'archived' | 'all')}
-          className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
-        >
-          <option value="active" className="bg-[#181b1f] text-white">
-            Active tasks
-          </option>
-          <option value="archived" className="bg-[#181b1f] text-white">
-            Archived tasks
-          </option>
-          <option value="all" className="bg-[#181b1f] text-white">
-            All tasks
-          </option>
-        </select>
-
-        <select
-          value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value)}
-          className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
-        >
-          <option value="all" className="bg-[#181b1f] text-white">
-            All statuses
-          </option>
+        <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className={controlClass}>
+          <option value="all">All statuses</option>
           {statusOptions.map((status) => (
-            <option key={status.value} value={status.value} className="bg-[#181b1f] text-white">
-              {status.label}
-            </option>
+            <option key={status.value} value={status.value}>{status.label}</option>
           ))}
         </select>
 
-        <select
-          value={priorityFilter}
-          onChange={(event) => setPriorityFilter(event.target.value)}
-          className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
-        >
-          <option value="all" className="bg-[#181b1f] text-white">
-            All priorities
-          </option>
+        <select value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)} className={controlClass}>
+          <option value="all">All priorities</option>
           {priorityOptions.map((priority) => (
-            <option key={priority.value} value={priority.value} className="bg-[#181b1f] text-white">
-              {priority.label}
-            </option>
+            <option key={priority.value} value={priority.value}>{priority.label}</option>
           ))}
         </select>
 
         <button
           type="button"
           onClick={archiveCompletedTasks}
-          className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:border-violet-300/40"
+          className="h-9 rounded-lg border border-[var(--outline)] bg-[var(--background-paper)] px-3 text-sm font-semibold text-[var(--text-secondary)] shadow-sm transition hover:bg-[var(--surface-muted)]"
         >
           Archive done
         </button>
@@ -134,11 +93,11 @@ export function TaskFilters({
         <button
           type="button"
           onClick={clearFilters}
-          className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:border-violet-300/40"
+          className="h-9 rounded-lg bg-[var(--text-primary)] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
         >
-          Clear filters
+          Clear
         </button>
       </div>
-    </div>
+    </section>
   )
 }
