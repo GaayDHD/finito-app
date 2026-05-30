@@ -152,6 +152,7 @@ function App() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
   const [sectionFilter, setSectionFilter] = useState('all')
+  const [groupBy, setGroupBy] = useState<'status' | 'priority' | 'scope'>('status')
 
   const fallbackSectionId = sections[0]?.id ?? ''
 
@@ -171,20 +172,47 @@ function App() {
     })
   }, [priorityFilter, searchQuery, sectionFilter, statusFilter, tasks])
 
-  const tasksBySection = useMemo(() => {
-    return sections.map((section) => ({
-      ...section,
-      tasks: filteredTasks
-        .filter((task) => task.section_id === section.id && !task.parent_task_id)
-        .sort((a, b) => (a.position ?? 0) - (b.position ?? 0)),
-    }))
-  }, [filteredTasks, sections])
-
-  const unsectionedTasks = useMemo(() => {
-    return filteredTasks
-      .filter((task) => !task.section_id && !task.parent_task_id)
+  const groupedTasks = useMemo(() => {
+    const parentTasks = filteredTasks
+      .filter((task) => !task.parent_task_id)
       .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-  }, [filteredTasks])
+
+    if (groupBy === 'status') {
+      return statusOptions.map((status) => ({
+        id: status.value,
+        name: status.label,
+        tasks: parentTasks.filter((task) => task.status === status.value),
+      }))
+    }
+
+    if (groupBy === 'priority') {
+      return [
+        ...priorityOptions.map((priority) => ({
+          id: priority.value,
+          name: priority.label,
+          tasks: parentTasks.filter((task) => task.priority === priority.value),
+        })),
+        {
+          id: 'no_priority',
+          name: 'No priority',
+          tasks: parentTasks.filter((task) => !task.priority),
+        },
+      ]
+    }
+
+    return [
+      ...difficultyOptions.map((difficulty) => ({
+        id: difficulty.value,
+        name: difficulty.label,
+        tasks: parentTasks.filter((task) => task.difficulty === difficulty.value),
+      })),
+      {
+        id: 'no_scope',
+        name: 'No scope',
+        tasks: parentTasks.filter((task) => !task.difficulty),
+      },
+    ]
+  }, [filteredTasks, groupBy])
 
   const stats = useMemo(() => {
     const blockedTaskIds = new Set(dependencies.map((dependency) => dependency.task_id))
@@ -891,6 +919,28 @@ function App() {
     setStatusFilter('all')
     setPriorityFilter('all')
     setSectionFilter('all')
+    setGroupBy('status')
+  }
+
+  async function quickSetTaskDone(task: Task) {
+    const blockingTasks = getBlockingTasks(task.id)
+    const isBlocked = task.status === 'blocked' || blockingTasks.length > 0
+
+    if (isBlocked) {
+      const shouldContinue = window.confirm(
+        'This task is blocked. Mark it as Done anyway?',
+      )
+
+      if (!shouldContinue) {
+        return
+      }
+    }
+
+    await updateTaskStatus(task.id, 'done')
+  }
+
+  async function quickReopenTask(task: Task) {
+    await updateTaskStatus(task.id, 'in_progress')
   }
 
   async function deleteTask(taskId: string) {
@@ -949,6 +999,24 @@ function App() {
       >
         <div className="space-y-4">
           <div className="min-w-0">
+            {task.status === 'done' ? (
+              <button
+                type="button"
+                onClick={() => quickReopenTask(task)}
+                className="rounded-full border border-amber-300/10 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold text-amber-100 transition hover:border-amber-300/40"
+              >
+                Reopen
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => quickSetTaskDone(task)}
+                className="rounded-full border border-emerald-300/10 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:border-emerald-300/40"
+              >
+                Mark done
+              </button>
+            )}
+
             <button
               type="button"
               disabled={!canMoveUp || movingTaskId === task.id}
@@ -1149,6 +1217,24 @@ function App() {
                         >
                           Move down
                         </button>
+
+                        {subtask.status === 'done' ? (
+                          <button
+                            type="button"
+                            onClick={() => quickReopenTask(subtask)}
+                            className="rounded-full border border-amber-300/10 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold text-amber-100 transition hover:border-amber-300/40"
+                          >
+                            Reopen
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => quickSetTaskDone(subtask)}
+                            className="rounded-full border border-emerald-300/10 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:border-emerald-300/40"
+                          >
+                            Mark done
+                          </button>
+                        )}
 
                         <label className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-medium text-zinc-200">
                           <span className="text-zinc-500">Status</span>
@@ -1569,7 +1655,7 @@ function App() {
         </form>
 
         <div className="mb-6 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-          <div className="grid gap-3 md:grid-cols-[1.5fr_0.8fr_0.8fr_0.8fr_auto]">
+          <div className="grid gap-3 md:grid-cols-[1.3fr_0.75fr_0.75fr_0.75fr_0.75fr_auto]">
             <input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
@@ -1588,6 +1674,16 @@ function App() {
                   {section.name}
                 </option>
               ))}
+            </select>
+
+            <select
+              value={groupBy}
+              onChange={(event) => setGroupBy(event.target.value as 'status' | 'priority' | 'scope')}
+              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
+            >
+              <option value="status" className="bg-[#181b1f] text-white">Group by status</option>
+              <option value="priority" className="bg-[#181b1f] text-white">Group by priority</option>
+              <option value="scope" className="bg-[#181b1f] text-white">Group by scope</option>
             </select>
 
             <select
@@ -1743,7 +1839,7 @@ function App() {
           <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-4">
             <div>
               <h2 className="text-xl font-semibold">Finito Build</h2>
-              <p className="text-sm text-zinc-400">Tasks grouped by project section.</p>
+              <p className="text-sm text-zinc-400">Tasks grouped by status, priority or scope.</p>
             </div>
             <span className="rounded-full bg-violet-400/10 px-3 py-1 text-sm font-medium text-violet-200">
               {filteredTasks.length} visible
@@ -1760,44 +1856,28 @@ function App() {
 
           {!isLoading && !errorMessage && (
             <div className="space-y-6">
-              {tasksBySection.map((section) => (
-                <section key={section.id} className="space-y-3">
+              {groupedTasks.map((group) => (
+                <section key={group.id} className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                      {section.name}
+                      {group.name}
                     </h3>
                     <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-zinc-400">
-                      {section.tasks.length} tasks
+                      {group.tasks.length} tasks
                     </span>
                   </div>
 
-                  {section.tasks.length > 0 ? (
+                  {group.tasks.length > 0 ? (
                     <div className="space-y-3">
-                      {section.tasks.map((task) => renderTask(task))}
+                      {group.tasks.map((task) => renderTask(task))}
                     </div>
                   ) : (
                     <div className="rounded-2xl border border-dashed border-white/10 px-5 py-6 text-sm text-zinc-500">
-                      No matching tasks in this section.
+                      No matching tasks in this group.
                     </div>
                   )}
                 </section>
               ))}
-
-              {unsectionedTasks.length > 0 && (
-                <section className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                      No section
-                    </h3>
-                    <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-zinc-400">
-                      {unsectionedTasks.length} tasks
-                    </span>
-                  </div>
-                  <div className="space-y-3">
-                    {unsectionedTasks.map((task) => renderTask(task))}
-                  </div>
-                </section>
-              )}
             </div>
           )}
         </div>
