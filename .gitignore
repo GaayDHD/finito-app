@@ -21,3 +21,5 @@ pnpm-debug.log*
 
 # Editor
 .vscode/
+# Local generated backups
+src/App.backup*.tsx
