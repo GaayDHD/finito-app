@@ -3,6 +3,9 @@ import { supabase } from './lib/supabase'
 import type { ActivityLog, Section, Task, TaskComment, TaskDependency } from './types'
 import { difficultyOptions, priorityOptions, statusOptions } from './constants'
 import { formatDate, getLabel, isTaskOverdue } from './utils'
+import { DashboardStats } from './components/DashboardStats'
+import { TaskFilters } from './components/TaskFilters'
+import { RecentActivityPanel } from './components/RecentActivityPanel'
 import './App.css'
 
 function App() {
@@ -1576,32 +1579,7 @@ function App() {
           </div>
         </div>
 
-        <div className="mb-6 grid gap-3 md:grid-cols-6">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Total</p>
-            <p className="mt-2 text-2xl font-semibold">{stats.total}</p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Visible</p>
-            <p className="mt-2 text-2xl font-semibold">{stats.visible}</p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Done</p>
-            <p className="mt-2 text-2xl font-semibold">{stats.done}</p>
-          </div>
-          <div className="rounded-2xl border border-red-300/10 bg-red-400/10 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-red-200/70">Blocked</p>
-            <p className="mt-2 text-2xl font-semibold text-red-100">{stats.blocked}</p>
-          </div>
-          <div className="rounded-2xl border border-red-300/10 bg-red-400/10 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-red-200/70">Overdue</p>
-            <p className="mt-2 text-2xl font-semibold text-red-100">{stats.overdue}</p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Archived</p>
-            <p className="mt-2 text-2xl font-semibold">{stats.archived}</p>
-          </div>
-        </div>
+        <DashboardStats stats={stats} />
 
         <form
           onSubmit={createTask}
@@ -1689,91 +1667,23 @@ function App() {
           </div>
         </form>
 
-        <div className="mb-6 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-          <div className="grid gap-3 md:grid-cols-[1.2fr_0.7fr_0.7fr_0.7fr_0.7fr_0.7fr_auto_auto]">
-            <input
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search tasks"
-              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-violet-300/60"
-            />
-
-            <select
-              value={sectionFilter}
-              onChange={(event) => setSectionFilter(event.target.value)}
-              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
-            >
-              <option value="all" className="bg-[#181b1f] text-white">All sections</option>
-              {sections.map((section) => (
-                <option key={section.id} value={section.id} className="bg-[#181b1f] text-white">
-                  {section.name}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={groupBy}
-              onChange={(event) => setGroupBy(event.target.value as 'status' | 'priority' | 'scope')}
-              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
-            >
-              <option value="status" className="bg-[#181b1f] text-white">Group by status</option>
-              <option value="priority" className="bg-[#181b1f] text-white">Group by priority</option>
-              <option value="scope" className="bg-[#181b1f] text-white">Group by scope</option>
-            </select>
-
-            <select
-              value={visibilityFilter}
-              onChange={(event) => setVisibilityFilter(event.target.value as 'active' | 'archived' | 'all')}
-              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
-            >
-              <option value="active" className="bg-[#181b1f] text-white">Active tasks</option>
-              <option value="archived" className="bg-[#181b1f] text-white">Archived tasks</option>
-              <option value="all" className="bg-[#181b1f] text-white">All tasks</option>
-            </select>
-
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
-            >
-              <option value="all" className="bg-[#181b1f] text-white">All statuses</option>
-              {statusOptions.map((status) => (
-                <option key={status.value} value={status.value} className="bg-[#181b1f] text-white">
-                  {status.label}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={priorityFilter}
-              onChange={(event) => setPriorityFilter(event.target.value)}
-              className="rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition focus:border-violet-300/60"
-            >
-              <option value="all" className="bg-[#181b1f] text-white">All priorities</option>
-              {priorityOptions.map((priority) => (
-                <option key={priority.value} value={priority.value} className="bg-[#181b1f] text-white">
-                  {priority.label}
-                </option>
-              ))}
-            </select>
-
-            <button
-              type="button"
-              onClick={archiveCompletedTasks}
-              className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:border-violet-300/40"
-            >
-              Archive done
-            </button>
-
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:border-violet-300/40"
-            >
-              Clear filters
-            </button>
-          </div>
-        </div>
+        <TaskFilters
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          sectionFilter={sectionFilter}
+          setSectionFilter={setSectionFilter}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          priorityFilter={priorityFilter}
+          setPriorityFilter={setPriorityFilter}
+          visibilityFilter={visibilityFilter}
+          setVisibilityFilter={setVisibilityFilter}
+          groupBy={groupBy}
+          setGroupBy={setGroupBy}
+          sections={sections}
+          clearFilters={clearFilters}
+          archiveCompletedTasks={archiveCompletedTasks}
+        />
 
         <div className="mb-6 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
           <div className="mb-4">
@@ -1844,49 +1754,7 @@ function App() {
           </div>
         </div>
 
-        <div className="mb-6 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold">Recent activity</h2>
-              <p className="text-sm text-zinc-400">Latest changes across this project.</p>
-            </div>
-            <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-zinc-400">
-              {activityLogs.length} logs
-            </span>
-          </div>
-
-          {activityLogs.length > 0 ? (
-            <div className="space-y-2">
-              {activityLogs.slice(0, 8).map((log) => (
-                <div
-                  key={log.id}
-                  className="flex flex-col gap-1 rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-zinc-100">{log.action}</p>
-                    {log.details && (
-                      <p className="mt-1 text-sm text-zinc-400">{log.details}</p>
-                    )}
-                  </div>
-                  <p className="shrink-0 text-xs text-zinc-500">
-                    {log.created_at
-                      ? new Intl.DateTimeFormat('en-AU', {
-                          day: '2-digit',
-                          month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        }).format(new Date(log.created_at))
-                      : 'No date'}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-white/10 px-5 py-6 text-sm text-zinc-500">
-              No activity yet.
-            </div>
-          )}
-        </div>
+        <RecentActivityPanel activityLogs={activityLogs} />
 
         <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4 shadow-2xl shadow-black/30">
           <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-4">
