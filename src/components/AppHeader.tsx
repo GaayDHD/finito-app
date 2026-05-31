@@ -22,7 +22,7 @@ export function AppHeader({
     <header className="sticky top-0 z-30 border-b border-[var(--outline-soft)] bg-[var(--background-paper)]">
       <div className="mx-auto grid max-w-[1600px] grid-cols-[minmax(220px,1fr)_auto_minmax(320px,1fr)] items-center gap-4 px-5 py-4">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-sm">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-[var(--outline-soft)]/70 bg-[var(--background-paper)]">
             <img
               src="https://res.cloudinary.com/dcd54tom6/image/upload/v1780118631/iTunes_512pt__1x_unphju.png"
               alt="Finito logo"
@@ -39,7 +39,7 @@ export function AppHeader({
 
         <nav className="relative hidden h-14 items-center justify-center gap-1.5 rounded-2xl border border-[var(--outline)] bg-[var(--surface-muted)] p-2 md:flex">
           <span
-            className={`absolute left-2 top-2 h-10 w-[72px] rounded-xl bg-[var(--background-paper)] shadow-sm transition-transform duration-200 ease-out ${
+            className={`absolute left-2 top-2 h-10 w-[72px] rounded-xl bg-[var(--background-paper)] transition-transform duration-200 ease-out ${
               viewMode === 'card' ? 'translate-x-[78px]' : 'translate-x-0'
             }`}
             aria-hidden="true"
@@ -64,7 +64,7 @@ export function AppHeader({
           <button
             type="button"
             disabled
-            className="relative z-10 flex h-10 items-center justify-center rounded-xl px-4 text-sm font-medium text-[var(--text-disabled)] opacity-50"
+            className="relative z-10 flex h-10 cursor-not-allowed items-center justify-center rounded-xl px-4 text-sm font-medium text-[var(--text-disabled)] opacity-50"
           >
             Kanban
           </button>
@@ -72,7 +72,7 @@ export function AppHeader({
           <button
             type="button"
             disabled
-            className="relative z-10 flex h-10 items-center justify-center rounded-xl px-4 text-sm font-medium text-[var(--text-disabled)] opacity-50"
+            className="relative z-10 flex h-10 cursor-not-allowed items-center justify-center rounded-xl px-4 text-sm font-medium text-[var(--text-disabled)] opacity-50"
           >
             Timeline
           </button>
@@ -80,7 +80,7 @@ export function AppHeader({
           <button
             type="button"
             disabled
-            className="relative z-10 flex h-10 items-center justify-center rounded-xl px-4 text-sm font-medium text-[var(--text-disabled)] opacity-50"
+            className="relative z-10 flex h-10 cursor-not-allowed items-center justify-center rounded-xl px-4 text-sm font-medium text-[var(--text-disabled)] opacity-50"
           >
             Calendar
           </button>
@@ -90,8 +90,8 @@ export function AppHeader({
           <input
             value=""
             disabled
-            placeholder="Search coming soon..."
-            className="hidden h-14 w-full max-w-[220px] cursor-not-allowed rounded-2xl border border-[var(--outline-soft)] bg-[var(--surface-subtle)] px-4 text-sm text-[var(--text-disabled)] shadow-sm outline-none placeholder:text-[var(--text-disabled)] lg:block"
+            placeholder="Search..."
+            className="hidden h-14 w-full max-w-[220px] cursor-not-allowed rounded-2xl border border-[var(--outline)] bg-[var(--surface-muted)] px-4 text-sm text-[var(--text-disabled)] opacity-50 outline-none placeholder:text-[var(--text-disabled)] lg:block"
           />
         </div>
       </div>
@@ -119,13 +119,13 @@ export function AppHeader({
         >
           Card
         </button>
-        <button type="button" disabled className="rounded-xl px-4 py-2.5 text-sm text-[var(--text-disabled)] opacity-50">
+        <button type="button" disabled className="cursor-not-allowed rounded-xl px-4 py-2.5 text-sm text-[var(--text-disabled)] opacity-50">
           Kanban
         </button>
-        <button type="button" disabled className="rounded-xl px-4 py-2.5 text-sm text-[var(--text-disabled)] opacity-50">
+        <button type="button" disabled className="cursor-not-allowed rounded-xl px-4 py-2.5 text-sm text-[var(--text-disabled)] opacity-50">
           Timeline
         </button>
-        <button type="button" disabled className="rounded-xl px-4 py-2.5 text-sm text-[var(--text-disabled)] opacity-50">
+        <button type="button" disabled className="cursor-not-allowed rounded-xl px-4 py-2.5 text-sm text-[var(--text-disabled)] opacity-50">
           Calendar
         </button>
       </div>
@@ -134,8 +134,8 @@ export function AppHeader({
         <input
           value=""
           disabled
-          placeholder="Search coming soon..."
-          className="h-14 w-full cursor-not-allowed rounded-2xl border border-[var(--outline-soft)] bg-[var(--surface-subtle)] px-4 text-sm text-[var(--text-disabled)] shadow-sm outline-none placeholder:text-[var(--text-disabled)]"
+          placeholder="Search..."
+          className="h-14 w-full cursor-not-allowed rounded-2xl border border-[var(--outline)] bg-[var(--surface-muted)] px-4 text-sm text-[var(--text-disabled)] opacity-50 outline-none placeholder:text-[var(--text-disabled)]"
         />
       </div>
     </header>
