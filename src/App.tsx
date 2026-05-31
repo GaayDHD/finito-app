@@ -66,7 +66,7 @@ function App() {
   const [sectionFilter, setSectionFilter] = useState('all')
   const [visibilityFilter, setVisibilityFilter] = useState<'active' | 'archived' | 'all'>('active')
   const [groupBy, setGroupBy] = useState<'status' | 'priority' | 'scope'>('status')
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('card')
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('table')
 
   const fallbackSectionId = sections[0]?.id ?? ''
 
