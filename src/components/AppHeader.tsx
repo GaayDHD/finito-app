@@ -91,7 +91,7 @@ export function AppHeader({
             value=""
             disabled
             placeholder="Search..."
-            className="hidden h-14 w-full max-w-[220px] cursor-not-allowed rounded-2xl border border-[var(--outline)] bg-[var(--surface-muted)] px-4 text-sm text-[var(--text-disabled)] opacity-50 outline-none placeholder:text-[var(--text-disabled)] lg:block"
+            className="hidden h-14 w-full max-w-[220px] cursor-not-allowed rounded-2xl border border-[var(--outline)] bg-[var(--background-paper)] px-4 text-sm text-[var(--text-disabled)] opacity-50 outline-none placeholder:text-[var(--text-disabled)] lg:block"
           />
         </div>
       </div>
@@ -135,7 +135,7 @@ export function AppHeader({
           value=""
           disabled
           placeholder="Search..."
-          className="h-14 w-full cursor-not-allowed rounded-2xl border border-[var(--outline)] bg-[var(--surface-muted)] px-4 text-sm text-[var(--text-disabled)] opacity-50 outline-none placeholder:text-[var(--text-disabled)]"
+          className="h-14 w-full cursor-not-allowed rounded-2xl border border-[var(--outline)] bg-[var(--background-paper)] px-4 text-sm text-[var(--text-disabled)] opacity-50 outline-none placeholder:text-[var(--text-disabled)]"
         />
       </div>
     </header>
