@@ -23,3 +23,7 @@ pnpm-debug.log*
 .vscode/
 # Local generated backups
 src/App.backup*.tsx
+
+# Local generated backups
+src/App.backup*.tsx
+src/components/*.backup.*.tsx
