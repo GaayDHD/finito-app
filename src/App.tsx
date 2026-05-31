@@ -69,6 +69,7 @@ function App() {
   const [groupBy, setGroupBy] = useState<'status' | 'priority' | 'scope'>('status')
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table')
   const [isCreateTaskFormOpen, setIsCreateTaskFormOpen] = useState(false)
+  const [workspaceToolView, setWorkspaceToolView] = useState<'sections' | 'activity'>('sections')
 
   const fallbackSectionId = sections[0]?.id ?? ''
 
@@ -1646,28 +1647,60 @@ function App() {
           archiveCompletedTasks={archiveCompletedTasks}
         />
 
-        <details className="mb-4 rounded-xl border border-[var(--outline-soft)] bg-white shadow-sm">
-          <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-[var(--text-primary)]">
-            Workspace tools
-          </summary>
-          <div className="border-t border-slate-100 p-4">
-            <SectionManager
-              sections={sections}
-              tasks={tasks}
-              newSectionName={newSectionName}
-              setNewSectionName={setNewSectionName}
-              sectionDraftNames={sectionDraftNames}
-              setSectionDraftNames={setSectionDraftNames}
-              creatingSection={creatingSection}
-              renamingSectionId={renamingSectionId}
-              deletingSectionId={deletingSectionId}
-              createSection={createSection}
-              renameSection={renameSection}
-              deleteSection={deleteSection}
-            />
-            <RecentActivityPanel activityLogs={activityLogs} />
+        <section className="mb-4 grid overflow-hidden rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-sm md:grid-cols-[220px_minmax(0,1fr)]">
+          <aside className="border-b border-[var(--outline-soft)] bg-[var(--surface-muted)] p-3 md:border-b-0 md:border-r">
+            <div className="mb-3 px-2 text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">
+              Workspace
+            </div>
+
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => setWorkspaceToolView('sections')}
+                className={`w-full rounded-lg px-3 py-2 text-left text-sm font-semibold transition ${
+                  workspaceToolView === 'sections'
+                    ? 'bg-[var(--background-paper)] text-[var(--primary-main)] shadow-sm'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--background-paper)]'
+                }`}
+              >
+                Sections
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setWorkspaceToolView('activity')}
+                className={`w-full rounded-lg px-3 py-2 text-left text-sm font-semibold transition ${
+                  workspaceToolView === 'activity'
+                    ? 'bg-[var(--background-paper)] text-[var(--primary-main)] shadow-sm'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--background-paper)]'
+                }`}
+              >
+                Activity
+              </button>
+            </div>
+          </aside>
+
+          <div className="min-w-0 p-4">
+            {workspaceToolView === 'sections' ? (
+              <SectionManager
+                sections={sections}
+                tasks={tasks}
+                newSectionName={newSectionName}
+                setNewSectionName={setNewSectionName}
+                sectionDraftNames={sectionDraftNames}
+                setSectionDraftNames={setSectionDraftNames}
+                creatingSection={creatingSection}
+                renamingSectionId={renamingSectionId}
+                deletingSectionId={deletingSectionId}
+                createSection={createSection}
+                renameSection={renameSection}
+                deleteSection={deleteSection}
+              />
+            ) : (
+              <RecentActivityPanel activityLogs={activityLogs} />
+            )}
           </div>
-        </details>
+        </section>
 
         <TaskList
           viewMode={viewMode}
