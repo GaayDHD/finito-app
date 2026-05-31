@@ -6,13 +6,13 @@ type RecentActivityPanelProps = {
 
 export function RecentActivityPanel({ activityLogs }: RecentActivityPanelProps) {
   return (
-    <div className="mb-6 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+    <div>
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Recent activity</h2>
-          <p className="text-sm text-zinc-400">Latest changes across this project.</p>
+          <h2 className="text-base font-semibold text-[var(--text-primary)]">Recent activity</h2>
+          <p className="text-sm text-[var(--text-muted)]">Latest changes across this project.</p>
         </div>
-        <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-zinc-400">
+        <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
           {activityLogs.length} logs
         </span>
       </div>
@@ -22,13 +22,13 @@ export function RecentActivityPanel({ activityLogs }: RecentActivityPanelProps) 
           {activityLogs.slice(0, 8).map((log) => (
             <div
               key={log.id}
-              className="flex flex-col gap-1 rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-1 rounded-xl border border-[var(--outline-soft)] bg-[var(--surface-muted)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
-                <p className="text-sm font-semibold text-zinc-100">{log.action}</p>
-                {log.details && <p className="mt-1 text-sm text-zinc-400">{log.details}</p>}
+                <p className="text-sm font-semibold text-[var(--text-primary)]">{log.action}</p>
+                {log.details && <p className="mt-1 text-sm text-[var(--text-muted)]">{log.details}</p>}
               </div>
-              <p className="shrink-0 text-xs text-zinc-500">
+              <p className="shrink-0 text-xs text-[var(--text-muted)]">
                 {log.created_at
                   ? new Intl.DateTimeFormat('en-AU', {
                       day: '2-digit',
@@ -42,7 +42,7 @@ export function RecentActivityPanel({ activityLogs }: RecentActivityPanelProps) 
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-white/10 px-5 py-6 text-sm text-zinc-500">
+        <div className="rounded-xl border border-dashed border-[var(--outline)] px-5 py-6 text-sm text-[var(--text-muted)]">
           No activity yet.
         </div>
       )}

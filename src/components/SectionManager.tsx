@@ -31,10 +31,10 @@ export function SectionManager({
   deleteSection,
 }: SectionManagerProps) {
   return (
-    <div className="mb-6 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+    <div>
       <div className="mb-4">
-        <h2 className="text-xl font-semibold">Manage sections</h2>
-        <p className="text-sm text-zinc-400">Create, rename and delete empty project sections.</p>
+        <h2 className="text-base font-semibold text-[var(--text-primary)]">Manage sections</h2>
+        <p className="text-sm text-[var(--text-muted)]">Create, rename and delete empty project sections.</p>
       </div>
 
       <form onSubmit={createSection} className="mb-4 flex flex-col gap-3 sm:flex-row">
@@ -42,12 +42,12 @@ export function SectionManager({
           value={newSectionName}
           onChange={(event) => setNewSectionName(event.target.value)}
           placeholder="New section name"
-          className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-[#181b1f] px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-violet-300/60"
+          className="min-w-0 flex-1 rounded-xl border border-[var(--outline)] bg-[var(--background-paper)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--primary-main)] focus:ring-4 focus:ring-[var(--primary-main)]/10"
         />
         <button
           type="submit"
           disabled={creatingSection}
-          className="rounded-2xl bg-violet-300 px-5 py-3 text-sm font-semibold text-[#111315] transition hover:bg-violet-200 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-xl bg-[var(--primary-main)] px-5 py-3 text-sm font-semibold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-dark)] disabled:cursor-not-allowed disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)]"
         >
           {creatingSection ? 'Creating…' : 'Create section'}
         </button>
@@ -60,7 +60,7 @@ export function SectionManager({
           return (
             <div
               key={section.id}
-              className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-[#181b1f] p-3 sm:flex-row sm:items-center"
+              className="flex flex-col gap-2 rounded-xl border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-3 sm:flex-row sm:items-center"
             >
               <input
                 value={sectionDraftNames[section.id] ?? section.name}
@@ -70,10 +70,10 @@ export function SectionManager({
                     [section.id]: event.target.value,
                   }))
                 }
-                className="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#111315] px-3 py-2 text-sm text-white outline-none transition focus:border-violet-300/60"
+                className="min-w-0 flex-1 rounded-lg border border-[var(--outline)] bg-[var(--background-paper)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary-main)] focus:ring-4 focus:ring-[var(--primary-main)]/10"
               />
 
-              <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-zinc-400">
+              <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
                 {sectionTaskCount} tasks
               </span>
 
@@ -81,7 +81,7 @@ export function SectionManager({
                 type="button"
                 disabled={renamingSectionId === section.id}
                 onClick={() => renameSection(section.id)}
-                className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-xs font-semibold text-zinc-100 transition hover:border-violet-300/40 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg border border-[var(--outline)] bg-[var(--background-paper)] px-3 py-2 text-xs font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-subtle)] disabled:cursor-not-allowed disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)]"
               >
                 {renamingSectionId === section.id ? 'Saving…' : 'Rename'}
               </button>
@@ -90,7 +90,7 @@ export function SectionManager({
                 type="button"
                 disabled={deletingSectionId === section.id || sectionTaskCount > 0}
                 onClick={() => deleteSection(section.id)}
-                className="rounded-xl border border-red-300/10 bg-red-400/10 px-3 py-2 text-xs font-semibold text-red-200 transition hover:border-red-300/40 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-lg border border-[var(--error-main)]/25 bg-[var(--error-light)] px-3 py-2 text-xs font-semibold text-[var(--error-dark)] transition hover:border-[var(--error-main)]/40 disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)]"
               >
                 Delete
               </button>

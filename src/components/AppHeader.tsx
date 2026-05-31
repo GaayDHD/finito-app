@@ -88,10 +88,10 @@ export function AppHeader({
 
         <div className="flex min-w-0 items-center justify-end gap-2">
           <input
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Search tasks..."
-            className="hidden h-14 w-full max-w-[220px] rounded-2xl border border-[var(--outline)] bg-[var(--background-paper)] px-4 text-sm text-[var(--text-primary)] shadow-sm outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--primary-main)] focus:ring-4 focus:ring-[var(--primary-main)]/10 lg:block"
+            value=""
+            disabled
+            placeholder="Search coming soon..."
+            className="hidden h-14 w-full max-w-[220px] cursor-not-allowed rounded-2xl border border-[var(--outline-soft)] bg-[var(--surface-subtle)] px-4 text-sm text-[var(--text-disabled)] shadow-sm outline-none placeholder:text-[var(--text-disabled)] lg:block"
           />
         </div>
       </div>
@@ -132,10 +132,10 @@ export function AppHeader({
 
       <div className="mx-auto px-5 pb-3 lg:hidden">
         <input
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Search tasks..."
-          className="h-14 w-full rounded-2xl border border-[var(--outline)] bg-[var(--background-paper)] px-4 text-sm text-[var(--text-primary)] shadow-sm outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--primary-main)] focus:ring-4 focus:ring-[var(--primary-main)]/10"
+          value=""
+          disabled
+          placeholder="Search coming soon..."
+          className="h-14 w-full cursor-not-allowed rounded-2xl border border-[var(--outline-soft)] bg-[var(--surface-subtle)] px-4 text-sm text-[var(--text-disabled)] shadow-sm outline-none placeholder:text-[var(--text-disabled)]"
         />
       </div>
     </header>
