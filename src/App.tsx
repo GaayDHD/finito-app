@@ -66,6 +66,7 @@ function App() {
   const [sectionFilter, setSectionFilter] = useState('all')
   const [visibilityFilter, setVisibilityFilter] = useState<'active' | 'archived' | 'all'>('active')
   const [groupBy, setGroupBy] = useState<'status' | 'priority' | 'scope'>('status')
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card')
 
   const fallbackSectionId = sections[0]?.id ?? ''
 
@@ -1563,7 +1564,7 @@ function App() {
 
   return (
     <main className="min-h-screen bg-[var(--surface-muted)] text-[var(--text-primary)]">
-      <AppHeader />
+      <AppHeader viewMode={viewMode} setViewMode={setViewMode} />
 
       <section className="mx-auto max-w-[1600px] px-5 py-5">
 
@@ -1632,10 +1633,18 @@ function App() {
         </details>
 
         <TaskList
+          viewMode={viewMode}
           groupedTasks={groupedTasks}
           filteredTaskCount={filteredTasks.length}
           isLoading={isLoading}
           errorMessage={errorMessage}
+          sections={sections}
+          updatingStatusTaskId={updatingStatusTaskId}
+          updatingPriorityTaskId={updatingPriorityTaskId}
+          updateTaskStatus={updateTaskStatus}
+          updateTaskPriority={updateTaskPriority}
+          getTaskComments={getTaskComments}
+          getSubtasks={getSubtasks}
           renderTask={renderTask}
         />
       </section>

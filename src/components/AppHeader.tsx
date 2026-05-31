@@ -1,4 +1,14 @@
-export function AppHeader() {
+type AppHeaderProps = {
+  viewMode: 'card' | 'table'
+  setViewMode: (viewMode: 'card' | 'table') => void
+}
+
+export function AppHeader({ viewMode, setViewMode }: AppHeaderProps) {
+  const tabClass = (isActive: boolean) =>
+    isActive
+      ? 'rounded-lg bg-[var(--background-paper)] px-3 py-1.5 text-sm font-semibold text-[var(--primary-main)] shadow-sm'
+      : 'rounded-lg px-3 py-1.5 text-sm font-medium text-[var(--text-muted)] transition hover:bg-[var(--background-paper)] hover:text-[var(--text-primary)]'
+
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--outline-soft)] bg-[var(--background-paper)]">
       <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-5 py-3">
@@ -15,7 +25,7 @@ export function AppHeader() {
                 Finito Build
               </h1>
               <span className="rounded-full border border-[var(--outline)] bg-[var(--surface-muted)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
-                Card
+                {viewMode === 'table' ? 'Table' : 'Card'}
               </span>
             </div>
             <p className="truncate text-xs text-[var(--text-muted)]">
@@ -27,12 +37,17 @@ export function AppHeader() {
         <nav className="hidden items-center gap-1 rounded-xl border border-[var(--outline)] bg-[var(--surface-muted)] p-1 md:flex">
           <button
             type="button"
-            className="rounded-lg bg-[var(--background-paper)] px-3 py-1.5 text-sm font-semibold text-[var(--primary-main)] shadow-sm"
+            onClick={() => setViewMode('card')}
+            className={tabClass(viewMode === 'card')}
           >
             Card
           </button>
-          <button type="button" disabled className="rounded-lg px-3 py-1.5 text-sm font-medium text-[var(--text-disabled)]">
-            List
+          <button
+            type="button"
+            onClick={() => setViewMode('table')}
+            className={tabClass(viewMode === 'table')}
+          >
+            Table
           </button>
           <button type="button" disabled className="rounded-lg px-3 py-1.5 text-sm font-medium text-[var(--text-disabled)]">
             Kanban
@@ -59,6 +74,32 @@ export function AppHeader() {
             + Task
           </button>
         </div>
+      </div>
+
+      <div className="mx-auto flex max-w-[1600px] items-center gap-1 overflow-x-auto px-5 pb-2 md:hidden">
+        <button
+          type="button"
+          onClick={() => setViewMode('card')}
+          className={tabClass(viewMode === 'card')}
+        >
+          Card
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewMode('table')}
+          className={tabClass(viewMode === 'table')}
+        >
+          Table
+        </button>
+        <button type="button" disabled className="rounded-lg px-3 py-1.5 text-sm text-[var(--text-disabled)]">
+          Kanban
+        </button>
+        <button type="button" disabled className="rounded-lg px-3 py-1.5 text-sm text-[var(--text-disabled)]">
+          Timeline
+        </button>
+        <button type="button" disabled className="rounded-lg px-3 py-1.5 text-sm text-[var(--text-disabled)]">
+          Calendar
+        </button>
       </div>
     </header>
   )
