@@ -12,7 +12,7 @@ export function AppHeader({
   setSearchQuery,
 }: AppHeaderProps) {
   const tabClass = (isActive: boolean) =>
-    `relative z-10 flex h-10 w-[64px] items-center justify-center rounded-lg px-3 text-sm transition ${
+    `relative z-10 flex h-10 min-w-[72px] items-center justify-center rounded-xl px-3 text-sm transition ${
       isActive
         ? 'font-bold text-[var(--primary-main)]'
         : 'font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)]'
@@ -37,10 +37,10 @@ export function AppHeader({
           </div>
         </div>
 
-        <nav className="relative hidden h-14 items-center justify-center gap-[9px] rounded-2xl border border-[var(--outline)] bg-[var(--surface-muted)] p-2 md:flex">
+        <nav className="relative hidden h-14 items-center justify-center gap-1.5 rounded-2xl border border-[var(--outline)] bg-[var(--surface-muted)] p-2 md:flex">
           <span
-            className={`absolute left-2 top-2 h-10 w-[64px] rounded-lg border border-[var(--outline-soft)]/70 bg-[var(--background-paper)] transition-transform duration-200 ease-out ${
-              viewMode === 'card' ? 'translate-x-[73px]' : 'translate-x-0'
+            className={`absolute left-2 top-2 h-10 w-[72px] rounded-xl bg-[var(--background-paper)] transition-transform duration-200 ease-out ${
+              viewMode === 'card' ? 'translate-x-[78px]' : 'translate-x-0'
             }`}
             aria-hidden="true"
           />
@@ -96,7 +96,7 @@ export function AppHeader({
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-[1600px] items-center gap-3 overflow-x-auto px-5 pb-3 md:hidden">
+      <div className="mx-auto flex max-w-[1600px] items-center gap-2 overflow-x-auto px-5 pb-3 md:hidden">
         <button
           type="button"
           onClick={() => setViewMode('table')}
@@ -108,7 +108,6 @@ export function AppHeader({
         >
           List
         </button>
-
         <button
           type="button"
           onClick={() => setViewMode('card')}
@@ -120,7 +119,6 @@ export function AppHeader({
         >
           Card
         </button>
-
         <button type="button" disabled className="cursor-not-allowed rounded-xl px-4 py-2.5 text-sm text-[var(--text-disabled)] opacity-50">
           Kanban
         </button>
