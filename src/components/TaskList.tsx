@@ -87,12 +87,12 @@ export function TaskList({
       <div className="flex items-center justify-between border-b border-[var(--outline-soft)] px-4 py-3">
         <div>
           <h2 className="text-base font-semibold text-[var(--text-primary)]">
-            {isTable ? 'Table view' : 'Card view'}
+            {isTable ? 'Table view' : 'List view'}
           </h2>
           <p className="text-xs text-[var(--text-muted)]">
             {isTable
               ? 'Compact rows grouped by the current view.'
-              : 'Compact cards grouped by the current view.'}
+              : 'Tasks grouped by the current view.'}
           </p>
         </div>
         <span className="rounded-full bg-[var(--primary-light)] px-3 py-1 text-xs font-semibold text-[var(--primary-main)]">

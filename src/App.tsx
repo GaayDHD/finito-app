@@ -68,6 +68,7 @@ function App() {
   const [visibilityFilter, setVisibilityFilter] = useState<'active' | 'archived' | 'all'>('active')
   const [groupBy, setGroupBy] = useState<'status' | 'priority' | 'scope'>('status')
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table')
+  const [isCreateTaskFormOpen, setIsCreateTaskFormOpen] = useState(false)
 
   const fallbackSectionId = sections[0]?.id ?? ''
 
@@ -315,6 +316,7 @@ function App() {
     setTaskStartDate('')
     setTaskDueDate('')
     setIsCreating(false)
+    setIsCreateTaskFormOpen(false)
     await logActivity('Created task', taskTitle.trim())
     await loadProjectAndTasks()
   }
@@ -1569,9 +1571,11 @@ function App() {
 
       <section className="mx-auto max-w-[1600px] px-5 py-5">
 
-        <DashboardStats stats={stats} />
+        <DashboardStats stats={stats} onNewTaskClick={() => setIsCreateTaskFormOpen(true)} />
 
         <CreateTaskForm
+          isOpen={isCreateTaskFormOpen}
+          setIsOpen={setIsCreateTaskFormOpen}
           taskTitle={taskTitle}
           setTaskTitle={setTaskTitle}
           taskDescription={taskDescription}
