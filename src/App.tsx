@@ -847,6 +847,32 @@ function App() {
     setVisibilityFilter('active')
   }
 
+  function resetCreateTaskForm() {
+    setTaskTitle('')
+    setTaskDescription('')
+    setTaskSectionId('')
+    setTaskPriority('medium')
+    setTaskDifficulty('not_scoped')
+    setTaskStartDate('')
+    setTaskDueDate('')
+  }
+
+  function toggleCreateTaskForm() {
+    setIsCreateTaskFormOpen((currentValue) => {
+      if (currentValue) {
+        resetCreateTaskForm()
+        return false
+      }
+
+      return true
+    })
+  }
+
+  function closeCreateTaskForm() {
+    resetCreateTaskForm()
+    setIsCreateTaskFormOpen(false)
+  }
+
   async function quickSetTaskDone(task: Task) {
     const blockingTasks = getBlockingTasks(task.id)
     const isBlocked = task.status === 'blocked' || blockingTasks.length > 0
@@ -1571,11 +1597,17 @@ function App() {
 
       <section className="mx-auto max-w-[1600px] px-5 py-5">
 
-        <DashboardStats stats={stats} onNewTaskClick={() => setIsCreateTaskFormOpen(true)} />
+        <DashboardStats stats={stats} onNewTaskClick={toggleCreateTaskForm} />
 
         <CreateTaskForm
           isOpen={isCreateTaskFormOpen}
-          setIsOpen={setIsCreateTaskFormOpen}
+          setIsOpen={(value) => {
+            if (value) {
+              setIsCreateTaskFormOpen(true)
+            } else {
+              closeCreateTaskForm()
+            }
+          }}
           taskTitle={taskTitle}
           setTaskTitle={setTaskTitle}
           taskDescription={taskDescription}
