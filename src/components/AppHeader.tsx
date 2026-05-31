@@ -12,7 +12,7 @@ export function AppHeader({
   setSearchQuery,
 }: AppHeaderProps) {
   const tabClass = (isActive: boolean) =>
-    `relative z-10 flex h-10 items-center justify-center rounded-xl px-4 text-sm transition ${
+    `relative z-10 flex h-10 min-w-[72px] items-center justify-center rounded-xl px-3 text-sm transition ${
       isActive
         ? 'font-bold text-[var(--primary-main)]'
         : 'font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)]'
@@ -22,24 +22,24 @@ export function AppHeader({
     <header className="sticky top-0 z-30 border-b border-[var(--outline-soft)] bg-[var(--background-paper)]">
       <div className="mx-auto grid max-w-[1600px] grid-cols-[minmax(220px,1fr)_auto_minmax(320px,1fr)] items-center gap-4 px-5 py-4">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-sm">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-sm">
             <img
               src="https://res.cloudinary.com/dcd54tom6/image/upload/v1780118631/iTunes_512pt__1x_unphju.png"
               alt="Finito logo"
-              className="h-9 w-9 rounded-xl object-contain"
+              className="h-10 w-10 rounded-lg object-contain"
             />
           </div>
 
           <div className="min-w-0">
-            <h1 className="truncate text-[28px] font-semibold leading-none tracking-tight text-[var(--text-primary)]">
+            <h1 className="truncate text-[30px] font-semibold leading-none tracking-tight text-[var(--text-primary)]">
               Finito
             </h1>
           </div>
         </div>
 
-        <nav className="relative hidden h-12 items-center justify-center gap-1.5 rounded-2xl border border-[var(--outline)] bg-[var(--surface-muted)] p-1 md:flex">
+        <nav className="relative hidden h-14 items-center justify-center gap-1.5 rounded-2xl border border-[var(--outline)] bg-[var(--surface-muted)] p-2 md:flex">
           <span
-            className={`absolute left-1 top-1 h-10 w-[72px] rounded-xl bg-[var(--background-paper)] shadow-sm transition-transform duration-200 ease-out ${
+            className={`absolute left-2 top-2 h-10 w-[72px] rounded-xl bg-[var(--background-paper)] shadow-sm transition-transform duration-200 ease-out ${
               viewMode === 'card' ? 'translate-x-[78px]' : 'translate-x-0'
             }`}
             aria-hidden="true"
@@ -91,7 +91,7 @@ export function AppHeader({
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder="Search tasks..."
-            className="hidden h-12 w-full max-w-[220px] rounded-2xl border border-[var(--outline)] bg-[var(--background-paper)] px-4 text-sm text-[var(--text-primary)] shadow-sm outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--primary-main)] focus:ring-4 focus:ring-[var(--primary-main)]/10 lg:block"
+            className="hidden h-14 w-full max-w-[220px] rounded-2xl border border-[var(--outline)] bg-[var(--background-paper)] px-4 text-sm text-[var(--text-primary)] shadow-sm outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--primary-main)] focus:ring-4 focus:ring-[var(--primary-main)]/10 lg:block"
           />
         </div>
       </div>
@@ -100,7 +100,7 @@ export function AppHeader({
         <button
           type="button"
           onClick={() => setViewMode('table')}
-          className={`rounded-xl px-4 py-2.5 text-sm ${
+          className={`rounded-xl px-4 py-2.5 text-sm transition ${
             viewMode === 'table'
               ? 'bg-[var(--primary-light)] font-bold text-[var(--primary-main)]'
               : 'font-medium text-[var(--text-muted)]'
@@ -111,7 +111,7 @@ export function AppHeader({
         <button
           type="button"
           onClick={() => setViewMode('card')}
-          className={`rounded-xl px-4 py-2.5 text-sm ${
+          className={`rounded-xl px-4 py-2.5 text-sm transition ${
             viewMode === 'card'
               ? 'bg-[var(--primary-light)] font-bold text-[var(--primary-main)]'
               : 'font-medium text-[var(--text-muted)]'
@@ -135,7 +135,7 @@ export function AppHeader({
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
           placeholder="Search tasks..."
-          className="h-12 w-full rounded-2xl border border-[var(--outline)] bg-[var(--background-paper)] px-4 text-sm text-[var(--text-primary)] shadow-sm outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--primary-main)] focus:ring-4 focus:ring-[var(--primary-main)]/10"
+          className="h-14 w-full rounded-2xl border border-[var(--outline)] bg-[var(--background-paper)] px-4 text-sm text-[var(--text-primary)] shadow-sm outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--primary-main)] focus:ring-4 focus:ring-[var(--primary-main)]/10"
         />
       </div>
     </header>
