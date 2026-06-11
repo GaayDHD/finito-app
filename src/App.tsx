@@ -68,6 +68,7 @@ function App() {
   const [groupBy, setGroupBy] = useState<'status' | 'priority' | 'scope'>('status')
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table')
   const [isCreateTaskFormOpen, setIsCreateTaskFormOpen] = useState(false)
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
 
   const fallbackSectionId = sections[0]?.id ?? ''
 
@@ -1590,6 +1591,8 @@ function App() {
     )
   }
 
+  const selectedTask = selectedTaskId ? tasks.find((task) => task.id === selectedTaskId) ?? null : null
+
   return (
     <main className="min-h-screen bg-[var(--surface-muted)] text-[var(--text-primary)]">
       <AppHeader
@@ -1677,8 +1680,59 @@ function App() {
             updateTaskPriority={updateTaskPriority}
             getTaskComments={getTaskComments}
             getSubtasks={getSubtasks}
+            selectedTaskId={selectedTaskId}
+            onOpenTask={setSelectedTaskId}
             renderTask={renderTask}
           />
+
+          {selectedTask ? (
+            <div className="fixed inset-y-0 right-0 z-40 flex w-full max-w-xl flex-col border-l border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-2xl">
+              <div className="flex items-start justify-between gap-4 border-b border-[var(--outline-soft)] px-6 py-5">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--text-muted)]">Task details</p>
+                  <h2 className="mt-2 text-xl font-semibold text-[var(--text-primary)]">{selectedTask.title}</h2>
+                  {selectedTask.description ? (
+                    <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{selectedTask.description}</p>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedTaskId(null)}
+                  className="rounded-full border border-[var(--outline-soft)] px-3 py-1.5 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-subtle)]"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-6 py-5">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Status</p>
+                    <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{getLabel(statusOptions, selectedTask.status)}</p>
+                  </div>
+                  <div className="rounded-2xl border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Priority</p>
+                    <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{getLabel(priorityOptions, selectedTask.priority)}</p>
+                  </div>
+                  <div className="rounded-2xl border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Start</p>
+                    <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{formatDate(selectedTask.start_date)}</p>
+                  </div>
+                  <div className="rounded-2xl border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Due</p>
+                    <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{formatDate(selectedTask.due_date)}</p>
+                  </div>
+                </div>
+
+                <div className="mt-6 rounded-2xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Next</p>
+                  <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                    This drawer is now wired to task selection. Next pass will move subtasks, blockers, comments, edit controls, archive and delete actions into this panel.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       </section>
     </main>

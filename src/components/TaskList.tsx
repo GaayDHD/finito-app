@@ -43,6 +43,8 @@ type TaskListProps = {
   updateTaskPriority: (taskId: string, priority: string) => void
   getTaskComments: (taskId: string) => unknown[]
   getSubtasks: (taskId: string) => Task[]
+  selectedTaskId: string | null
+  onOpenTask: (taskId: string) => void
   renderTask: (task: Task) => ReactNode
 }
 
@@ -182,6 +184,8 @@ export function TaskList({
   updateTaskPriority,
   getTaskComments,
   getSubtasks,
+  selectedTaskId,
+  onOpenTask,
   renderTask,
 }: TaskListProps) {
   const [openHeaderMenu, setOpenHeaderMenu] = useState<string | null>(null)
@@ -539,7 +543,15 @@ export function TaskList({
 
               {group.tasks.length > 0 ? (
                 <div className="divide-y divide-[var(--outline-soft)]">
-                  {group.tasks.map((task) => renderTask(task))}
+                  {group.tasks.map((task) => (
+                    <div
+                      key={task.id}
+                      onClick={() => onOpenTask(task.id)}
+                      className={`cursor-pointer transition ${selectedTaskId === task.id ? 'ring-2 ring-[var(--primary)]/20' : ''}`}
+                    >
+                      {renderTask(task)}
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className="px-4 py-5 text-sm text-[var(--text-muted)]">
@@ -582,7 +594,10 @@ export function TaskList({
                       return (
                         <div
                           key={task.id}
-                          className="grid grid-cols-[minmax(320px,1.8fr)_150px_140px_140px_150px_120px_120px_90px_90px] items-center gap-0 px-4 py-2 text-sm transition hover:bg-[var(--surface-muted)]"
+                          onClick={() => onOpenTask(task.id)}
+                          className={`grid cursor-pointer grid-cols-[minmax(320px,1.8fr)_150px_140px_140px_150px_120px_120px_90px_90px] items-center gap-0 px-4 py-2 text-sm transition hover:bg-[var(--surface-muted)] ${
+                            selectedTaskId === task.id ? 'bg-[var(--surface-subtle)]' : ''
+                          }`}
                         >
                           <div className="min-w-0 pr-4 text-left">
                             <div className="flex items-center gap-2">
@@ -600,6 +615,7 @@ export function TaskList({
                             <select
                               value={task.status}
                               disabled={updatingStatusTaskId === task.id}
+                              onClick={(event) => event.stopPropagation()}
                               onChange={(event) => updateTaskStatus(task.id, event.target.value)}
                               className={`h-7 max-w-[130px] rounded-full border px-2 text-center text-xs font-semibold outline-none ${getStatusTone(task.status)}`}
                             >
@@ -615,6 +631,7 @@ export function TaskList({
                             <select
                               value={task.priority ?? ''}
                               disabled={updatingPriorityTaskId === task.id}
+                              onClick={(event) => event.stopPropagation()}
                               onChange={(event) => updateTaskPriority(task.id, event.target.value)}
                               className={`h-7 max-w-[120px] rounded-full border px-2 text-center text-xs font-semibold outline-none ${getPriorityTone(task.priority)}`}
                             >
