@@ -1772,9 +1772,66 @@ function App() {
                 </div>
 
                 <div className="mt-4 rounded-2xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Blocked by</p>
+                    <span className="rounded-full bg-[var(--surface-subtle)] px-2 py-1 text-xs font-semibold text-[var(--text-secondary)]">
+                      {getBlockingTasks(selectedTask.id).length}
+                    </span>
+                  </div>
+
+                  {getBlockingTasks(selectedTask.id).length > 0 ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {getBlockingTasks(selectedTask.id).map(({ dependency, task: blockingTask }) => (
+                        <span
+                          key={dependency.id}
+                          className="inline-flex items-center gap-2 rounded-full border border-[var(--error-main)]/35 bg-[var(--error-light)] px-2.5 py-1 text-xs font-semibold text-[var(--error-dark)]"
+                        >
+                          {blockingTask?.title ?? 'Unknown task'}
+                          <button
+                            type="button"
+                            disabled={removingDependencyId === dependency.id}
+                            onClick={() => removeTaskDependency(dependency.id)}
+                            className="text-[var(--error-dark)]/70 transition hover:text-[var(--error-dark)] disabled:opacity-65"
+                            aria-label={`Remove blocker ${blockingTask?.title ?? 'task'}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-[var(--text-secondary)]">This task is not blocked.</p>
+                  )}
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Blocks</p>
+                    <span className="rounded-full bg-[var(--surface-subtle)] px-2 py-1 text-xs font-semibold text-[var(--text-secondary)]">
+                      {getBlockedTasks(selectedTask.id).length}
+                    </span>
+                  </div>
+
+                  {getBlockedTasks(selectedTask.id).length > 0 ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {getBlockedTasks(selectedTask.id).map(({ dependency, task: blockedTask }) => (
+                        <span
+                          key={dependency.id}
+                          className="inline-flex items-center gap-2 rounded-full border border-[var(--primary-main)]/30 bg-[var(--primary-light)] px-2.5 py-1 text-xs font-semibold text-[var(--primary-main)]"
+                        >
+                          {blockedTask?.title ?? 'Unknown task'}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-[var(--text-secondary)]">This task does not block anything.</p>
+                  )}
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Next</p>
                   <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                    Subtasks and comments are now visible in the drawer. Next pass can move blockers, edit controls, archive and delete actions into this panel.
+                    Blockers, subtasks and comments are now visible in the drawer. Next pass can move edit controls, archive and delete actions into this panel.
                   </p>
                 </div>
               </div>
