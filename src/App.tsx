@@ -1725,9 +1725,56 @@ function App() {
                 </div>
 
                 <div className="mt-6 rounded-2xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Subtasks</p>
+                    <span className="rounded-full bg-[var(--surface-subtle)] px-2 py-1 text-xs font-semibold text-[var(--text-secondary)]">
+                      {getSubtasks(selectedTask.id).length}
+                    </span>
+                  </div>
+
+                  {getSubtasks(selectedTask.id).length > 0 ? (
+                    <div className="mt-3 space-y-2">
+                      {getSubtasks(selectedTask.id).map((subtask) => (
+                        <div key={subtask.id} className="rounded-xl border border-[var(--outline-soft)] bg-[var(--surface-muted)] px-3 py-2">
+                          <p className="text-sm font-semibold text-[var(--text-primary)]">{subtask.title}</p>
+                          <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                            {getLabel(statusOptions, subtask.status)} · {getLabel(priorityOptions, subtask.priority)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-[var(--text-secondary)]">No subtasks yet.</p>
+                  )}
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Comments</p>
+                    <span className="rounded-full bg-[var(--surface-subtle)] px-2 py-1 text-xs font-semibold text-[var(--text-secondary)]">
+                      {getTaskComments(selectedTask.id).length}
+                    </span>
+                  </div>
+
+                  {getTaskComments(selectedTask.id).length > 0 ? (
+                    <div className="mt-3 space-y-2">
+                      {getTaskComments(selectedTask.id).map((comment, index) => (
+                        <div key={index} className="rounded-xl border border-[var(--outline-soft)] bg-[var(--surface-muted)] px-3 py-2">
+                          <p className="text-sm leading-6 text-[var(--text-secondary)]">
+                            {typeof comment === 'object' && comment !== null && 'body' in comment ? String(comment.body) : String(comment)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-[var(--text-secondary)]">No comments yet.</p>
+                  )}
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Next</p>
                   <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                    This drawer is now wired to task selection. Next pass will move subtasks, blockers, comments, edit controls, archive and delete actions into this panel.
+                    Subtasks and comments are now visible in the drawer. Next pass can move blockers, edit controls, archive and delete actions into this panel.
                   </p>
                 </div>
               </div>
