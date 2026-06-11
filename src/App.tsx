@@ -1758,10 +1758,27 @@ function App() {
 
                   {getTaskComments(selectedTask.id).length > 0 ? (
                     <div className="mt-3 space-y-2">
-                      {getTaskComments(selectedTask.id).map((comment, index) => (
-                        <div key={index} className="rounded-xl border border-[var(--outline-soft)] bg-[var(--surface-muted)] px-3 py-2">
-                          <p className="text-sm leading-6 text-[var(--text-secondary)]">
-                            {typeof comment === 'object' && comment !== null && 'body' in comment ? String(comment.body) : String(comment)}
+                      {getTaskComments(selectedTask.id).map((comment) => (
+                        <div key={comment.id} className="rounded-xl border border-[var(--outline-soft)] bg-[var(--surface-muted)] px-3 py-2">
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm leading-6 text-[var(--text-secondary)]">{comment.body}</p>
+                            <button
+                              type="button"
+                              disabled={deletingCommentId === comment.id}
+                              onClick={() => deleteComment(comment.id)}
+                              className="shrink-0 text-xs font-semibold text-[var(--error-dark)]/70 transition hover:text-[var(--error-dark)] disabled:opacity-65"
+                            >
+                              {deletingCommentId === comment.id ? 'Deleting…' : 'Delete'}
+                            </button>
+                          </div>
+                          <p className="mt-1 text-xs text-[var(--text-muted)]">
+                            {comment.created_at
+                              ? new Intl.DateTimeFormat('en-AU', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric',
+                                }).format(new Date(comment.created_at))
+                              : 'No date'}
                           </p>
                         </div>
                       ))}
@@ -1769,6 +1786,28 @@ function App() {
                   ) : (
                     <p className="mt-3 text-sm text-[var(--text-secondary)]">No comments yet.</p>
                   )}
+
+                  <div className="mt-3 flex gap-2">
+                    <input
+                      value={commentDrafts[selectedTask.id] ?? ''}
+                      onChange={(event) =>
+                        setCommentDrafts((currentDrafts) => ({
+                          ...currentDrafts,
+                          [selectedTask.id]: event.target.value,
+                        }))
+                      }
+                      placeholder="Add a comment"
+                      className="min-w-0 flex-1 rounded-lg border border-[var(--outline-soft)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--primary)]"
+                    />
+                    <button
+                      type="button"
+                      disabled={addingCommentTaskId === selectedTask.id}
+                      onClick={() => addComment(selectedTask.id)}
+                      className="shrink-0 rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {addingCommentTaskId === selectedTask.id ? 'Adding…' : 'Comment'}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mt-4 rounded-2xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-4">
