@@ -5,10 +5,13 @@ type WorkspaceSidebarProps = {
   sections: Section[]
   tasks: Task[]
   activityLogs: ActivityLog[]
+  newSectionName: string
+  setNewSectionName: (value: string) => void
   sectionDraftNames: Record<string, string>
   setSectionDraftNames: (value: React.SetStateAction<Record<string, string>>) => void
-  renamingSectionId: string | null
+  creatingSection: boolean
   deletingSectionId: string | null
+  createSection: (event: React.FormEvent<HTMLFormElement>) => void
   renameSection: (sectionId: string) => void
   deleteSection: (sectionId: string) => void
 }
@@ -17,14 +20,19 @@ export function WorkspaceSidebar({
   sections,
   tasks,
   activityLogs,
+  newSectionName,
+  setNewSectionName,
   sectionDraftNames,
   setSectionDraftNames,
-  renamingSectionId,
+  creatingSection,
   deletingSectionId,
+  createSection,
   renameSection,
   deleteSection,
 }: WorkspaceSidebarProps) {
   const [activeTool, setActiveTool] = useState<'sections' | 'activity'>('sections')
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null)
+  const [isAddingSection, setIsAddingSection] = useState(false)
   const [hoveredSectionId, setHoveredSectionId] = useState<string | null>(null)
   const [confirmDeleteSectionId, setConfirmDeleteSectionId] = useState<string | null>(null)
 
@@ -38,11 +46,26 @@ export function WorkspaceSidebar({
     const draftName = sectionDraftNames[sectionId]?.trim()
     const section = sections.find((currentSection) => currentSection.id === sectionId)
 
+    setEditingSectionId(null)
+
     if (!section || !draftName || draftName === section.name) {
       return
     }
 
     renameSection(sectionId)
+  }
+
+  function cancelSectionEdit(sectionId: string) {
+    const section = sections.find((currentSection) => currentSection.id === sectionId)
+
+    if (section) {
+      setSectionDraftNames((currentDrafts) => ({
+        ...currentDrafts,
+        [sectionId]: section.name,
+      }))
+    }
+
+    setEditingSectionId(null)
   }
 
   function handleSectionKeyDown(event: React.KeyboardEvent<HTMLInputElement>, sectionId: string) {
@@ -52,15 +75,7 @@ export function WorkspaceSidebar({
     }
 
     if (event.key === 'Escape') {
-      const section = sections.find((currentSection) => currentSection.id === sectionId)
-
-      if (section) {
-        setSectionDraftNames((currentDrafts) => ({
-          ...currentDrafts,
-          [sectionId]: section.name,
-        }))
-      }
-
+      cancelSectionEdit(sectionId)
       event.currentTarget.blur()
     }
   }
@@ -69,7 +84,7 @@ export function WorkspaceSidebar({
     <aside className="relative h-full rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-sm">
       <div className="border-b border-[var(--outline-soft)] px-4 py-3">
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">
-          Workspace
+          Workspace Tools
         </p>
       </div>
 
@@ -102,13 +117,25 @@ export function WorkspaceSidebar({
       <div className="border-t border-[var(--outline-soft)] p-3">
         {activeTool === 'sections' ? (
           <div className="space-y-2">
-            <p className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">
-              Section options
-            </p>
+            <div className="flex items-center justify-between px-1">
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">
+                Section Options
+              </p>
+
+              <button
+                type="button"
+                onClick={() => setIsAddingSection(true)}
+                className="flex h-5 w-5 items-center justify-center rounded-full border border-[var(--outline-soft)] bg-[var(--background-paper)] text-xs font-semibold text-[var(--text-muted)] transition hover:border-[var(--primary-main)]/30 hover:text-[var(--primary-main)]"
+                title="Add section"
+              >
+                +
+              </button>
+            </div>
 
             {sections.map((section) => {
               const sectionTaskCount = getSectionTaskCount(section.id)
               const isHovered = hoveredSectionId === section.id
+              const isEditing = editingSectionId === section.id
               const canDelete = sectionTaskCount === 0
 
               return (
@@ -116,10 +143,10 @@ export function WorkspaceSidebar({
                   key={section.id}
                   onMouseEnter={() => setHoveredSectionId(section.id)}
                   onMouseLeave={() => setHoveredSectionId(null)}
-                  className="group relative flex min-h-10 items-center gap-2 rounded-full border border-[var(--outline-soft)] bg-[var(--surface-muted)] px-3 py-2 transition hover:border-[var(--outline)] hover:bg-[var(--background-paper)]"
+                  className="group relative flex min-h-8 items-center gap-2 rounded-full border border-[var(--outline-soft)] bg-[var(--surface-subtle)] px-3 py-1.5 transition hover:border-[var(--outline)]"
                 >
                   <div className="min-w-0 flex-1">
-                    {isHovered ? (
+                    {isEditing ? (
                       <input
                         value={sectionDraftNames[section.id] ?? section.name}
                         onChange={(event) =>
@@ -130,17 +157,22 @@ export function WorkspaceSidebar({
                         }
                         onBlur={() => saveSectionName(section.id)}
                         onKeyDown={(event) => handleSectionKeyDown(event, section.id)}
-                        className="h-6 w-full rounded-md border border-[var(--outline)] bg-[var(--background-paper)] px-2 text-xs font-semibold text-[var(--text-primary)] outline-none transition focus:border-[var(--primary-main)] focus:ring-2 focus:ring-[var(--primary-main)]/10"
+                        className="h-6 w-full rounded-md border border-[var(--outline)] bg-[var(--background-paper)] px-2 text-xs font-normal text-[var(--text-secondary)] outline-none transition focus:border-[var(--primary-main)] focus:ring-2 focus:ring-[var(--primary-main)]/10"
                         autoFocus
                       />
                     ) : (
-                      <p className="truncate text-xs font-semibold text-[var(--text-secondary)]">
+                      <button
+                        type="button"
+                        onClick={() => setEditingSectionId(section.id)}
+                        className="block max-w-full truncate text-left text-xs font-semibold text-[var(--text-secondary)]"
+                        title="Click to rename section"
+                      >
                         {section.name}
-                      </p>
+                      </button>
                     )}
                   </div>
 
-                  <span className="shrink-0 rounded-full bg-[var(--surface-subtle)] px-2 py-0.5 text-[10px] font-semibold text-[var(--text-muted)]">
+                  <span className="shrink-0 rounded-full bg-[var(--background-paper)] px-2 py-0.5 text-[10px] font-semibold text-[var(--text-muted)]">
                     {sectionTaskCount}
                   </span>
 
@@ -148,7 +180,9 @@ export function WorkspaceSidebar({
                     type="button"
                     disabled={!canDelete || deletingSectionId === section.id}
                     onClick={() => setConfirmDeleteSectionId(section.id)}
-                    className="hidden h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm text-[var(--text-disabled)] transition hover:bg-[var(--error-light)] hover:text-[var(--error-dark)] disabled:cursor-not-allowed disabled:opacity-30 group-hover:flex"
+                    className={`h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm text-[var(--text-disabled)] transition hover:bg-[var(--error-light)] hover:text-[var(--error-dark)] disabled:cursor-not-allowed disabled:opacity-30 ${
+                      isHovered ? 'flex' : 'hidden'
+                    }`}
                     title={canDelete ? 'Delete section' : 'Only empty sections can be deleted'}
                   >
                     ×
@@ -156,6 +190,53 @@ export function WorkspaceSidebar({
                 </div>
               )
             })}
+
+            {isAddingSection ? (
+              <form
+                onSubmit={(event) => {
+                  createSection(event)
+                  setIsAddingSection(false)
+                }}
+                className="flex min-h-8 w-full items-center gap-2 rounded-full border border-dashed border-[var(--primary-main)]/35 bg-[var(--surface-subtle)] px-3 py-1.5"
+              >
+                <input
+                  value={newSectionName}
+                  onChange={(event) => setNewSectionName(event.target.value)}
+                  onBlur={() => {
+                    if (!newSectionName.trim()) {
+                      setIsAddingSection(false)
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Escape') {
+                      setNewSectionName('')
+                      setIsAddingSection(false)
+                    }
+                  }}
+                  placeholder="Section name"
+                  className="min-w-0 flex-1 bg-transparent text-xs font-normal text-[var(--text-secondary)] outline-none placeholder:text-[var(--text-muted)]"
+                  autoFocus
+                />
+
+                <button
+                  type="submit"
+                  disabled={creatingSection}
+                  className="shrink-0 rounded-full bg-[var(--primary-light)] px-2 py-0.5 text-[10px] font-semibold text-[var(--primary-main)] disabled:cursor-not-allowed disabled:text-[var(--text-disabled)]"
+                >
+                  Add
+                </button>
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsAddingSection(true)}
+                className="flex min-h-8 w-full items-center justify-between rounded-full border border-dashed border-[var(--outline)] bg-[var(--surface-subtle)] px-3 py-1.5 text-left text-xs font-semibold text-[var(--text-muted)] transition hover:border-[var(--primary-main)]/35 hover:text-[var(--primary-main)]"
+                title="Add section"
+              >
+                <span>Add section</span>
+                <span className="text-sm leading-none">+</span>
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-2">

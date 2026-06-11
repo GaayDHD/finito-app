@@ -1,15 +1,11 @@
 type AppHeaderProps = {
   viewMode: 'card' | 'table'
   setViewMode: (viewMode: 'card' | 'table') => void
-  searchQuery: string
-  setSearchQuery: (value: string) => void
 }
 
 export function AppHeader({
   viewMode,
   setViewMode,
-  searchQuery,
-  setSearchQuery,
 }: AppHeaderProps) {
   const tabClass = (isActive: boolean) =>
     `relative z-10 flex h-10 min-w-[72px] items-center justify-center rounded-xl px-3 text-sm transition ${

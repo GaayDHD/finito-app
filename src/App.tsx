@@ -35,7 +35,7 @@ function App() {
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
   const [savingTaskId, setSavingTaskId] = useState<string | null>(null)
   const [creatingSection, setCreatingSection] = useState(false)
-  const [renamingSectionId, setRenamingSectionId] = useState<string | null>(null)
+  const [, setRenamingSectionId] = useState<string | null>(null)
   const [deletingSectionId, setDeletingSectionId] = useState<string | null>(null)
   const [addingCommentTaskId, setAddingCommentTaskId] = useState<string | null>(null)
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null)
@@ -1592,7 +1592,10 @@ function App() {
 
   return (
     <main className="min-h-screen bg-[var(--surface-muted)] text-[var(--text-primary)]">
-      <AppHeader viewMode={viewMode} setViewMode={setViewMode} />
+      <AppHeader
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+      />
 
       <section className="mx-auto max-w-[1600px] px-5 py-5">
 
@@ -1628,9 +1631,7 @@ function App() {
         />
 
         <TaskFilters
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          sectionFilter={sectionFilter}
+              sectionFilter={sectionFilter}
           setSectionFilter={setSectionFilter}
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
@@ -1652,10 +1653,13 @@ function App() {
             sections={sections}
             tasks={tasks}
             activityLogs={activityLogs}
+            newSectionName={newSectionName}
+            setNewSectionName={setNewSectionName}
             sectionDraftNames={sectionDraftNames}
             setSectionDraftNames={setSectionDraftNames}
-            renamingSectionId={renamingSectionId}
+            creatingSection={creatingSection}
             deletingSectionId={deletingSectionId}
+            createSection={createSection}
             renameSection={renameSection}
             deleteSection={deleteSection}
           />
