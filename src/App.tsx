@@ -1746,6 +1746,28 @@ function App() {
                   ) : (
                     <p className="mt-3 text-sm text-[var(--text-secondary)]">No subtasks yet.</p>
                   )}
+
+                  <div className="mt-3 flex gap-2">
+                    <input
+                      value={subtaskDrafts[selectedTask.id] ?? ''}
+                      onChange={(event) =>
+                        setSubtaskDrafts((currentDrafts) => ({
+                          ...currentDrafts,
+                          [selectedTask.id]: event.target.value,
+                        }))
+                      }
+                      placeholder="Add a subtask"
+                      className="min-w-0 flex-1 rounded-lg border border-[var(--outline-soft)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--primary)]"
+                    />
+                    <button
+                      type="button"
+                      disabled={creatingSubtaskTaskId === selectedTask.id || !(subtaskDrafts[selectedTask.id] ?? '').trim()}
+                      onClick={() => createSubtask(selectedTask)}
+                      className="shrink-0 rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {creatingSubtaskTaskId === selectedTask.id ? 'Adding…' : 'Add subtask'}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mt-4 rounded-2xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-4">
