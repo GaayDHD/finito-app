@@ -1829,10 +1829,125 @@ function App() {
                 </div>
 
                 <div className="mt-4 rounded-2xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Next</p>
-                  <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                    Blockers, subtasks and comments are now visible in the drawer. Next pass can move edit controls, archive and delete actions into this panel.
-                  </p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Actions</p>
+
+                  {editingTaskId === selectedTask.id ? (
+                    <div className="mt-4 space-y-3">
+                      <label className="block text-sm font-semibold text-[var(--text-secondary)]">
+                        Title
+                        <input
+                          type="text"
+                          value={editTitle}
+                          onChange={(event) => setEditTitle(event.target.value)}
+                          className="mt-1 w-full rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary)]"
+                        />
+                      </label>
+
+                      <label className="block text-sm font-semibold text-[var(--text-secondary)]">
+                        Description
+                        <textarea
+                          value={editDescription}
+                          onChange={(event) => setEditDescription(event.target.value)}
+                          rows={3}
+                          className="mt-1 w-full resize-none rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary)]"
+                        />
+                      </label>
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="block text-sm font-semibold text-[var(--text-secondary)]">
+                          Scope
+                          <select
+                            value={editDifficulty}
+                            onChange={(event) => setEditDifficulty(event.target.value)}
+                            className="mt-1 w-full rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary)]"
+                          >
+                            {difficultyOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label className="block text-sm font-semibold text-[var(--text-secondary)]">
+                          Start date
+                          <input
+                            type="date"
+                            value={editStartDate}
+                            onChange={(event) => setEditStartDate(event.target.value)}
+                            className="mt-1 w-full rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary)]"
+                          />
+                        </label>
+
+                        <label className="block text-sm font-semibold text-[var(--text-secondary)]">
+                          Due date
+                          <input
+                            type="date"
+                            value={editDueDate}
+                            onChange={(event) => setEditDueDate(event.target.value)}
+                            className="mt-1 w-full rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary)]"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        <button
+                          type="button"
+                          disabled={savingTaskId === selectedTask.id}
+                          onClick={() => saveTaskEdits(selectedTask.id)}
+                          className="rounded-full bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+                        >
+                          {savingTaskId === selectedTask.id ? 'Saving...' : 'Save changes'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelEditingTask}
+                          className="rounded-full border border-[var(--outline-soft)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-subtle)]"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => startEditingTask(selectedTask)}
+                        className="rounded-full border border-[var(--outline-soft)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-subtle)]"
+                      >
+                        Edit details
+                      </button>
+
+                      {selectedTask.archived_at ? (
+                        <button
+                          type="button"
+                          disabled={archivingTaskId === selectedTask.id}
+                          onClick={() => restoreTask(selectedTask)}
+                          className="rounded-full border border-[var(--primary)] px-4 py-2 text-sm font-semibold text-[var(--primary)] transition hover:bg-[var(--primary-light)] disabled:opacity-60"
+                        >
+                          {archivingTaskId === selectedTask.id ? 'Restoring...' : 'Restore'}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={archivingTaskId === selectedTask.id}
+                          onClick={() => archiveTask(selectedTask)}
+                          className="rounded-full border border-[var(--outline-soft)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-subtle)] disabled:opacity-60"
+                        >
+                          {archivingTaskId === selectedTask.id ? 'Archiving...' : 'Archive'}
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        disabled={deletingTaskId === selectedTask.id}
+                        onClick={() => deleteTask(selectedTask.id)}
+                        className="rounded-full border border-[var(--error-main)]/35 px-4 py-2 text-sm font-semibold text-[var(--error-dark)] transition hover:bg-[var(--error-light)] disabled:opacity-60"
+                      >
+                        {deletingTaskId === selectedTask.id ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
