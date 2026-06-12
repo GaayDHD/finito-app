@@ -1592,6 +1592,18 @@ function App() {
   }
 
   const selectedTask = selectedTaskId ? tasks.find((task) => task.id === selectedTaskId) ?? null : null
+  const selectedTaskLinkedBlockerIds = selectedTask
+    ? dependencies
+        .filter((dependency) => dependency.task_id === selectedTask.id)
+        .map((dependency) => dependency.depends_on_task_id)
+    : []
+  const selectedTaskAvailableBlockers = selectedTask
+    ? tasks.filter(
+        (candidateTask) =>
+          candidateTask.id !== selectedTask.id &&
+          !selectedTaskLinkedBlockerIds.includes(candidateTask.id),
+      )
+    : []
 
   return (
     <main className="min-h-screen bg-[var(--surface-muted)] text-[var(--text-primary)]">
@@ -1863,6 +1875,26 @@ function App() {
                   ) : (
                     <p className="mt-3 text-sm text-[var(--text-secondary)]">This task is not blocked.</p>
                   )}
+
+                  <select
+                    aria-label={`Add blocker for ${selectedTask.title}`}
+                    defaultValue=""
+                    disabled={addingDependencyTaskId === selectedTask.id || selectedTaskAvailableBlockers.length === 0}
+                    onChange={(event) => {
+                      addTaskDependency(selectedTask.id, event.target.value)
+                      event.currentTarget.value = ''
+                    }}
+                    className="mt-3 w-full cursor-pointer rounded-lg border border-[var(--outline-soft)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <option value="">
+                      {addingDependencyTaskId === selectedTask.id ? 'Adding blocker…' : 'Add blocker'}
+                    </option>
+                    {selectedTaskAvailableBlockers.map((candidateTask) => (
+                      <option key={candidateTask.id} value={candidateTask.id}>
+                        {candidateTask.title}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="mt-4 rounded-2xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-4">
