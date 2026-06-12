@@ -1009,583 +1009,64 @@ function App() {
   }
 
   function renderTask(task: Task) {
-    const isEditing = editingTaskId === task.id
     const blockingTasks = getBlockingTasks(task.id)
-    const blockedTasks = getBlockedTasks(task.id)
-    const linkedBlockerIds = dependencies
-      .filter((dependency) => dependency.task_id === task.id)
-      .map((dependency) => dependency.depends_on_task_id)
-    const availableBlockers = tasks.filter(
-      (candidateTask) =>
-        candidateTask.id !== task.id &&
-        !linkedBlockerIds.includes(candidateTask.id),
-    )
     const taskIsOverdue = isTaskOverdue(task)
     const taskComments = getTaskComments(task.id)
     const subtasks = getSubtasks(task.id)
     const completedSubtasks = subtasks.filter((subtask) => subtask.status === 'done').length
-    const sectionTaskOrder = tasks
-      .filter((currentTask) => currentTask.section_id === task.section_id && currentTask.parent_task_id === task.parent_task_id)
-      .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-    const taskOrderIndex = sectionTaskOrder.findIndex((currentTask) => currentTask.id === task.id)
-    const canMoveUp = taskOrderIndex > 0
-    const canMoveDown = taskOrderIndex >= 0 && taskOrderIndex < sectionTaskOrder.length - 1
 
     return (
       <article
         key={task.id}
-        className={`border-b border-slate-100 bg-white px-4 py-3 transition hover:bg-[var(--surface-muted)] ${
-          blockingTasks.length > 0 || taskIsOverdue
-            ? 'border-[var(--error-main)]/35/30 hover:border-[var(--error-main)]/35/50'
-            : 'border-[var(--outline-soft)] hover:border-[#8051FF]/50'
-        }`}
+        className="border-b border-[var(--outline-soft)] bg-white px-4 py-3 transition hover:bg-[var(--surface-muted)]"
       >
-        <div className="space-y-2">
-          <div className="min-w-0">
-            {task.status === 'done' ? (
-              <button
-                type="button"
-                onClick={() => quickReopenTask(task)}
-                className="rounded-full border border-[var(--warning-main)]/25 bg-[var(--warning-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--warning-dark)] transition hover:border-amber-300/40"
-              >
-                Reopen
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => quickSetTaskDone(task)}
-                className="rounded-full border border-[var(--success-main)]/25 bg-[var(--success-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--success-dark)] transition hover:border-emerald-300/40"
-              >
-                Mark done
-              </button>
-            )}
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-sm font-semibold">{task.title}</h3>
+          <span className="rounded-full bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-semibold text-[var(--text-secondary)]">
+            {getLabel(statusOptions, task.status)}
+          </span>
+          {task.priority && (
+            <span className="rounded-full border border-[var(--primary-main)]/30 bg-[var(--primary-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--primary-main)]">
+              {getLabel(priorityOptions, task.priority)}
+            </span>
+          )}
+          {task.archived_at && (
+            <span className="rounded-full bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-semibold text-[var(--text-muted)]">
+              Archived
+            </span>
+          )}
+          {taskIsOverdue && (
+            <span className="rounded-full border border-[var(--error-main)]/35 bg-[var(--error-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--error-dark)]">
+              Overdue
+            </span>
+          )}
+          {blockingTasks.length > 0 && (
+            <span className="rounded-full border border-[var(--error-main)]/35 bg-[var(--error-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--error-dark)]">
+              Blocked by {blockingTasks.length}
+            </span>
+          )}
+        </div>
 
-            <button
-              type="button"
-              disabled={!canMoveUp || movingTaskId === task.id}
-              onClick={() => moveTask(task.id, 'up')}
-              className="rounded-full border border-[var(--outline-soft)] bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-semibold text-zinc-200 transition hover:border-[#8051FF]/50 disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-            >
-              Move up
-            </button>
+        {task.description && (
+          <p className="mt-1 max-w-3xl truncate text-xs leading-5 text-[var(--text-disabled)]">{task.description}</p>
+        )}
 
-            <button
-              type="button"
-              disabled={!canMoveDown || movingTaskId === task.id}
-              onClick={() => moveTask(task.id, 'down')}
-              className="rounded-full border border-[var(--outline-soft)] bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-semibold text-zinc-200 transition hover:border-[#8051FF]/50 disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-            >
-              Move down
-            </button>
-
-            <button
-              type="button"
-              disabled={duplicatingTaskId === task.id}
-              onClick={() => duplicateTask(task)}
-              className="rounded-full border border-[var(--primary-main)]/30 bg-[var(--primary-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--primary-main)] transition hover:border-[#8051FF]/50 disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-            >
-              {duplicatingTaskId === task.id ? 'Duplicating…' : 'Duplicate'}
-            </button>
-
-            {isEditing ? (
-              <div className="space-y-2">
-                <input
-                  value={editTitle}
-                  onChange={(event) => setEditTitle(event.target.value)}
-                  className="w-full rounded-lg border border-[var(--outline-soft)] bg-[var(--surface-muted)] px-3 py-2 text-sm font-semibold text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--primary-main)]"
-                />
-
-                <textarea
-                  value={editDescription}
-                  onChange={(event) => setEditDescription(event.target.value)}
-                  rows={3}
-                  placeholder="Description"
-                  className="w-full resize-none rounded-lg border border-[var(--outline-soft)] bg-[var(--surface-muted)] px-3 py-2 text-sm leading-6 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--primary-main)]"
-                />
-
-                <div className="grid gap-3 md:grid-cols-3">
-                  <select
-                    value={editDifficulty}
-                    onChange={(event) => setEditDifficulty(event.target.value)}
-                    className="rounded-lg border border-[var(--outline-soft)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary-main)]"
-                  >
-                    {difficultyOptions.map((difficulty) => (
-                      <option key={difficulty.value} value={difficulty.value} className="bg-white text-[var(--text-primary)]">
-                        {difficulty.label}
-                      </option>
-                    ))}
-                  </select>
-
-                  <input
-                    type="date"
-                    value={editStartDate}
-                    onChange={(event) => setEditStartDate(event.target.value)}
-                    className="rounded-lg border border-[var(--outline-soft)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary-main)]"
-                  />
-
-                  <input
-                    type="date"
-                    value={editDueDate}
-                    onChange={(event) => setEditDueDate(event.target.value)}
-                    className="rounded-lg border border-[var(--outline-soft)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary-main)]"
-                  />
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-sm font-semibold">{task.title}</h3>
-                  {task.archived_at && (
-                    <span className="rounded-full border border-zinc-300/10 bg-[var(--surface-subtle)] px-3 py-1 text-xs font-semibold text-[var(--text-muted)]">
-                      Archived
-                    </span>
-                  )}
-                  {taskIsOverdue && (
-                    <span className="rounded-full border border-[var(--error-main)]/35 bg-[var(--error-light)] px-3 py-1 text-xs font-semibold text-[var(--error-dark)]">
-                      Overdue
-                    </span>
-                  )}
-                </div>
-
-                {task.description && (
-                  <p className="mt-1 max-w-3xl truncate text-xs leading-5 text-[var(--text-disabled)]">{task.description}</p>
-                )}
-
-                <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
-                  <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[var(--text-disabled)]">
-                    Difficulty: {getLabel(difficultyOptions, task.difficulty)}
-                  </span>
-                  <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[var(--text-disabled)]">
-                    Start: {formatDate(task.start_date)}
-                  </span>
-                  <span className={`rounded-full px-3 py-1 ${taskIsOverdue ? 'bg-[var(--error-light)] text-[var(--error-dark)]' : 'bg-[var(--surface-subtle)] text-[var(--text-disabled)]'}`}>
-                    Due: {formatDate(task.due_date)}
-                  </span>
-                  <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[var(--text-disabled)]">
-                    Comments: {taskComments.length}
-                  </span>
-                  <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[var(--text-disabled)]">
-                    Subtasks: {completedSubtasks}/{subtasks.length}
-                  </span>
-                </div>
-
-                {blockingTasks.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--error-dark)]/70">
-                      Blocked by
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {blockingTasks.map(({ dependency, task: blockingTask }) => (
-                        <span
-                          key={dependency.id}
-                          className="inline-flex items-center gap-2 rounded-full border border-[var(--error-main)]/35 bg-[var(--error-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--error-dark)]"
-                        >
-                          {blockingTask?.title}
-                          <button
-                            type="button"
-                            disabled={removingDependencyId === dependency.id}
-                            onClick={() => removeTaskDependency(dependency.id)}
-                            className="text-[var(--error-dark)]/70 transition hover:text-[var(--error-dark)] disabled:opacity-65"
-                            aria-label={`Remove blocker ${blockingTask?.title}`}
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {blockedTasks.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--primary-main)]/70">
-                      Blocks
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {blockedTasks.map(({ dependency, task: blockedTask }) => (
-                        <span
-                          key={dependency.id}
-                          className="inline-flex items-center gap-2 rounded-full border border-[var(--primary-main)]/30 bg-[var(--primary-light)] px-2.5 py-1 text-[11px] font-medium text-[var(--primary-main)]"
-                        >
-                          {blockedTask?.title}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          <div className="rounded-lg border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
-                Subtasks
-              </p>
-              <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs text-[var(--text-disabled)]">
-                {completedSubtasks}/{subtasks.length}
-              </span>
-            </div>
-
-            {subtasks.length > 0 && (
-              <div className="mb-3 space-y-2">
-                {subtasks.map((subtask) => {
-                  const subtaskIndex = subtasks.findIndex((currentSubtask) => currentSubtask.id === subtask.id)
-                  const canMoveSubtaskUp = subtaskIndex > 0
-                  const canMoveSubtaskDown = subtaskIndex >= 0 && subtaskIndex < subtasks.length - 1
-
-                  return (
-                    <div
-                      key={subtask.id}
-                      className="rounded-lg border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-3"
-                    >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-zinc-100">{subtask.title}</p>
-                        <p className="mt-1 text-xs text-[var(--text-muted)]">
-                          {getLabel(statusOptions, subtask.status)} · {subtask.priority ? getLabel(priorityOptions, subtask.priority) : 'No priority'}
-                        </p>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          disabled={!canMoveSubtaskUp || movingTaskId === subtask.id}
-                          onClick={() => moveTask(subtask.id, 'up')}
-                          className="rounded-full border border-[var(--outline-soft)] bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-semibold text-zinc-200 transition hover:border-[#8051FF]/50 disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-                        >
-                          Move up
-                        </button>
-
-                        <button
-                          type="button"
-                          disabled={!canMoveSubtaskDown || movingTaskId === subtask.id}
-                          onClick={() => moveTask(subtask.id, 'down')}
-                          className="rounded-full border border-[var(--outline-soft)] bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-semibold text-zinc-200 transition hover:border-[#8051FF]/50 disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-                        >
-                          Move down
-                        </button>
-
-                        {subtask.status === 'done' ? (
-                          <button
-                            type="button"
-                            onClick={() => quickReopenTask(subtask)}
-                            className="rounded-full border border-[var(--warning-main)]/25 bg-[var(--warning-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--warning-dark)] transition hover:border-amber-300/40"
-                          >
-                            Reopen
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => quickSetTaskDone(subtask)}
-                            className="rounded-full border border-[var(--success-main)]/25 bg-[var(--success-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--success-dark)] transition hover:border-emerald-300/40"
-                          >
-                            Mark done
-                          </button>
-                        )}
-
-                        <label className="flex items-center gap-2 rounded-full border border-[var(--outline-soft)] bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-medium text-zinc-200">
-                          <span className="text-[var(--text-muted)]">Status</span>
-                          <select
-                            aria-label={`Status for ${subtask.title}`}
-                            value={subtask.status}
-                            disabled={updatingStatusTaskId === subtask.id}
-                            onChange={(event) => updateTaskStatus(subtask.id, event.target.value)}
-                            className="cursor-pointer appearance-auto bg-transparent text-xs font-semibold text-zinc-100 outline-none disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-                          >
-                            {statusOptions.map((status) => (
-                              <option key={status.value} value={status.value} className="bg-white text-[var(--text-primary)]">
-                                {status.label}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-
-                        <label className="flex items-center gap-2 rounded-full border border-[var(--primary-main)]/30 bg-[var(--primary-light)] px-2.5 py-1 text-[11px] font-medium text-[var(--primary-main)]">
-                          <span className="text-[var(--primary-main)]/60">Priority</span>
-                          <select
-                            aria-label={`Priority for ${subtask.title}`}
-                            value={subtask.priority ?? ''}
-                            disabled={updatingPriorityTaskId === subtask.id}
-                            onChange={(event) => updateTaskPriority(subtask.id, event.target.value)}
-                            className="cursor-pointer appearance-auto bg-transparent text-xs font-semibold text-[var(--primary-main)] outline-none disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-                          >
-                            <option value="" className="bg-white text-[var(--text-primary)]">
-                              No priority
-                            </option>
-                            {priorityOptions.map((priority) => (
-                              <option key={priority.value} value={priority.value} className="bg-white text-[var(--text-primary)]">
-                                {priority.label}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-
-                        <button
-                          type="button"
-                          disabled={deletingTaskId === subtask.id}
-                          onClick={() => deleteTask(subtask.id)}
-                          className="rounded-full border border-[var(--error-main)]/25 bg-[var(--error-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--error-dark)] transition hover:border-[var(--error-main)]/35/40 disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-                        >
-                          {deletingTaskId === subtask.id ? 'Deleting…' : 'Delete'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )
-                })}
-              </div>
-            )}
-
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <input
-                value={subtaskDrafts[task.id] ?? ''}
-                onChange={(event) =>
-                  setSubtaskDrafts((currentDrafts) => ({
-                    ...currentDrafts,
-                    [task.id]: event.target.value,
-                  }))
-                }
-                placeholder="Add a subtask"
-                className="min-w-0 flex-1 rounded-lg border border-[var(--outline-soft)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--primary-main)]"
-              />
-              <button
-                type="button"
-                disabled={creatingSubtaskTaskId === task.id || !(subtaskDrafts[task.id] ?? '').trim()}
-                onClick={() => createSubtask(task)}
-                className="rounded-lg bg-[var(--surface-subtle)] px-3 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/15 disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-              >
-                {creatingSubtaskTaskId === task.id ? 'Adding…' : 'Add subtask'}
-              </button>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
-                Comments
-              </p>
-              <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-xs text-[var(--text-disabled)]">
-                {taskComments.length}
-              </span>
-            </div>
-
-            {taskComments.length > 0 && (
-              <div className="mb-3 space-y-2">
-                {taskComments.map((comment) => (
-                  <div
-                    key={comment.id}
-                    className="flex items-start justify-between gap-3 rounded-lg bg-[var(--surface-muted)] px-4 py-3"
-                  >
-                    <div>
-                      <p className="text-sm leading-6 text-zinc-200">{comment.body}</p>
-                      <p className="mt-1 text-xs text-[var(--text-muted)]">
-                        {comment.created_at
-                          ? new Intl.DateTimeFormat('en-AU', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                            }).format(new Date(comment.created_at))
-                          : 'No date'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={deletingCommentId === comment.id}
-                      onClick={() => deleteComment(comment.id)}
-                      className="shrink-0 text-xs font-semibold text-[var(--error-dark)]/70 transition hover:text-[var(--error-dark)] disabled:opacity-65"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <input
-                value={commentDrafts[task.id] ?? ''}
-                onChange={(event) =>
-                  setCommentDrafts((currentDrafts) => ({
-                    ...currentDrafts,
-                    [task.id]: event.target.value,
-                  }))
-                }
-                placeholder="Add a comment"
-                className="min-w-0 flex-1 rounded-lg border border-[var(--outline-soft)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--primary-main)]"
-              />
-              <button
-                type="button"
-                disabled={addingCommentTaskId === task.id}
-                onClick={() => addComment(task.id)}
-                className="rounded-lg bg-[var(--surface-subtle)] px-3 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/15 disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-              >
-                {addingCommentTaskId === task.id ? 'Adding…' : 'Comment'}
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 border-t border-[var(--outline-soft)] pt-4">
-            <label className="flex items-center gap-2 rounded-full border border-[var(--outline-soft)] bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-medium text-zinc-200 transition hover:border-[#8051FF]/50">
-              <span className="text-[var(--text-muted)]">Section</span>
-              <select
-                aria-label={`Section for ${task.title}`}
-                value={task.section_id ?? ''}
-                disabled={updatingSectionTaskId === task.id}
-                onChange={(event) => updateTaskSection(task.id, event.target.value)}
-                className="cursor-pointer appearance-auto bg-transparent text-xs font-semibold text-zinc-100 outline-none disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-              >
-                {sections.map((section) => (
-                  <option key={section.id} value={section.id} className="bg-white text-[var(--text-primary)]">
-                    {section.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="flex items-center gap-2 rounded-full border border-[var(--outline-soft)] bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-medium text-zinc-200 transition hover:border-[#8051FF]/50">
-              <span className="text-[var(--text-muted)]">Status</span>
-              <select
-                aria-label={`Status for ${task.title}`}
-                value={task.status}
-                disabled={updatingStatusTaskId === task.id}
-                onChange={(event) => updateTaskStatus(task.id, event.target.value)}
-                className="cursor-pointer appearance-auto bg-transparent text-xs font-semibold text-zinc-100 outline-none disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-              >
-                {statusOptions.map((status) => (
-                  <option key={status.value} value={status.value} className="bg-white text-[var(--text-primary)]">
-                    {status.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            {task.priority && (
-              <label className="flex items-center gap-2 rounded-full border border-[var(--primary-main)]/30 bg-[var(--primary-light)] px-2.5 py-1 text-[11px] font-medium text-[var(--primary-main)] transition hover:border-[#8051FF]/50">
-                <span className="text-[var(--primary-main)]/60">Priority</span>
-                <select
-                  aria-label={`Priority for ${task.title}`}
-                  value={task.priority}
-                  disabled={updatingPriorityTaskId === task.id}
-                  onChange={(event) => updateTaskPriority(task.id, event.target.value)}
-                  className="cursor-pointer appearance-auto bg-transparent text-xs font-semibold text-[var(--primary-main)] outline-none disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-                >
-                  {priorityOptions.map((priority) => (
-                    <option key={priority.value} value={priority.value} className="bg-white text-[var(--text-primary)]">
-                      {priority.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-
-            <label className="flex items-center gap-2 rounded-full border border-[var(--error-main)]/35 bg-[var(--error-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--error-dark)] transition hover:border-[var(--error-main)]/35/40">
-              <span className="text-[var(--error-dark)]/60">Blocked by</span>
-              <select
-                aria-label={`Add blocker for ${task.title}`}
-                defaultValue=""
-                disabled={addingDependencyTaskId === task.id || availableBlockers.length === 0}
-                onChange={(event) => {
-                  addTaskDependency(task.id, event.target.value)
-                  event.currentTarget.value = ''
-                }}
-                className="cursor-pointer appearance-auto bg-transparent text-xs font-semibold text-[var(--error-dark)] outline-none disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-              >
-                <option value="" className="bg-white text-[var(--text-primary)]">
-                  Add blocker
-                </option>
-                {availableBlockers.map((candidateTask) => (
-                  <option key={candidateTask.id} value={candidateTask.id} className="bg-white text-[var(--text-primary)]">
-                    {candidateTask.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <button
-              type="button"
-              disabled={!canMoveUp || movingTaskId === task.id}
-              onClick={() => moveTask(task.id, 'up')}
-              className="rounded-full border border-[var(--outline-soft)] bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-semibold text-zinc-200 transition hover:border-[#8051FF]/50 disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-            >
-              Move up
-            </button>
-
-            <button
-              type="button"
-              disabled={!canMoveDown || movingTaskId === task.id}
-              onClick={() => moveTask(task.id, 'down')}
-              className="rounded-full border border-[var(--outline-soft)] bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-semibold text-zinc-200 transition hover:border-[#8051FF]/50 disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-            >
-              Move down
-            </button>
-
-            <button
-              type="button"
-              disabled={duplicatingTaskId === task.id}
-              onClick={() => duplicateTask(task)}
-              className="rounded-full border border-[var(--primary-main)]/30 bg-[var(--primary-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--primary-main)] transition hover:border-[#8051FF]/50 disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-            >
-              {duplicatingTaskId === task.id ? 'Duplicating…' : 'Duplicate'}
-            </button>
-
-            {isEditing ? (
-              <>
-                <button
-                  type="button"
-                  disabled={savingTaskId === task.id}
-                  onClick={() => saveTaskEdits(task.id)}
-                  className="rounded-full border border-[var(--success-main)]/25 bg-[var(--success-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--success-dark)] transition hover:border-emerald-300/40 hover:bg-emerald-400/15 disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-                >
-                  {savingTaskId === task.id ? 'Saving…' : 'Save'}
-                </button>
-                <button
-                  type="button"
-                  onClick={cancelEditingTask}
-                  className="rounded-full border border-[var(--outline-soft)] bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-semibold text-zinc-200 transition hover:border-white/30"
-                >
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => startEditingTask(task)}
-                className="rounded-full border border-[var(--outline-soft)] bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-semibold text-zinc-200 transition hover:border-[#8051FF]/50"
-              >
-                Edit
-              </button>
-            )}
-
-            {task.archived_at ? (
-              <button
-                type="button"
-                disabled={archivingTaskId === task.id}
-                onClick={() => restoreTask(task)}
-                className="rounded-full border border-[var(--success-main)]/25 bg-[var(--success-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--success-dark)] transition hover:border-emerald-300/40 disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-              >
-                {archivingTaskId === task.id ? 'Restoring…' : 'Restore'}
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled={archivingTaskId === task.id}
-                onClick={() => archiveTask(task)}
-                className="rounded-full border border-[var(--outline-soft)] bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-semibold text-zinc-200 transition hover:border-[#8051FF]/50 disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-              >
-                {archivingTaskId === task.id ? 'Archiving…' : 'Archive'}
-              </button>
-            )}
-
-            <button
-              type="button"
-              disabled={deletingTaskId === task.id}
-              onClick={() => deleteTask(task.id)}
-              className="rounded-full border border-[var(--error-main)]/25 bg-[var(--error-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--error-dark)] transition hover:border-[var(--error-main)]/35/40 hover:bg-red-400/15 disabled:cursor-not-allowed disabled:border-[var(--outline-soft)] disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)] disabled:opacity-100"
-            >
-              {deletingTaskId === task.id ? 'Deleting…' : 'Delete'}
-            </button>
-          </div>
+        <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+          <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[var(--text-disabled)]">
+            Scope: {getLabel(difficultyOptions, task.difficulty)}
+          </span>
+          <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[var(--text-disabled)]">
+            Start: {formatDate(task.start_date)}
+          </span>
+          <span className={`rounded-full px-3 py-1 ${taskIsOverdue ? 'bg-[var(--error-light)] text-[var(--error-dark)]' : 'bg-[var(--surface-subtle)] text-[var(--text-disabled)]'}`}>
+            Due: {formatDate(task.due_date)}
+          </span>
+          <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[var(--text-disabled)]">
+            Comments: {taskComments.length}
+          </span>
+          <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[var(--text-disabled)]">
+            Subtasks: {completedSubtasks}/{subtasks.length}
+          </span>
         </div>
       </article>
     )
