@@ -1604,6 +1604,21 @@ function App() {
           !selectedTaskLinkedBlockerIds.includes(candidateTask.id),
       )
     : []
+  const selectedTaskSiblings = selectedTask
+    ? tasks
+        .filter(
+          (currentTask) =>
+            currentTask.section_id === selectedTask.section_id &&
+            currentTask.parent_task_id === selectedTask.parent_task_id,
+        )
+        .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+    : []
+  const selectedTaskOrderIndex = selectedTask
+    ? selectedTaskSiblings.findIndex((currentTask) => currentTask.id === selectedTask.id)
+    : -1
+  const selectedTaskCanMoveUp = selectedTaskOrderIndex > 0
+  const selectedTaskCanMoveDown =
+    selectedTaskOrderIndex >= 0 && selectedTaskOrderIndex < selectedTaskSiblings.length - 1
 
   return (
     <main className="min-h-screen bg-[var(--surface-muted)] text-[var(--text-primary)]">
@@ -1759,6 +1774,22 @@ function App() {
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Due</p>
                     <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{formatDate(selectedTask.due_date)}</p>
                   </div>
+                  <div className="rounded-2xl border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-4 sm:col-span-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Section</p>
+                    <select
+                      aria-label={`Section for ${selectedTask.title}`}
+                      value={selectedTask.section_id ?? ''}
+                      disabled={updatingSectionTaskId === selectedTask.id}
+                      onChange={(event) => updateTaskSection(selectedTask.id, event.target.value)}
+                      className="mt-2 w-full cursor-pointer rounded-lg border border-[var(--outline-soft)] bg-[var(--background-paper)] px-2 py-1.5 text-sm font-semibold text-[var(--text-primary)] outline-none transition focus:border-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {sections.map((section) => (
+                        <option key={section.id} value={section.id}>
+                          {section.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="mt-6 rounded-2xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-4">
@@ -1773,10 +1804,35 @@ function App() {
                     <div className="mt-3 space-y-2">
                       {getSubtasks(selectedTask.id).map((subtask) => (
                         <div key={subtask.id} className="rounded-xl border border-[var(--outline-soft)] bg-[var(--surface-muted)] px-3 py-2">
-                          <p className="text-sm font-semibold text-[var(--text-primary)]">{subtask.title}</p>
-                          <p className="mt-1 text-xs text-[var(--text-secondary)]">
-                            {getLabel(statusOptions, subtask.status)} · {getLabel(priorityOptions, subtask.priority)}
-                          </p>
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm font-semibold text-[var(--text-primary)]">{subtask.title}</p>
+                            <button
+                              type="button"
+                              disabled={deletingTaskId === subtask.id}
+                              onClick={() => deleteTask(subtask.id)}
+                              className="shrink-0 text-xs font-semibold text-[var(--error-dark)]/70 transition hover:text-[var(--error-dark)] disabled:opacity-65"
+                            >
+                              {deletingTaskId === subtask.id ? 'Deleting…' : 'Delete'}
+                            </button>
+                          </div>
+                          <div className="mt-2 flex items-center gap-2">
+                            <select
+                              aria-label={`Status for ${subtask.title}`}
+                              value={subtask.status}
+                              disabled={updatingStatusTaskId === subtask.id}
+                              onChange={(event) => updateTaskStatus(subtask.id, event.target.value)}
+                              className="cursor-pointer rounded-lg border border-[var(--outline-soft)] bg-[var(--background-paper)] px-2 py-1 text-xs font-semibold text-[var(--text-primary)] outline-none transition focus:border-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {statusOptions.map((status) => (
+                                <option key={status.value} value={status.value}>
+                                  {status.label}
+                                </option>
+                              ))}
+                            </select>
+                            <span className="text-xs text-[var(--text-secondary)]">
+                              {subtask.priority ? getLabel(priorityOptions, subtask.priority) : 'No priority'}
+                            </span>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -2034,6 +2090,51 @@ function App() {
                         className="rounded-full border border-[var(--outline-soft)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-subtle)]"
                       >
                         Edit details
+                      </button>
+
+                      {selectedTask.status === 'done' ? (
+                        <button
+                          type="button"
+                          onClick={() => quickReopenTask(selectedTask)}
+                          className="rounded-full border border-[var(--warning-main)]/25 bg-[var(--warning-light)] px-4 py-2 text-sm font-semibold text-[var(--warning-dark)] transition hover:opacity-90"
+                        >
+                          Reopen
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => quickSetTaskDone(selectedTask)}
+                          className="rounded-full border border-[var(--success-main)]/25 bg-[var(--success-light)] px-4 py-2 text-sm font-semibold text-[var(--success-dark)] transition hover:opacity-90"
+                        >
+                          Mark done
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        disabled={duplicatingTaskId === selectedTask.id}
+                        onClick={() => duplicateTask(selectedTask)}
+                        className="rounded-full border border-[var(--outline-soft)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-subtle)] disabled:opacity-60"
+                      >
+                        {duplicatingTaskId === selectedTask.id ? 'Duplicating…' : 'Duplicate'}
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={!selectedTaskCanMoveUp || movingTaskId === selectedTask.id}
+                        onClick={() => moveTask(selectedTask.id, 'up')}
+                        className="rounded-full border border-[var(--outline-soft)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-subtle)] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Move up
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={!selectedTaskCanMoveDown || movingTaskId === selectedTask.id}
+                        onClick={() => moveTask(selectedTask.id, 'down')}
+                        className="rounded-full border border-[var(--outline-soft)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-subtle)] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Move down
                       </button>
 
                       {selectedTask.archived_at ? (
