@@ -1,11 +1,13 @@
 type AppHeaderProps = {
   viewMode: 'card' | 'table'
   setViewMode: (viewMode: 'card' | 'table') => void
+  onSignOut: () => void
 }
 
 export function AppHeader({
   viewMode,
   setViewMode,
+  onSignOut,
 }: AppHeaderProps) {
   const tabClass = (isActive: boolean) =>
     `relative z-10 flex h-10 min-w-[72px] items-center justify-center rounded-xl px-3 text-sm transition ${
@@ -89,6 +91,13 @@ export function AppHeader({
             placeholder="Search..."
             className="hidden h-14 w-full max-w-[220px] cursor-not-allowed rounded-2xl border border-[var(--outline)] bg-[var(--background-paper)] px-4 text-sm text-[var(--text-disabled)] opacity-50 outline-none placeholder:text-[var(--text-disabled)] lg:block"
           />
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="h-14 shrink-0 rounded-2xl border border-[var(--outline)] bg-[var(--background-paper)] px-4 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
+          >
+            Sign out
+          </button>
         </div>
       </div>
 

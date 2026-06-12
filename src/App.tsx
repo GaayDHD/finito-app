@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
+import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
 import type { ActivityLog, Section, Task, TaskComment, TaskDependency, Workspace } from './types'
 import { difficultyOptions, priorityOptions, statusOptions } from './constants'
@@ -10,9 +11,12 @@ import { CreateTaskForm } from './components/CreateTaskForm'
 import { TaskList } from './components/TaskList'
 import { WorkspaceSidebar } from './components/WorkspaceSidebar'
 import { AppHeader } from './components/AppHeader'
+import { AuthScreen } from './components/AuthScreen'
 import './App.css'
 
 function App() {
+  const [session, setSession] = useState<Session | null>(null)
+  const [authReady, setAuthReady] = useState(false)
   const [tasks, setTasks] = useState<Task[]>([])
   const [sections, setSections] = useState<Section[]>([])
   const [dependencies, setDependencies] = useState<TaskDependency[]>([])
@@ -308,9 +312,39 @@ function App() {
   }
 
   useEffect(() => {
-    loadProjectAndTasks()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+      setAuthReady(true)
+    })
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession)
+    })
+
+    return () => {
+      authListener.subscription.unsubscribe()
+    }
   }, [])
+
+  useEffect(() => {
+    if (session) {
+      loadProjectAndTasks()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user.id])
+
+  async function signOut() {
+    setSelectedTaskId(null)
+    setWorkspaceId(null)
+    setProjectId(null)
+    setWorkspaces([])
+    setTasks([])
+    setSections([])
+    setComments([])
+    setDependencies([])
+    setActivityLogs([])
+    await supabase.auth.signOut()
+  }
 
   async function createTask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -587,7 +621,7 @@ function App() {
 
     const { data: workspace, error } = await supabase
       .from('workspaces')
-      .insert({ name })
+      .insert({ name, owner_id: session?.user.id })
       .select('id, name')
       .single()
 
@@ -1192,11 +1226,20 @@ function App() {
   const selectedTaskCanMoveDown =
     selectedTaskOrderIndex >= 0 && selectedTaskOrderIndex < selectedTaskSiblings.length - 1
 
+  if (!authReady) {
+    return <main className="min-h-screen bg-[var(--surface-muted)]" />
+  }
+
+  if (!session) {
+    return <AuthScreen />
+  }
+
   return (
     <main className="min-h-screen bg-[var(--surface-muted)] text-[var(--text-primary)]">
       <AppHeader
         viewMode={viewMode}
         setViewMode={setViewMode}
+        onSignOut={signOut}
       />
 
       <section className="mx-auto max-w-[1600px] px-5 py-5">
