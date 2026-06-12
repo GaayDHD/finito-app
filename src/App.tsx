@@ -1720,11 +1720,36 @@ function App() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-2xl border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Status</p>
-                    <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{getLabel(statusOptions, selectedTask.status)}</p>
+                    <select
+                      aria-label={`Status for ${selectedTask.title}`}
+                      value={selectedTask.status}
+                      disabled={updatingStatusTaskId === selectedTask.id}
+                      onChange={(event) => updateTaskStatus(selectedTask.id, event.target.value)}
+                      className="mt-2 w-full cursor-pointer rounded-lg border border-[var(--outline-soft)] bg-[var(--background-paper)] px-2 py-1.5 text-sm font-semibold text-[var(--text-primary)] outline-none transition focus:border-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {statusOptions.map((status) => (
+                        <option key={status.value} value={status.value}>
+                          {status.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="rounded-2xl border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Priority</p>
-                    <p className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{getLabel(priorityOptions, selectedTask.priority)}</p>
+                    <select
+                      aria-label={`Priority for ${selectedTask.title}`}
+                      value={selectedTask.priority ?? ''}
+                      disabled={updatingPriorityTaskId === selectedTask.id}
+                      onChange={(event) => updateTaskPriority(selectedTask.id, event.target.value)}
+                      className="mt-2 w-full cursor-pointer rounded-lg border border-[var(--outline-soft)] bg-[var(--background-paper)] px-2 py-1.5 text-sm font-semibold text-[var(--text-primary)] outline-none transition focus:border-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <option value="">No priority</option>
+                      {priorityOptions.map((priority) => (
+                        <option key={priority.value} value={priority.value}>
+                          {priority.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="rounded-2xl border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Start</p>
