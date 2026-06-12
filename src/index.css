@@ -4,59 +4,71 @@
   color-scheme: light;
 
   /* Brand / primary */
-  --primary: #5E35B1;
-  --primary-main: #5E35B1;
-  --primary-light: #EDE7F6;
-  --primary-soft: #F4F0FF;
-  --primary-dark: #4527A0;
-  --primary-contrast: #FFFFFF;
+  --primary: #6600ff;
+  --primary-main: #6600ff;
+  --primary-light: #efe6ff;
+  --primary-soft: #f7f2ff;
+  --primary-dark: #5200cc;
+  --primary-contrast: #ffffff;
 
   /* Secondary accent, used sparingly */
-  --secondary-main: #7B1FA2;
-  --secondary-light: #F3E5F5;
-  --secondary-dark: #4A148C;
-  --secondary-contrast: #FFFFFF;
+  --secondary-main: #bf5af2;
+  --secondary-light: #f7ebfd;
+  --secondary-dark: #8e24c9;
+  --secondary-contrast: #ffffff;
 
-  /* Material-style semantic colours */
-  --success-main: #2E7D32;
-  --success-light: #E8F5E9;
-  --success-dark: #1B5E20;
-  --success-contrast: #FFFFFF;
+  /* Apple-style semantic colours */
+  --success-main: #34c759;
+  --success-light: #e6f8eb;
+  --success-dark: #1f8a3d;
+  --success-contrast: #ffffff;
 
-  --warning-main: #ED6C02;
-  --warning-light: #FFF4E5;
-  --warning-dark: #E65100;
-  --warning-contrast: #1F2933;
+  --warning-main: #ff9500;
+  --warning-light: #fff3e0;
+  --warning-dark: #c25e00;
+  --warning-contrast: #1d1d1f;
 
-  --error-main: #D32F2F;
-  --error-light: #FDECEA;
-  --error-dark: #B71C1C;
-  --error-contrast: #FFFFFF;
+  --error-main: #ff3b30;
+  --error-light: #ffe9e7;
+  --error-dark: #c62e25;
+  --error-contrast: #ffffff;
 
-  --info-main: #0288D1;
-  --info-light: #E5F4FB;
-  --info-dark: #01579B;
-  --info-contrast: #FFFFFF;
+  --info-main: #0a84ff;
+  --info-light: #e5f1ff;
+  --info-dark: #0860c4;
+  --info-contrast: #ffffff;
 
   /* Neutral system */
-  --background-default: #F6F7F9;
-  --background-paper: #FFFFFF;
-  --surface-muted: #F8FAFC;
-  --surface-subtle: #F1F5F9;
-  --outline: #D6DEE8;
-  --outline-soft: #E5EAF0;
+  --background-default: #f5f5f7;
+  --background-paper: #ffffff;
+  --surface-muted: #f5f5f7;
+  --surface-subtle: #ededf0;
+  --outline: rgba(29, 29, 31, 0.13);
+  --outline-soft: rgba(29, 29, 31, 0.09);
 
-  --text-primary: #111827;
-  --text-secondary: #334155;
-  --text-muted: #64748B;
-  --text-disabled: #94A3B8;
+  --text-primary: #1d1d1f;
+  --text-secondary: rgba(29, 29, 31, 0.75);
+  --text-muted: rgba(29, 29, 31, 0.6);
+  --text-disabled: rgba(29, 29, 31, 0.44);
 
-  --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.08);
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 2px 24px rgba(0, 0, 0, 0.06), 0 24px 80px rgba(0, 0, 0, 0.08);
+
+  /* Asana-style dark sidebar */
+  --sidebar-bg: #1e1f21;
+  --sidebar-text: rgba(255, 255, 255, 0.85);
+  --sidebar-muted: rgba(255, 255, 255, 0.55);
+  --sidebar-faint: rgba(255, 255, 255, 0.38);
+  --sidebar-hover: rgba(255, 255, 255, 0.08);
+  --sidebar-active: rgba(150, 90, 255, 0.28);
+  --sidebar-active-text: #cfa9ff;
+  --sidebar-stroke: rgba(255, 255, 255, 0.1);
 
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-    "Segoe UI", sans-serif;
+    -apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont,
+    "Segoe UI", Helvetica, Arial, sans-serif;
 
+  -webkit-font-smoothing: antialiased;
   background: var(--background-default);
   color: var(--text-primary);
 }
@@ -77,7 +89,7 @@ textarea {
 }
 
 ::selection {
-  background: rgba(94, 53, 177, 0.18);
+  background: rgba(102, 0, 255, 0.15);
 }
 
 /* Shared readable defaults for form controls */

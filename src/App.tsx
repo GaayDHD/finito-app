@@ -1245,8 +1245,6 @@ function App() {
 
       <section className="mx-auto max-w-[1600px] px-5 py-5">
 
-        <DashboardStats stats={stats} onNewTaskClick={toggleCreateTaskForm} />
-
         <CreateTaskForm
           isOpen={isCreateTaskFormOpen}
           setIsOpen={(value) => {
@@ -1294,7 +1292,7 @@ function App() {
 
 
 
-        <div className="mb-4 grid items-stretch gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <div className="mb-4 grid items-stretch gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
           <WorkspaceSidebar
             sections={sections}
             tasks={tasks}
@@ -1317,6 +1315,9 @@ function App() {
             deleteSection={deleteSection}
           />
 
+          <div className="min-w-0 space-y-4">
+          <DashboardStats stats={stats} onNewTaskClick={toggleCreateTaskForm} />
+
           <TaskList
             viewMode={viewMode}
             groupedTasks={groupedTasks}
@@ -1334,6 +1335,7 @@ function App() {
             onOpenTask={setSelectedTaskId}
             renderTask={renderTask}
           />
+          </div>
 
           {selectedTask ? (
             <TaskDetailDrawer
