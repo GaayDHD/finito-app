@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { supabase } from './lib/supabase'
-import type { ActivityLog, Section, Task, TaskComment, TaskDependency } from './types'
+import type { ActivityLog, Section, Task, TaskComment, TaskDependency, Workspace } from './types'
 import { difficultyOptions, priorityOptions, statusOptions } from './constants'
 import { formatDate, getLabel, isTaskOverdue } from './utils'
 import { DashboardStats } from './components/DashboardStats'
@@ -18,6 +18,8 @@ function App() {
   const [dependencies, setDependencies] = useState<TaskDependency[]>([])
   const [comments, setComments] = useState<TaskComment[]>([])
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([])
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([])
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null)
   const [projectId, setProjectId] = useState<string | null>(null)
 
   const [isLoading, setIsLoading] = useState(true)
@@ -35,6 +37,8 @@ function App() {
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
   const [savingTaskId, setSavingTaskId] = useState<string | null>(null)
   const [creatingSection, setCreatingSection] = useState(false)
+  const [creatingWorkspace, setCreatingWorkspace] = useState(false)
+  const [newWorkspaceName, setNewWorkspaceName] = useState('')
   const [, setRenamingSectionId] = useState<string | null>(null)
   const [deletingSectionId, setDeletingSectionId] = useState<string | null>(null)
   const [addingCommentTaskId, setAddingCommentTaskId] = useState<string | null>(null)
@@ -169,7 +173,7 @@ function App() {
     }
   }
 
-  async function loadProjectAndTasks(options: { showLoading?: boolean } = {}) {
+  async function loadProjectAndTasks(options: { showLoading?: boolean; workspaceId?: string } = {}) {
     const shouldShowLoading = options.showLoading ?? true
 
     setErrorMessage(null)
@@ -178,14 +182,51 @@ function App() {
       setIsLoading(true)
     }
 
-    const { data: project, error: projectError } = await supabase
+    const { data: workspaceData, error: workspaceError } = await supabase
+      .from('workspaces')
+      .select('id, name')
+      .order('created_at', { ascending: true })
+
+    if (workspaceError) {
+      setErrorMessage(workspaceError.message)
+      setIsLoading(false)
+      return
+    }
+
+    setWorkspaces(workspaceData ?? [])
+
+    const targetWorkspaceId = options.workspaceId ?? workspaceId ?? workspaceData?.[0]?.id ?? null
+    const isWorkspaceSwitch = targetWorkspaceId !== workspaceId
+    setWorkspaceId(targetWorkspaceId)
+
+    if (!targetWorkspaceId) {
+      setProjectId(null)
+      setSections([])
+      setTasks([])
+      setIsLoading(false)
+      return
+    }
+
+    const { data: projectData, error: projectError } = await supabase
       .from('projects')
       .select('id')
-      .eq('name', 'Finito Build')
-      .single()
+      .eq('workspace_id', targetWorkspaceId)
+      .order('created_at', { ascending: true })
+      .limit(1)
 
     if (projectError) {
       setErrorMessage(projectError.message)
+      setIsLoading(false)
+      return
+    }
+
+    const project = projectData?.[0]
+
+    if (!project) {
+      setProjectId(null)
+      setSections([])
+      setTasks([])
+      setActivityLogs([])
       setIsLoading(false)
       return
     }
@@ -206,8 +247,8 @@ function App() {
 
     setSections(sectionData ?? [])
 
-    if (!taskSectionId && sectionData?.[0]?.id) {
-      setTaskSectionId(sectionData[0].id)
+    if ((isWorkspaceSwitch || !taskSectionId) && sectionData) {
+      setTaskSectionId(sectionData[0]?.id ?? '')
     }
 
     const { data, error } = await supabase
@@ -520,6 +561,56 @@ function App() {
 
   function getTaskComments(taskId: string) {
     return comments.filter((comment) => comment.task_id === taskId)
+  }
+
+  async function switchWorkspace(nextWorkspaceId: string) {
+    if (nextWorkspaceId === workspaceId) {
+      return
+    }
+
+    setSelectedTaskId(null)
+    await loadProjectAndTasks({ workspaceId: nextWorkspaceId })
+  }
+
+  async function createWorkspace(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    const name = newWorkspaceName.trim()
+
+    if (!name) {
+      setErrorMessage('Workspace name is required.')
+      return
+    }
+
+    setCreatingWorkspace(true)
+    setErrorMessage(null)
+
+    const { data: workspace, error } = await supabase
+      .from('workspaces')
+      .insert({ name })
+      .select('id, name')
+      .single()
+
+    if (error) {
+      setErrorMessage(error.message)
+      setCreatingWorkspace(false)
+      return
+    }
+
+    const { error: projectError } = await supabase
+      .from('projects')
+      .insert({ workspace_id: workspace.id, name: 'General' })
+
+    if (projectError) {
+      setErrorMessage(projectError.message)
+      setCreatingWorkspace(false)
+      return
+    }
+
+    setNewWorkspaceName('')
+    setCreatingWorkspace(false)
+    setSelectedTaskId(null)
+    await loadProjectAndTasks({ workspaceId: workspace.id })
   }
 
   async function createSection(event: FormEvent<HTMLFormElement>) {
@@ -1164,6 +1255,13 @@ function App() {
             sections={sections}
             tasks={tasks}
             activityLogs={activityLogs}
+            workspaces={workspaces}
+            currentWorkspaceId={workspaceId}
+            newWorkspaceName={newWorkspaceName}
+            setNewWorkspaceName={setNewWorkspaceName}
+            creatingWorkspace={creatingWorkspace}
+            createWorkspace={createWorkspace}
+            switchWorkspace={switchWorkspace}
             newSectionName={newSectionName}
             setNewSectionName={setNewSectionName}
             sectionDraftNames={sectionDraftNames}

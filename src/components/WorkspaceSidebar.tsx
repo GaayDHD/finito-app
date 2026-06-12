@@ -1,10 +1,17 @@
 import { useState } from 'react'
-import type { ActivityLog, Section, Task } from '../types'
+import type { ActivityLog, Section, Task, Workspace } from '../types'
 
 type WorkspaceSidebarProps = {
   sections: Section[]
   tasks: Task[]
   activityLogs: ActivityLog[]
+  workspaces: Workspace[]
+  currentWorkspaceId: string | null
+  newWorkspaceName: string
+  setNewWorkspaceName: (value: string) => void
+  creatingWorkspace: boolean
+  createWorkspace: (event: React.FormEvent<HTMLFormElement>) => void
+  switchWorkspace: (workspaceId: string) => void
   newSectionName: string
   setNewSectionName: (value: string) => void
   sectionDraftNames: Record<string, string>
@@ -20,6 +27,13 @@ export function WorkspaceSidebar({
   sections,
   tasks,
   activityLogs,
+  workspaces,
+  currentWorkspaceId,
+  newWorkspaceName,
+  setNewWorkspaceName,
+  creatingWorkspace,
+  createWorkspace,
+  switchWorkspace,
   newSectionName,
   setNewSectionName,
   sectionDraftNames,
@@ -30,9 +44,10 @@ export function WorkspaceSidebar({
   renameSection,
   deleteSection,
 }: WorkspaceSidebarProps) {
-  const [activeTool, setActiveTool] = useState<'sections' | 'activity'>('sections')
+  const [activeTool, setActiveTool] = useState<'workspaces' | 'sections' | 'activity'>('workspaces')
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null)
   const [isAddingSection, setIsAddingSection] = useState(false)
+  const [isAddingWorkspace, setIsAddingWorkspace] = useState(false)
   const [hoveredSectionId, setHoveredSectionId] = useState<string | null>(null)
   const [confirmDeleteSectionId, setConfirmDeleteSectionId] = useState<string | null>(null)
 
@@ -91,6 +106,18 @@ export function WorkspaceSidebar({
       <div className="space-y-2 p-3">
         <button
           type="button"
+          onClick={() => setActiveTool('workspaces')}
+          className={`w-full rounded-lg px-3 py-2 text-left text-sm font-semibold transition ${
+            activeTool === 'workspaces'
+              ? 'bg-[var(--primary-light)] text-[var(--primary-dark)]'
+              : 'text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]'
+          }`}
+        >
+          Workspaces
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTool('sections')}
           className={`w-full rounded-lg px-3 py-2 text-left text-sm font-semibold transition ${
             activeTool === 'sections'
@@ -115,23 +142,88 @@ export function WorkspaceSidebar({
       </div>
 
       <div className="border-t border-[var(--outline-soft)] p-3">
-        {activeTool === 'sections' ? (
+        {activeTool === 'workspaces' ? (
           <div className="space-y-2">
-            <div className="flex items-center justify-between px-1">
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">
-                Section Options
-              </p>
+            {workspaces.map((workspace) => {
+              const isCurrent = workspace.id === currentWorkspaceId
 
+              return (
+                <button
+                  key={workspace.id}
+                  type="button"
+                  onClick={() => switchWorkspace(workspace.id)}
+                  className={`flex min-h-8 w-full items-center justify-between gap-2 rounded-full border px-3 py-1.5 text-left transition ${
+                    isCurrent
+                      ? 'border-[var(--primary-main)]/35 bg-[var(--primary-light)]'
+                      : 'border-[var(--outline-soft)] bg-[var(--surface-subtle)] hover:border-[var(--outline)]'
+                  }`}
+                  title={isCurrent ? 'Current workspace' : 'Switch to this workspace'}
+                >
+                  <span
+                    className={`min-w-0 truncate text-xs font-semibold ${
+                      isCurrent ? 'text-[var(--primary-dark)]' : 'text-[var(--text-secondary)]'
+                    }`}
+                  >
+                    {workspace.name}
+                  </span>
+                  {isCurrent && (
+                    <span className="shrink-0 rounded-full bg-[var(--background-paper)] px-2 py-0.5 text-[10px] font-semibold text-[var(--primary-main)]">
+                      Current
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+
+            {isAddingWorkspace ? (
+              <form
+                onSubmit={(event) => {
+                  createWorkspace(event)
+                  setIsAddingWorkspace(false)
+                }}
+                className="flex min-h-8 w-full items-center gap-2 rounded-full border border-dashed border-[var(--primary-main)]/35 bg-[var(--surface-subtle)] px-3 py-1.5"
+              >
+                <input
+                  value={newWorkspaceName}
+                  onChange={(event) => setNewWorkspaceName(event.target.value)}
+                  onBlur={() => {
+                    if (!newWorkspaceName.trim()) {
+                      setIsAddingWorkspace(false)
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Escape') {
+                      setNewWorkspaceName('')
+                      setIsAddingWorkspace(false)
+                    }
+                  }}
+                  placeholder="Workspace name"
+                  className="min-w-0 flex-1 bg-transparent text-xs font-normal text-[var(--text-secondary)] outline-none placeholder:text-[var(--text-muted)]"
+                  autoFocus
+                />
+
+                <button
+                  type="submit"
+                  disabled={creatingWorkspace}
+                  className="shrink-0 rounded-full bg-[var(--primary-light)] px-2 py-0.5 text-[10px] font-semibold text-[var(--primary-main)] disabled:cursor-not-allowed disabled:text-[var(--text-disabled)]"
+                >
+                  Add
+                </button>
+              </form>
+            ) : (
               <button
                 type="button"
-                onClick={() => setIsAddingSection(true)}
-                className="flex h-5 w-5 items-center justify-center rounded-full border border-[var(--outline-soft)] bg-[var(--background-paper)] text-xs font-semibold text-[var(--text-muted)] transition hover:border-[var(--primary-main)]/30 hover:text-[var(--primary-main)]"
-                title="Add section"
+                onClick={() => setIsAddingWorkspace(true)}
+                className="flex min-h-8 w-full items-center justify-between rounded-full border border-dashed border-[var(--outline)] bg-[var(--surface-subtle)] px-3 py-1.5 text-left text-xs font-semibold text-[var(--text-muted)] transition hover:border-[var(--primary-main)]/35 hover:text-[var(--primary-main)]"
+                title="Add workspace"
               >
-                +
+                <span>Add workspace</span>
+                <span className="text-sm leading-none">+</span>
               </button>
-            </div>
-
+            )}
+          </div>
+        ) : activeTool === 'sections' ? (
+          <div className="space-y-2">
             {sections.map((section) => {
               const sectionTaskCount = getSectionTaskCount(section.id)
               const isHovered = hoveredSectionId === section.id

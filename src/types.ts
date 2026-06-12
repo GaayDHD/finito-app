@@ -1,3 +1,8 @@
+export type Workspace = {
+  id: string
+  name: string
+}
+
 export type Task = {
   id: string
   title: string
