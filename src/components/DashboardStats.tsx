@@ -37,43 +37,34 @@ export function DashboardStats({ stats, onNewTaskClick }: DashboardStatsProps) {
   }
 
   return (
-    <section className="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <div className="group relative">
-        <button
-          type="button"
-          className="h-12 rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] px-4 text-sm font-semibold text-[var(--text-primary)] shadow-sm transition hover:border-[var(--outline)] hover:bg-[var(--surface-muted)]"
-        >
-          Task Overview
-        </button>
+    <section className="flex flex-wrap items-start justify-between gap-4">
+      <div className="min-w-0">
+        <h1 className="text-2xl font-semibold tracking-tight text-[var(--text-primary)]">Tasks</h1>
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {statItems.map((item) => {
+            const value = item.key === 'archived' ? stats.archived ?? 0 : stats[item.key]
 
-        <div className="pointer-events-none absolute left-0 top-14 z-20 w-72 translate-y-1 rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-2 opacity-0 shadow-xl transition group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100">
-          <div className="space-y-1">
-            {statItems.map((item) => {
-              const value = item.key === 'archived' ? stats.archived ?? 0 : stats[item.key]
-
-              return (
-                <div
-                  key={item.key}
-                  className="flex items-center justify-between rounded-lg px-3 py-2"
-                >
-                  <span className="text-sm font-medium text-[var(--text-secondary)]">
-                    {item.label}
-                  </span>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${getToneClass(item.tone)}`}>
-                    {value}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
+            return (
+              <span
+                key={item.key}
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${getToneClass(item.tone)}`}
+              >
+                {item.label}
+                <span className="font-bold">{value}</span>
+              </span>
+            )
+          })}
         </div>
       </div>
 
       <button
         type="button"
         onClick={onNewTaskClick}
-        className="h-12 rounded-xl bg-[var(--primary-main)] px-5 text-sm font-semibold text-[var(--primary-contrast)] shadow-sm transition hover:bg-[var(--primary-dark)]"
+        className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-purple-400 to-purple-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
       >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className="h-4 w-4">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
         New Task
       </button>
     </section>

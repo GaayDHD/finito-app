@@ -92,7 +92,6 @@ export function SettingsModal({
     await signOut()
   }
 
-  const sectionTitle = 'text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]'
   const fieldClass =
     'h-10 w-full rounded-lg border border-[var(--outline)] bg-[var(--background-paper)] px-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary-main)] focus:ring-4 focus:ring-[var(--primary-main)]/10'
 
@@ -102,75 +101,79 @@ export function SettingsModal({
       : 'text-[var(--error-dark)]'
   }
 
+  const cardClass =
+    'rounded-2xl border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-4'
+  const labelClass = 'block text-xs font-semibold text-[var(--text-muted)]'
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
-      <div className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-[var(--background-paper)] shadow-2xl sm:rounded-2xl">
-        <div className="flex items-center justify-between border-b border-[var(--outline-soft)] px-5 py-4">
-          <h2 className="text-base font-semibold text-[var(--text-primary)]">Settings</h2>
+      <div className="relative z-10 flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl bg-[var(--background-paper)] shadow-2xl sm:rounded-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--outline-soft)] px-6 py-5">
+          <div>
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">Settings</h2>
+            <p className="text-sm text-[var(--text-muted)]">Manage your account, appearance, and security.</p>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-[var(--outline)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
+            className="shrink-0 rounded-full border border-[var(--outline)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
           >
             Close
           </button>
         </div>
 
-        <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
-          {/* Account */}
-          <section className="space-y-3">
-            <p className={sectionTitle}>Account</p>
-            <div>
-              <p className="text-xs text-[var(--text-muted)]">Signed in as</p>
-              <p className="truncate text-sm font-semibold text-[var(--text-primary)]" title={userEmail}>
-                {userEmail}
-              </p>
+        <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
+          {/* Personal information */}
+          <section className={cardClass}>
+            <div className="mb-3">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)]">Personal information</h3>
+              <p className="text-xs text-[var(--text-muted)]">Your sign-in email and how to change it.</p>
             </div>
 
-            <form onSubmit={updateEmail} className="space-y-2">
-              <label className="block text-sm font-medium text-[var(--text-secondary)]">
-                Update email
-                <input
-                  type="email"
-                  value={newEmail}
-                  onChange={(event) => setNewEmail(event.target.value)}
-                  placeholder="new@email.com"
-                  className={`mt-1 ${fieldClass}`}
-                />
-              </label>
-              <button
-                type="submit"
-                disabled={updatingEmail || !newEmail.trim()}
-                className="rounded-full bg-[var(--primary-main)] px-4 py-2 text-sm font-semibold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-dark)] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {updatingEmail ? 'Sending…' : 'Update email'}
-              </button>
-              {emailFeedback && (
-                <p className={`text-xs ${feedbackClass(emailFeedback.tone)}`}>{emailFeedback.text}</p>
-              )}
-            </form>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <span className={labelClass}>Current email</span>
+                <p className="mt-1 flex h-10 items-center truncate rounded-lg border border-[var(--outline-soft)] bg-[var(--background-paper)] px-3 text-sm font-medium text-[var(--text-secondary)]" title={userEmail}>
+                  {userEmail}
+                </p>
+              </div>
 
-            <div className="space-y-2">
-              <button
-                type="button"
-                disabled={sendingReset}
-                onClick={sendPasswordReset}
-                className="text-sm font-semibold text-[var(--primary-main)] transition hover:text-[var(--primary-dark)] disabled:opacity-60"
-              >
-                {sendingReset ? 'Sending…' : 'Send password reset email'}
-              </button>
-              {resetFeedback && (
-                <p className={`text-xs ${feedbackClass(resetFeedback.tone)}`}>{resetFeedback.text}</p>
-              )}
+              <form onSubmit={updateEmail}>
+                <label className={labelClass}>
+                  New email
+                  <input
+                    type="email"
+                    value={newEmail}
+                    onChange={(event) => setNewEmail(event.target.value)}
+                    placeholder="new@email.com"
+                    className={`mt-1 ${fieldClass}`}
+                  />
+                </label>
+                <div className="mt-2 flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={updatingEmail || !newEmail.trim()}
+                    className="rounded-full bg-[var(--primary-main)] px-4 py-2 text-sm font-semibold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-dark)] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {updatingEmail ? 'Sending…' : 'Update email'}
+                  </button>
+                </div>
+              </form>
             </div>
+            {emailFeedback && (
+              <p className={`mt-2 text-xs ${feedbackClass(emailFeedback.tone)}`}>{emailFeedback.text}</p>
+            )}
           </section>
 
           {/* Appearance */}
-          <section className="space-y-3 border-t border-[var(--outline-soft)] pt-5">
-            <p className={sectionTitle}>Appearance</p>
-            <div className="flex rounded-full border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-1">
+          <section className={cardClass}>
+            <div className="mb-3">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)]">Appearance</h3>
+              <p className="text-xs text-[var(--text-muted)]">Choose how Finito looks. System follows your device.</p>
+            </div>
+            <div className="flex max-w-sm rounded-full border border-[var(--outline-soft)] bg-[var(--background-paper)] p-1">
               {themeOptions.map((option) => (
                 <button
                   key={option.value}
@@ -178,7 +181,7 @@ export function SettingsModal({
                   onClick={() => setTheme(option.value)}
                   className={`flex-1 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
                     theme === option.value
-                      ? 'bg-[var(--background-paper)] text-[var(--primary-main)] shadow-sm'
+                      ? 'bg-gradient-to-r from-purple-400 to-purple-600 text-white shadow-sm'
                       : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                   }`}
                 >
@@ -188,32 +191,41 @@ export function SettingsModal({
             </div>
           </section>
 
-          {/* Session */}
-          <section className="space-y-3 border-t border-[var(--outline-soft)] pt-5">
-            <p className={sectionTitle}>Session</p>
-            <button
-              type="button"
-              onClick={signOut}
-              className="w-full rounded-lg border border-[var(--outline)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
-            >
-              Sign out
-            </button>
+          {/* Security */}
+          <section className={cardClass}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-[var(--text-primary)]">Security</h3>
+                <p className="text-xs text-[var(--text-muted)]">We&apos;ll email a secure link to reset your password.</p>
+              </div>
+              <button
+                type="button"
+                disabled={sendingReset}
+                onClick={sendPasswordReset}
+                className="rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-subtle)] disabled:opacity-60"
+              >
+                {sendingReset ? 'Sending…' : 'Send password reset'}
+              </button>
+            </div>
+            {resetFeedback && (
+              <p className={`mt-2 text-xs ${feedbackClass(resetFeedback.tone)}`}>{resetFeedback.text}</p>
+            )}
           </section>
 
           {/* Danger zone */}
-          <section className="space-y-3 rounded-xl border border-[var(--error-main)]/30 bg-[var(--error-light)] p-4">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--error-dark)]">Danger zone</p>
-            <p className="text-xs text-[var(--text-secondary)]">
+          <section className="rounded-2xl border border-[var(--error-main)]/30 bg-[var(--error-light)] p-4">
+            <h3 className="text-sm font-semibold text-[var(--error-dark)]">Danger zone</h3>
+            <p className="mt-1 text-xs text-[var(--text-secondary)]">
               Deleting your account permanently removes your workspaces, projects, and tasks. This cannot be undone.
             </p>
 
             {confirmDelete ? (
-              <div className="flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <button
                   type="button"
                   disabled={deleting}
                   onClick={deleteAccount}
-                  className="rounded-lg bg-[var(--error-main)] px-4 py-2 text-sm font-semibold text-[var(--error-contrast)] transition hover:bg-[var(--error-dark)] disabled:opacity-60"
+                  className="rounded-full bg-[var(--error-main)] px-4 py-2 text-sm font-semibold text-[var(--error-contrast)] transition hover:bg-[var(--error-dark)] disabled:opacity-60"
                 >
                   {deleting ? 'Deleting…' : 'Yes, delete my account'}
                 </button>
@@ -221,7 +233,7 @@ export function SettingsModal({
                   type="button"
                   disabled={deleting}
                   onClick={() => setConfirmDelete(false)}
-                  className="rounded-lg border border-[var(--outline)] bg-[var(--background-paper)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
+                  className="rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
                 >
                   Cancel
                 </button>
@@ -230,14 +242,24 @@ export function SettingsModal({
               <button
                 type="button"
                 onClick={() => setConfirmDelete(true)}
-                className="rounded-lg border border-[var(--error-main)]/50 bg-[var(--background-paper)] px-4 py-2 text-sm font-semibold text-[var(--error-dark)] transition hover:bg-[var(--error-light)]"
+                className="mt-3 rounded-full border border-[var(--error-main)]/50 bg-[var(--background-paper)] px-4 py-2 text-sm font-semibold text-[var(--error-dark)] transition hover:bg-[var(--error-light)]"
               >
                 Delete account
               </button>
             )}
 
-            {deleteError && <p className="text-xs text-[var(--error-dark)]">{deleteError}</p>}
+            {deleteError && <p className="mt-2 text-xs text-[var(--error-dark)]">{deleteError}</p>}
           </section>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-[var(--outline-soft)] px-6 py-4">
+          <button
+            type="button"
+            onClick={signOut}
+            className="rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
+          >
+            Sign out
+          </button>
         </div>
       </div>
     </div>

@@ -1254,6 +1254,7 @@ function App() {
               activeTool={sidebarTool}
               setActiveTool={setSidebarTool}
               onOpenSettings={() => setIsSettingsOpen(true)}
+              signOut={signOut}
             />
           </div>
 
@@ -1351,9 +1352,9 @@ function App() {
             className="absolute inset-0 bg-black/40"
             onClick={() => setIsMobileSheetOpen(false)}
           />
-          <div className="absolute inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-3xl bg-[var(--sidebar-bg)] pb-[max(env(safe-area-inset-bottom),16px)] shadow-2xl">
+          <div className="absolute inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-3xl bg-[var(--background-paper)] pb-[max(env(safe-area-inset-bottom),16px)] shadow-2xl">
             <div className="flex justify-center pt-3">
-              <span className="h-1 w-10 rounded-full bg-[var(--sidebar-stroke-strong)]" />
+              <span className="h-1 w-10 rounded-full bg-[var(--outline)]" />
             </div>
             <WorkspaceSidebar
               activityLogs={activityLogs}
@@ -1373,6 +1374,7 @@ function App() {
                 setIsMobileSheetOpen(false)
                 setIsSettingsOpen(true)
               }}
+              signOut={signOut}
               sticky={false}
             />
           </div>
