@@ -181,7 +181,7 @@ export function SettingsModal({
                   onClick={() => setTheme(option.value)}
                   className={`flex-1 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
                     theme === option.value
-                      ? 'bg-gradient-to-r from-purple-400 to-purple-600 text-white shadow-sm'
+                      ? 'bg-[var(--primary-main)] text-white shadow-sm'
                       : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                   }`}
                 >

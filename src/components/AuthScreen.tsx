@@ -96,7 +96,7 @@ export function AuthScreen() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-xl bg-[var(--primary)] px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+            className="w-full rounded-xl bg-[var(--primary-main)] px-4 py-2.5 text-sm font-semibold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-dark)] disabled:opacity-60"
           >
             {isSubmitting ? 'Please wait…' : mode === 'sign_in' ? 'Sign in' : 'Create account'}
           </button>

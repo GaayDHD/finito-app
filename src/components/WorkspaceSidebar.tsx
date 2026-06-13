@@ -86,7 +86,7 @@ export function WorkspaceSidebar({
           onClick={onClick}
           className={`group flex w-full items-center gap-3 rounded-full p-3 text-sm font-semibold transition-all ease-linear ${
             isActive
-              ? 'bg-gradient-to-r from-purple-400 to-purple-600 text-white shadow-sm'
+              ? 'bg-[var(--primary-main)] text-white shadow-sm'
               : 'text-[var(--text-secondary)] hover:bg-[var(--primary-light)] hover:text-[var(--primary-dark)] hover:shadow-inner'
           }`}
         >

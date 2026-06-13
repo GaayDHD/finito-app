@@ -268,7 +268,7 @@ export function TaskDetailDrawer({
               type="button"
               disabled={creatingSubtaskTaskId === selectedTask.id || !(subtaskDrafts[selectedTask.id] ?? '').trim()}
               onClick={() => createSubtask(selectedTask)}
-              className="shrink-0 rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="shrink-0 rounded-lg bg-[var(--primary-main)] px-3 py-2 text-sm font-semibold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-dark)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {creatingSubtaskTaskId === selectedTask.id ? 'Adding…' : 'Add subtask'}
             </button>
@@ -330,7 +330,7 @@ export function TaskDetailDrawer({
               type="button"
               disabled={addingCommentTaskId === selectedTask.id}
               onClick={() => addComment(selectedTask.id)}
-              className="shrink-0 rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="shrink-0 rounded-lg bg-[var(--primary-main)] px-3 py-2 text-sm font-semibold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-dark)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {addingCommentTaskId === selectedTask.id ? 'Adding…' : 'Comment'}
             </button>
@@ -481,7 +481,7 @@ export function TaskDetailDrawer({
                   type="button"
                   disabled={savingTaskId === selectedTask.id}
                   onClick={() => saveTaskEdits(selectedTask.id)}
-                  className="rounded-full bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+                  className="rounded-full bg-[var(--primary-main)] px-4 py-2 text-sm font-semibold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-dark)] disabled:opacity-60"
                 >
                   {savingTaskId === selectedTask.id ? 'Saving...' : 'Save changes'}
                 </button>

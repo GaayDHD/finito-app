@@ -523,7 +523,7 @@ export function TaskList({
                   onClick={() => setGroupBy(option.value)}
                   className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
                     groupBy === option.value
-                      ? 'bg-[var(--background-paper)] text-[var(--primary-main)] shadow-sm'
+                      ? 'bg-[var(--primary-main)] text-white shadow-sm'
                       : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                   }`}
                 >
