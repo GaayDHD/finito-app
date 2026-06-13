@@ -113,12 +113,18 @@ function App() {
   const fallbackSectionId = sections[0]?.id ?? ''
 
   const filteredTasks = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+
     return tasks.filter((task) => {
-      const query = searchQuery.trim().toLowerCase()
+      const sectionName = sections.find((section) => section.id === task.section_id)?.name ?? ''
       const matchesSearch =
         !query ||
         task.title.toLowerCase().includes(query) ||
-        task.description?.toLowerCase().includes(query)
+        (task.description?.toLowerCase().includes(query) ?? false) ||
+        sectionName.toLowerCase().includes(query) ||
+        comments.some(
+          (comment) => comment.task_id === task.id && comment.body.toLowerCase().includes(query),
+        )
 
       const matchesStatus = statusFilter === 'all' || task.status === statusFilter
       const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter
@@ -130,7 +136,7 @@ function App() {
 
       return matchesSearch && matchesStatus && matchesPriority && matchesSection && matchesVisibility
     })
-  }, [priorityFilter, searchQuery, sectionFilter, statusFilter, tasks, visibilityFilter])
+  }, [comments, priorityFilter, searchQuery, sections, sectionFilter, statusFilter, tasks, visibilityFilter])
 
   const groupedTasks = useMemo(() => {
     const parentTasks = filteredTasks
@@ -628,6 +634,8 @@ function App() {
     setRemovingDependencyId(dependencyId)
     setErrorMessage(null)
 
+    const removed = dependencies.find((dependency) => dependency.id === dependencyId)
+
     const { error } = await supabase
       .from('task_dependencies')
       .delete()
@@ -639,9 +647,32 @@ function App() {
       return
     }
 
-    setDependencies((currentDependencies) =>
-      currentDependencies.filter((dependency) => dependency.id !== dependencyId),
-    )
+    const remainingDependencies = dependencies.filter((dependency) => dependency.id !== dependencyId)
+    setDependencies(remainingDependencies)
+
+    // When the last blocker is cleared, a task that was auto-marked Blocked
+    // shouldn't stay stuck — return it to Not started.
+    if (removed) {
+      const blockedTask = tasks.find((task) => task.id === removed.task_id)
+      const stillBlocked = remainingDependencies.some((dependency) => dependency.task_id === removed.task_id)
+
+      if (blockedTask && blockedTask.status === 'blocked' && !stillBlocked) {
+        const { error: statusError } = await supabase
+          .from('tasks')
+          .update({ status: 'not_started' })
+          .eq('id', removed.task_id)
+
+        if (!statusError) {
+          setTasks((currentTasks) =>
+            currentTasks.map((task) =>
+              task.id === removed.task_id ? { ...task, status: 'not_started' } : task,
+            ),
+          )
+          await logActivity('Updated task status', `${blockedTask.title} → Not started`, removed.task_id)
+        }
+      }
+    }
+
     setRemovingDependencyId(null)
   }
 
@@ -1275,6 +1306,8 @@ function App() {
       <AppHeader
         viewMode={viewMode}
         setViewMode={setViewMode}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
       />
 
       <section className="mx-auto max-w-[1600px] px-4 py-5 pb-24 sm:px-5 lg:pb-5">

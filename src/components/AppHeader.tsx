@@ -3,6 +3,8 @@ type ViewMode = 'card' | 'table' | 'kanban' | 'timeline' | 'calendar'
 type AppHeaderProps = {
   viewMode: ViewMode
   setViewMode: (viewMode: ViewMode) => void
+  searchQuery: string
+  setSearchQuery: (value: string) => void
 }
 
 const viewTabs: { mode: ViewMode; label: string }[] = [
@@ -16,6 +18,8 @@ const viewTabs: { mode: ViewMode; label: string }[] = [
 export function AppHeader({
   viewMode,
   setViewMode,
+  searchQuery,
+  setSearchQuery,
 }: AppHeaderProps) {
   const tabBase =
     'shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition sm:rounded-none sm:border-b-2 sm:px-1 sm:py-0 sm:pb-2.5 sm:pt-1 sm:text-sm'
@@ -43,12 +47,36 @@ export function AppHeader({
           ))}
         </nav>
 
-        <input
-          value=""
-          disabled
-          placeholder="Search..."
-          className="my-2 hidden h-9 w-full max-w-[220px] cursor-not-allowed rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-4 text-sm text-[var(--text-disabled)] opacity-50 outline-none placeholder:text-[var(--text-disabled)] lg:block"
-        />
+        <div className="relative my-2 hidden w-full max-w-[240px] sm:block">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search tasks..."
+            className="h-9 w-full rounded-full border border-[var(--outline)] bg-[var(--background-paper)] pl-9 pr-9 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary-main)] focus:ring-4 focus:ring-[var(--primary-main)]/10 placeholder:text-[var(--text-muted)]"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              aria-label="Clear search"
+              className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]"
+            >
+              ×
+            </button>
+          )}
+        </div>
       </div>
     </header>
   )

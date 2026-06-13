@@ -54,18 +54,6 @@
   --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
   --shadow-card: 0 2px 24px rgba(0, 0, 0, 0.06), 0 24px 80px rgba(0, 0, 0, 0.08);
 
-  /* Sidebar (light grey rail) */
-  --sidebar-bg: #ececef;
-  --sidebar-text: rgba(29, 29, 31, 0.85);
-  --sidebar-muted: rgba(29, 29, 31, 0.6);
-  --sidebar-faint: rgba(29, 29, 31, 0.45);
-  --sidebar-hover: rgba(29, 29, 31, 0.06);
-  --sidebar-active: rgba(102, 0, 255, 0.12);
-  --sidebar-active-text: #5200cc;
-  --sidebar-stroke: rgba(29, 29, 31, 0.1);
-  --sidebar-stroke-strong: rgba(29, 29, 31, 0.22);
-  --sidebar-chip: #ffffff;
-
   font-family:
     -apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont,
     "Segoe UI", Helvetica, Arial, sans-serif;
@@ -124,17 +112,6 @@
 
   --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.3);
   --shadow-card: 0 2px 24px rgba(0, 0, 0, 0.3), 0 24px 80px rgba(0, 0, 0, 0.5);
-
-  --sidebar-bg: #1a1b1d;
-  --sidebar-text: rgba(255, 255, 255, 0.85);
-  --sidebar-muted: rgba(255, 255, 255, 0.55);
-  --sidebar-faint: rgba(255, 255, 255, 0.38);
-  --sidebar-hover: rgba(255, 255, 255, 0.08);
-  --sidebar-active: rgba(150, 90, 255, 0.28);
-  --sidebar-active-text: #cfa9ff;
-  --sidebar-stroke: rgba(255, 255, 255, 0.1);
-  --sidebar-stroke-strong: rgba(255, 255, 255, 0.24);
-  --sidebar-chip: rgba(255, 255, 255, 0.15);
 }
 
 body {
