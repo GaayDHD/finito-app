@@ -46,7 +46,15 @@ type TaskListProps = {
   selectedTaskId: string | null
   onOpenTask: (taskId: string) => void
   renderTask: (task: Task) => ReactNode
+  groupBy: 'status' | 'priority' | 'scope'
+  setGroupBy: (value: 'status' | 'priority' | 'scope') => void
 }
+
+const groupByOptions: { value: 'status' | 'priority' | 'scope'; label: string }[] = [
+  { value: 'status', label: 'Status' },
+  { value: 'priority', label: 'Priority' },
+  { value: 'scope', label: 'Scope' },
+]
 
 const columns: { id: string; label: string; field: SortField; align: 'left' | 'center' }[] = [
   { id: 'task', label: 'Task', field: 'title', align: 'left' },
@@ -187,6 +195,8 @@ export function TaskList({
   selectedTaskId,
   onOpenTask,
   renderTask,
+  groupBy,
+  setGroupBy,
 }: TaskListProps) {
   const [openHeaderMenu, setOpenHeaderMenu] = useState<string | null>(null)
   const [tableSort, setTableSort] = useState<TableSort | null>(null)
@@ -493,18 +503,35 @@ export function TaskList({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] px-4 py-3 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] px-4 py-3 shadow-sm">
         <div>
           <h2 className="text-base font-semibold text-[var(--text-primary)]">
             {isTable ? 'Table view' : 'Card view'}
           </h2>
           <p className="text-xs text-[var(--text-muted)]">
-            {isTable
-              ? 'Compact rows grouped by the current view.'
-              : 'Compact cards grouped by the current view.'}
+            Grouped by {groupByOptions.find((option) => option.value === groupBy)?.label.toLowerCase()}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-medium text-[var(--text-muted)]">Group by</span>
+            <div className="flex rounded-full border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-0.5">
+              {groupByOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setGroupBy(option.value)}
+                  className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
+                    groupBy === option.value
+                      ? 'bg-[var(--background-paper)] text-[var(--primary-main)] shadow-sm'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
           {isTable && (tableSort || activeFilterCount > 0) && (
             <button
               type="button"
@@ -575,8 +602,8 @@ export function TaskList({
                 </span>
               </div>
               <div className="overflow-x-auto">
-                <div className="min-w-[1180px]">
-                  <div className="grid grid-cols-[minmax(320px,1.8fr)_150px_140px_140px_150px_120px_120px_90px_90px] border-b border-[var(--outline-soft)] bg-[var(--surface-muted)] px-4 py-2">
+                <div className="min-w-[1240px]">
+                  <div className="grid grid-cols-[minmax(320px,1.8fr)_150px_140px_140px_150px_120px_120px_120px_120px] border-b border-[var(--outline-soft)] bg-[var(--surface-muted)] px-4 py-2">
                     {columns.map((column) => (
                       <div key={column.id}>{renderHeaderButton(column)}</div>
                     ))}
@@ -592,7 +619,7 @@ export function TaskList({
                         <div
                           key={task.id}
                           onClick={() => onOpenTask(task.id)}
-                          className={`grid cursor-pointer grid-cols-[minmax(320px,1.8fr)_150px_140px_140px_150px_120px_120px_90px_90px] items-center gap-0 px-4 py-2 text-sm transition hover:bg-[var(--surface-muted)] ${
+                          className={`grid cursor-pointer grid-cols-[minmax(320px,1.8fr)_150px_140px_140px_150px_120px_120px_120px_120px] items-center gap-0 px-4 py-2 text-sm transition hover:bg-[var(--surface-muted)] ${
                             selectedTaskId === task.id ? 'bg-[var(--surface-subtle)]' : ''
                           }`}
                         >

@@ -13,6 +13,7 @@ import { WorkspaceSidebar } from './components/WorkspaceSidebar'
 import type { SidebarTool, ThemePreference } from './components/WorkspaceSidebar'
 import { AppHeader } from './components/AppHeader'
 import { AuthScreen } from './components/AuthScreen'
+import { SettingsModal } from './components/SettingsModal'
 import { TaskDetailDrawer } from './components/TaskDetailDrawer'
 import './App.css'
 
@@ -53,8 +54,9 @@ function App() {
 
   const [taskTitle, setTaskTitle] = useState('')
   const [taskDescription, setTaskDescription] = useState('')
-  const [taskPriority, setTaskPriority] = useState('medium')
-  const [taskDifficulty, setTaskDifficulty] = useState('not_scoped')
+  const [taskStatus, setTaskStatus] = useState('')
+  const [taskPriority, setTaskPriority] = useState('')
+  const [taskDifficulty, setTaskDifficulty] = useState('')
   const [taskSectionId, setTaskSectionId] = useState('')
   const [taskStartDate, setTaskStartDate] = useState('')
   const [taskDueDate, setTaskDueDate] = useState('')
@@ -76,6 +78,7 @@ function App() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [sidebarTool, setSidebarTool] = useState<SidebarTool>('workspaces')
   const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [theme, setTheme] = useState<ThemePreference>(() => {
     const stored = localStorage.getItem('finito-theme')
     return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system'
@@ -394,9 +397,9 @@ function App() {
       parent_task_id: null,
       title: taskTitle.trim(),
       description: taskDescription.trim() || null,
-      status: 'not_started',
-      priority: taskPriority,
-      difficulty: taskDifficulty,
+      status: taskStatus || 'not_started',
+      priority: taskPriority || null,
+      difficulty: taskDifficulty || 'not_scoped',
       start_date: taskStartDate || null,
       due_date: taskDueDate || null,
       archived_at: null,
@@ -411,8 +414,9 @@ function App() {
 
     setTaskTitle('')
     setTaskDescription('')
-    setTaskPriority('medium')
-    setTaskDifficulty('not_scoped')
+    setTaskStatus('')
+    setTaskPriority('')
+    setTaskDifficulty('')
     setTaskSectionId(taskSectionId || fallbackSectionId)
     setTaskStartDate('')
     setTaskDueDate('')
@@ -1151,38 +1155,31 @@ function App() {
     return <AuthScreen />
   }
 
-  const mobileNavItems: { tool: SidebarTool; label: string; icon: React.ReactNode }[] = [
-    {
-      tool: 'workspaces',
-      label: 'Workspaces',
-      icon: (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="7" height="7" rx="1.5" />
-          <rect x="14" y="3" width="7" height="7" rx="1.5" />
-          <rect x="3" y="14" width="7" height="7" rx="1.5" />
-          <rect x="14" y="14" width="7" height="7" rx="1.5" />
-        </svg>
-      ),
-    },
-    {
-      tool: 'activity',
-      label: 'Activity',
-      icon: (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-        </svg>
-      ),
-    },
-    {
-      tool: 'settings',
-      label: 'Settings',
-      icon: (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-        </svg>
-      ),
-    },
+  const workspacesIcon = (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1.5" />
+      <rect x="14" y="3" width="7" height="7" rx="1.5" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+      <rect x="14" y="14" width="7" height="7" rx="1.5" />
+    </svg>
+  )
+
+  const activityIcon = (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
+  )
+
+  const settingsIcon = (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  )
+
+  const sheetNavItems: { tool: SidebarTool; label: string; icon: React.ReactNode }[] = [
+    { tool: 'workspaces', label: 'Workspaces', icon: workspacesIcon },
+    { tool: 'activity', label: 'Activity', icon: activityIcon },
   ]
 
   return (
@@ -1207,6 +1204,8 @@ function App() {
           setTaskTitle={setTaskTitle}
           taskDescription={taskDescription}
           setTaskDescription={setTaskDescription}
+          taskStatus={taskStatus}
+          setTaskStatus={setTaskStatus}
           taskSectionId={taskSectionId}
           setTaskSectionId={setTaskSectionId}
           fallbackSectionId={fallbackSectionId}
@@ -1254,10 +1253,7 @@ function App() {
               switchWorkspace={switchWorkspace}
               activeTool={sidebarTool}
               setActiveTool={setSidebarTool}
-              userEmail={session.user.email ?? ''}
-              signOut={signOut}
-              theme={theme}
-              setTheme={setTheme}
+              onOpenSettings={() => setIsSettingsOpen(true)}
             />
           </div>
 
@@ -1280,6 +1276,8 @@ function App() {
             selectedTaskId={selectedTaskId}
             onOpenTask={setSelectedTaskId}
             renderTask={renderTask}
+            groupBy={groupBy}
+            setGroupBy={setGroupBy}
           />
           </div>
 
@@ -1371,10 +1369,10 @@ function App() {
               }}
               activeTool={sidebarTool}
               setActiveTool={setSidebarTool}
-              userEmail={session.user.email ?? ''}
-              signOut={signOut}
-              theme={theme}
-              setTheme={setTheme}
+              onOpenSettings={() => {
+                setIsMobileSheetOpen(false)
+                setIsSettingsOpen(true)
+              }}
               sticky={false}
             />
           </div>
@@ -1383,7 +1381,7 @@ function App() {
 
       {/* Mobile bottom navigation */}
       <nav className="fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-[var(--outline-soft)] bg-[var(--background-paper)] pb-[max(env(safe-area-inset-bottom),0px)] lg:hidden">
-        {mobileNavItems.map((item) => {
+        {sheetNavItems.map((item) => {
           const isActive = isMobileSheetOpen && sidebarTool === item.tool
           return (
             <button
@@ -1407,6 +1405,17 @@ function App() {
         })}
         <button
           type="button"
+          onClick={() => {
+            setIsMobileSheetOpen(false)
+            setIsSettingsOpen(true)
+          }}
+          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold text-[var(--text-muted)]"
+        >
+          <span aria-hidden="true">{settingsIcon}</span>
+          Settings
+        </button>
+        <button
+          type="button"
           onClick={toggleCreateTaskForm}
           className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold text-[var(--primary)]"
         >
@@ -1419,6 +1428,15 @@ function App() {
           New
         </button>
       </nav>
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        userEmail={session.user.email ?? ''}
+        theme={theme}
+        setTheme={setTheme}
+        signOut={signOut}
+      />
     </main>
   )
 }

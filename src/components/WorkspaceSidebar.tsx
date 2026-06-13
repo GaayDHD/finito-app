@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import type { ActivityLog, Workspace } from '../types'
-import { supabase } from '../lib/supabase'
 
-export type SidebarTool = 'workspaces' | 'activity' | 'settings'
-export type ThemePreference = 'light' | 'dark' | 'system'
+export type SidebarTool = 'workspaces' | 'activity'
+export type { ThemePreference } from './SettingsModal'
 
 type WorkspaceSidebarProps = {
   activityLogs: ActivityLog[]
@@ -16,18 +15,9 @@ type WorkspaceSidebarProps = {
   switchWorkspace: (workspaceId: string) => void
   activeTool: SidebarTool
   setActiveTool: (tool: SidebarTool) => void
-  userEmail: string
-  signOut: () => void
-  theme: ThemePreference
-  setTheme: (theme: ThemePreference) => void
+  onOpenSettings: () => void
   sticky?: boolean
 }
-
-const themeOptions: { value: ThemePreference; label: string }[] = [
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
-  { value: 'system', label: 'System' },
-]
 
 export function WorkspaceSidebar({
   activityLogs,
@@ -40,29 +30,14 @@ export function WorkspaceSidebar({
   switchWorkspace,
   activeTool,
   setActiveTool,
-  userEmail,
-  signOut,
-  theme,
-  setTheme,
+  onOpenSettings,
   sticky = true,
 }: WorkspaceSidebarProps) {
   const [isAddingWorkspace, setIsAddingWorkspace] = useState(false)
-  const [resetMessage, setResetMessage] = useState<string | null>(null)
-  const [sendingReset, setSendingReset] = useState(false)
 
-  async function sendPasswordReset() {
-    setSendingReset(true)
-    setResetMessage(null)
-
-    const { error } = await supabase.auth.resetPasswordForEmail(userEmail)
-
-    setResetMessage(error ? error.message : 'Password reset email sent.')
-    setSendingReset(false)
-  }
-
-  const toolButtonClass = (tool: SidebarTool) =>
+  const toolButtonClass = (isActive: boolean) =>
     `w-full rounded-lg px-3 py-2 text-left text-sm font-semibold transition ${
-      activeTool === tool
+      isActive
         ? 'bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]'
         : 'text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-hover)]'
     }`
@@ -77,15 +52,15 @@ export function WorkspaceSidebar({
         </div>
 
         <div className="space-y-2 p-3">
-          <button type="button" onClick={() => setActiveTool('workspaces')} className={toolButtonClass('workspaces')}>
+          <button type="button" onClick={() => setActiveTool('workspaces')} className={toolButtonClass(activeTool === 'workspaces')}>
             Workspaces
           </button>
 
-          <button type="button" onClick={() => setActiveTool('activity')} className={toolButtonClass('activity')}>
+          <button type="button" onClick={() => setActiveTool('activity')} className={toolButtonClass(activeTool === 'activity')}>
             Activity
           </button>
 
-          <button type="button" onClick={() => setActiveTool('settings')} className={toolButtonClass('settings')}>
+          <button type="button" onClick={onOpenSettings} className={toolButtonClass(false)}>
             Settings
           </button>
         </div>
@@ -171,7 +146,7 @@ export function WorkspaceSidebar({
                 </button>
               )}
             </div>
-          ) : activeTool === 'activity' ? (
+          ) : (
             <div className="space-y-2">
               <p className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--sidebar-faint)]">
                 Recent activity
@@ -198,60 +173,6 @@ export function WorkspaceSidebar({
                   No activity yet.
                 </p>
               )}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <p className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--sidebar-faint)]">
-                  Account
-                </p>
-                <p className="mt-2 truncate rounded-xl border border-[var(--sidebar-stroke)] bg-[var(--sidebar-hover)] px-3 py-2 text-xs font-semibold text-[var(--sidebar-text)]" title={userEmail}>
-                  {userEmail}
-                </p>
-
-                <button
-                  type="button"
-                  disabled={sendingReset}
-                  onClick={sendPasswordReset}
-                  className="mt-2 w-full rounded-full border border-[var(--sidebar-stroke-strong)] px-3 py-1.5 text-left text-xs font-semibold text-[var(--sidebar-muted)] transition hover:text-[var(--sidebar-text)] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {sendingReset ? 'Sending…' : 'Send password reset email'}
-                </button>
-
-                {resetMessage && (
-                  <p className="mt-2 px-1 text-[11px] text-[var(--sidebar-muted)]">{resetMessage}</p>
-                )}
-
-                <button
-                  type="button"
-                  onClick={signOut}
-                  className="mt-2 w-full rounded-full border border-[var(--error-main)]/40 bg-[var(--error-light)] px-3 py-1.5 text-left text-xs font-semibold text-[var(--error-dark)] transition hover:opacity-85"
-                >
-                  Sign out
-                </button>
-              </div>
-
-              <div>
-                <p className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--sidebar-faint)]">
-                  Appearance
-                </p>
-                <div className="mt-2 flex rounded-full border border-[var(--sidebar-stroke)] bg-[var(--sidebar-hover)] p-1">
-                  {themeOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setTheme(option.value)}
-                      className={`flex-1 rounded-full px-2 py-1 text-[11px] font-semibold transition ${
-                        theme === option.value
-                          ? 'bg-[var(--sidebar-chip)] text-[var(--sidebar-active-text)]'
-                          : 'text-[var(--sidebar-muted)] hover:text-[var(--sidebar-text)]'
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           )}
         </div>

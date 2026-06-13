@@ -25,7 +25,7 @@ export function AppHeader({
             onClick={() => setViewMode('table')}
             className={tabClass(viewMode === 'table')}
           >
-            List
+            Table
           </button>
 
           <button
