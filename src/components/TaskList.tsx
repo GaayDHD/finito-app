@@ -492,8 +492,8 @@ export function TaskList({
   const displayedCount = isTable ? tableVisibleCount : filteredTaskCount
 
   return (
-    <section className="overflow-hidden rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-sm">
-      <div className="flex items-center justify-between border-b border-[var(--outline-soft)] px-4 py-3">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] px-4 py-3 shadow-sm">
         <div>
           <h2 className="text-base font-semibold text-[var(--text-primary)]">
             {isTable ? 'Table view' : 'Card view'}
@@ -529,9 +529,9 @@ export function TaskList({
       )}
 
       {!isLoading && !errorMessage && viewMode === 'card' && (
-        <div>
-          {groupedTasks.map((group) => (
-            <section key={group.id} className="border-b border-[var(--outline-soft)] last:border-b-0">
+        <>
+          {groupedTasks.filter((group) => group.tasks.length > 0).map((group) => (
+            <section key={group.id} className="overflow-hidden rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-sm">
               <div className="flex items-center justify-between bg-[var(--surface-muted)] px-4 py-2">
                 <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                   {group.name}
@@ -541,49 +541,46 @@ export function TaskList({
                 </span>
               </div>
 
-              {group.tasks.length > 0 ? (
-                <div className="divide-y divide-[var(--outline-soft)]">
-                  {group.tasks.map((task) => (
-                    <div
-                      key={task.id}
-                      onClick={() => onOpenTask(task.id)}
-                      className={`cursor-pointer transition ${selectedTaskId === task.id ? 'ring-2 ring-[var(--primary)]/20' : ''}`}
-                    >
-                      {renderTask(task)}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="px-4 py-5 text-sm text-[var(--text-muted)]">
-                  No matching tasks in this group.
-                </div>
-              )}
+              <div className="divide-y divide-[var(--outline-soft)]">
+                {group.tasks.map((task) => (
+                  <div
+                    key={task.id}
+                    onClick={() => onOpenTask(task.id)}
+                    className={`cursor-pointer transition ${selectedTaskId === task.id ? 'ring-2 ring-inset ring-[var(--primary)]/20' : ''}`}
+                  >
+                    {renderTask(task)}
+                  </div>
+                ))}
+              </div>
             </section>
           ))}
-        </div>
+          {groupedTasks.every((group) => group.tasks.length === 0) && (
+            <div className="rounded-xl border border-dashed border-[var(--outline)] bg-[var(--background-paper)] px-4 py-10 text-center text-sm text-[var(--text-muted)]">
+              No tasks to show.
+            </div>
+          )}
+        </>
       )}
 
       {!isLoading && !errorMessage && viewMode === 'table' && (
-        <div className="overflow-x-auto">
-          <div className="min-w-[1180px]">
-            <div className="grid grid-cols-[minmax(320px,1.8fr)_150px_140px_140px_150px_120px_120px_90px_90px] border-b border-[var(--outline-soft)] bg-[var(--surface-muted)] px-4 py-2">
-              {columns.map((column) => (
-                <div key={column.id}>{renderHeaderButton(column)}</div>
-              ))}
-            </div>
-
-            {tableGroups.map((group) => (
-              <section key={group.id} className="border-b border-[var(--outline-soft)] last:border-b-0">
-                <div className="flex items-center justify-between bg-[var(--surface-subtle)] px-4 py-2">
-                  <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
-                    {group.name}
-                  </h3>
-                  <span className="text-xs font-medium text-[var(--text-muted)]">
-                    {group.tasks.length} tasks
-                  </span>
-                </div>
-
-                {group.tasks.length > 0 ? (
+        <>
+          {tableGroups.filter((group) => group.tasks.length > 0).map((group) => (
+            <section key={group.id} className="overflow-hidden rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-sm">
+              <div className="flex items-center justify-between bg-[var(--surface-subtle)] px-4 py-2">
+                <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                  {group.name}
+                </h3>
+                <span className="text-xs font-medium text-[var(--text-muted)]">
+                  {group.tasks.length} tasks
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <div className="min-w-[1180px]">
+                  <div className="grid grid-cols-[minmax(320px,1.8fr)_150px_140px_140px_150px_120px_120px_90px_90px] border-b border-[var(--outline-soft)] bg-[var(--surface-muted)] px-4 py-2">
+                    {columns.map((column) => (
+                      <div key={column.id}>{renderHeaderButton(column)}</div>
+                    ))}
+                  </div>
                   <div className="divide-y divide-[var(--outline-soft)]">
                     {group.tasks.map((task) => {
                       const section = sections.find((currentSection) => currentSection.id === task.section_id)
@@ -671,16 +668,17 @@ export function TaskList({
                       )
                     })}
                   </div>
-                ) : (
-                  <div className="px-4 py-5 text-sm text-[var(--text-muted)]">
-                    No matching tasks in this group.
-                  </div>
-                )}
-              </section>
-            ))}
-          </div>
-        </div>
+                </div>
+              </div>
+            </section>
+          ))}
+          {tableGroups.every((group) => group.tasks.length === 0) && (
+            <div className="rounded-xl border border-dashed border-[var(--outline)] bg-[var(--background-paper)] px-4 py-10 text-center text-sm text-[var(--text-muted)]">
+              No tasks to show.
+            </div>
+          )}
+        </>
       )}
-    </section>
+    </div>
   )
 }

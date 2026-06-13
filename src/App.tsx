@@ -10,6 +10,7 @@ import { TaskFilters } from './components/TaskFilters'
 import { CreateTaskForm } from './components/CreateTaskForm'
 import { TaskList } from './components/TaskList'
 import { WorkspaceSidebar } from './components/WorkspaceSidebar'
+import type { SidebarTool, ThemePreference } from './components/WorkspaceSidebar'
 import { AppHeader } from './components/AppHeader'
 import { AuthScreen } from './components/AuthScreen'
 import { TaskDetailDrawer } from './components/TaskDetailDrawer'
@@ -41,17 +42,12 @@ function App() {
   const [creatingSubtaskTaskId, setCreatingSubtaskTaskId] = useState<string | null>(null)
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
   const [savingTaskId, setSavingTaskId] = useState<string | null>(null)
-  const [creatingSection, setCreatingSection] = useState(false)
   const [creatingWorkspace, setCreatingWorkspace] = useState(false)
   const [newWorkspaceName, setNewWorkspaceName] = useState('')
-  const [, setRenamingSectionId] = useState<string | null>(null)
-  const [deletingSectionId, setDeletingSectionId] = useState<string | null>(null)
   const [addingCommentTaskId, setAddingCommentTaskId] = useState<string | null>(null)
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null)
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [newSectionName, setNewSectionName] = useState('')
-  const [sectionDraftNames, setSectionDraftNames] = useState<Record<string, string>>({})
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({})
   const [subtaskDrafts, setSubtaskDrafts] = useState<Record<string, string>>({})
 
@@ -78,6 +74,35 @@ function App() {
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table')
   const [isCreateTaskFormOpen, setIsCreateTaskFormOpen] = useState(false)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [sidebarTool, setSidebarTool] = useState<SidebarTool>('workspaces')
+  const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false)
+  const [theme, setTheme] = useState<ThemePreference>(() => {
+    const stored = localStorage.getItem('finito-theme')
+    return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system'
+  })
+
+  useEffect(() => {
+    localStorage.setItem('finito-theme', theme)
+
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+
+    function applyTheme() {
+      const resolved = theme === 'system' ? (media.matches ? 'dark' : 'light') : theme
+      document.documentElement.dataset.theme = resolved
+    }
+
+    applyTheme()
+
+    if (theme === 'system') {
+      media.addEventListener('change', applyTheme)
+      return () => media.removeEventListener('change', applyTheme)
+    }
+  }, [theme])
+
+  function openMobileTool(tool: SidebarTool) {
+    setSidebarTool(tool)
+    setIsMobileSheetOpen(true)
+  }
 
   const fallbackSectionId = sections[0]?.id ?? ''
 
@@ -648,115 +673,6 @@ function App() {
     await loadProjectAndTasks({ workspaceId: workspace.id })
   }
 
-  async function createSection(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    if (!newSectionName.trim()) {
-      setErrorMessage('Section name is required.')
-      return
-    }
-
-    if (!projectId) {
-      setErrorMessage('Project not loaded yet. Refresh and try again.')
-      return
-    }
-
-    setCreatingSection(true)
-    setErrorMessage(null)
-
-    const { data, error } = await supabase
-      .from('sections')
-      .insert({
-        project_id: projectId,
-        name: newSectionName.trim(),
-        position: sections.length + 1,
-      })
-      .select('id, name, position')
-      .single()
-
-    if (error) {
-      setErrorMessage(error.message)
-      setCreatingSection(false)
-      return
-    }
-
-    setSections((currentSections) => [...currentSections, data])
-    setNewSectionName('')
-    setCreatingSection(false)
-  }
-
-  async function renameSection(sectionId: string) {
-    const draftName = sectionDraftNames[sectionId]?.trim()
-
-    if (!draftName) {
-      setErrorMessage('Section name is required.')
-      return
-    }
-
-    setRenamingSectionId(sectionId)
-    setErrorMessage(null)
-
-    const { error } = await supabase
-      .from('sections')
-      .update({ name: draftName })
-      .eq('id', sectionId)
-
-    if (error) {
-      setErrorMessage(error.message)
-      setRenamingSectionId(null)
-      return
-    }
-
-    setSections((currentSections) =>
-      currentSections.map((section) =>
-        section.id === sectionId ? { ...section, name: draftName } : section,
-      ),
-    )
-
-    setSectionDraftNames((currentDrafts) => {
-      const nextDrafts = { ...currentDrafts }
-      delete nextDrafts[sectionId]
-      return nextDrafts
-    })
-
-    setRenamingSectionId(null)
-  }
-
-  async function deleteSection(sectionId: string) {
-    const section = sections.find((currentSection) => currentSection.id === sectionId)
-    const sectionTaskCount = tasks.filter((task) => task.section_id === sectionId).length
-
-    if (sectionTaskCount > 0) {
-      setErrorMessage('Move or delete the tasks in this section before deleting it.')
-      return
-    }
-
-    const shouldDelete = window.confirm(`Delete the section “${section?.name ?? 'this section'}”?`)
-
-    if (!shouldDelete) {
-      return
-    }
-
-    setDeletingSectionId(sectionId)
-    setErrorMessage(null)
-
-    const { error } = await supabase
-      .from('sections')
-      .delete()
-      .eq('id', sectionId)
-
-    if (error) {
-      setErrorMessage(error.message)
-      setDeletingSectionId(null)
-      return
-    }
-
-    setSections((currentSections) =>
-      currentSections.filter((currentSection) => currentSection.id !== sectionId),
-    )
-    setDeletingSectionId(null)
-  }
-
   async function addComment(taskId: string) {
     const body = commentDrafts[taskId]?.trim()
 
@@ -1235,15 +1151,48 @@ function App() {
     return <AuthScreen />
   }
 
+  const mobileNavItems: { tool: SidebarTool; label: string; icon: React.ReactNode }[] = [
+    {
+      tool: 'workspaces',
+      label: 'Workspaces',
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1.5" />
+          <rect x="14" y="3" width="7" height="7" rx="1.5" />
+          <rect x="3" y="14" width="7" height="7" rx="1.5" />
+          <rect x="14" y="14" width="7" height="7" rx="1.5" />
+        </svg>
+      ),
+    },
+    {
+      tool: 'activity',
+      label: 'Activity',
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+        </svg>
+      ),
+    },
+    {
+      tool: 'settings',
+      label: 'Settings',
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+      ),
+    },
+  ]
+
   return (
     <main className="min-h-screen bg-[var(--surface-muted)] text-[var(--text-primary)]">
       <AppHeader
         viewMode={viewMode}
         setViewMode={setViewMode}
-        onSignOut={signOut}
       />
 
-      <section className="mx-auto max-w-[1600px] px-5 py-5">
+      <section className="mx-auto max-w-[1600px] px-4 py-5 pb-24 sm:px-5 lg:pb-5">
 
         <CreateTaskForm
           isOpen={isCreateTaskFormOpen}
@@ -1293,27 +1242,24 @@ function App() {
 
 
         <div className="mb-4 grid items-stretch gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
-          <WorkspaceSidebar
-            sections={sections}
-            tasks={tasks}
-            activityLogs={activityLogs}
-            workspaces={workspaces}
-            currentWorkspaceId={workspaceId}
-            newWorkspaceName={newWorkspaceName}
-            setNewWorkspaceName={setNewWorkspaceName}
-            creatingWorkspace={creatingWorkspace}
-            createWorkspace={createWorkspace}
-            switchWorkspace={switchWorkspace}
-            newSectionName={newSectionName}
-            setNewSectionName={setNewSectionName}
-            sectionDraftNames={sectionDraftNames}
-            setSectionDraftNames={setSectionDraftNames}
-            creatingSection={creatingSection}
-            deletingSectionId={deletingSectionId}
-            createSection={createSection}
-            renameSection={renameSection}
-            deleteSection={deleteSection}
-          />
+          <div className="hidden lg:block">
+            <WorkspaceSidebar
+              activityLogs={activityLogs}
+              workspaces={workspaces}
+              currentWorkspaceId={workspaceId}
+              newWorkspaceName={newWorkspaceName}
+              setNewWorkspaceName={setNewWorkspaceName}
+              creatingWorkspace={creatingWorkspace}
+              createWorkspace={createWorkspace}
+              switchWorkspace={switchWorkspace}
+              activeTool={sidebarTool}
+              setActiveTool={setSidebarTool}
+              userEmail={session.user.email ?? ''}
+              signOut={signOut}
+              theme={theme}
+              setTheme={setTheme}
+            />
+          </div>
 
           <div className="min-w-0 space-y-4">
           <DashboardStats stats={stats} onNewTaskClick={toggleCreateTaskForm} />
@@ -1399,6 +1345,80 @@ function App() {
           ) : null}
         </div>
       </section>
+
+      {/* Mobile sheet for sidebar tools */}
+      {isMobileSheetOpen && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setIsMobileSheetOpen(false)}
+          />
+          <div className="absolute inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-3xl bg-[var(--sidebar-bg)] pb-[max(env(safe-area-inset-bottom),16px)] shadow-2xl">
+            <div className="flex justify-center pt-3">
+              <span className="h-1 w-10 rounded-full bg-[var(--sidebar-stroke-strong)]" />
+            </div>
+            <WorkspaceSidebar
+              activityLogs={activityLogs}
+              workspaces={workspaces}
+              currentWorkspaceId={workspaceId}
+              newWorkspaceName={newWorkspaceName}
+              setNewWorkspaceName={setNewWorkspaceName}
+              creatingWorkspace={creatingWorkspace}
+              createWorkspace={createWorkspace}
+              switchWorkspace={(id) => {
+                switchWorkspace(id)
+                setIsMobileSheetOpen(false)
+              }}
+              activeTool={sidebarTool}
+              setActiveTool={setSidebarTool}
+              userEmail={session.user.email ?? ''}
+              signOut={signOut}
+              theme={theme}
+              setTheme={setTheme}
+              sticky={false}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Mobile bottom navigation */}
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-[var(--outline-soft)] bg-[var(--background-paper)] pb-[max(env(safe-area-inset-bottom),0px)] lg:hidden">
+        {mobileNavItems.map((item) => {
+          const isActive = isMobileSheetOpen && sidebarTool === item.tool
+          return (
+            <button
+              key={item.tool}
+              type="button"
+              onClick={() => {
+                if (isMobileSheetOpen && sidebarTool === item.tool) {
+                  setIsMobileSheetOpen(false)
+                } else {
+                  openMobileTool(item.tool)
+                }
+              }}
+              className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold transition ${
+                isActive ? 'text-[var(--primary)]' : 'text-[var(--text-muted)]'
+              }`}
+            >
+              <span aria-hidden="true">{item.icon}</span>
+              {item.label}
+            </button>
+          )
+        })}
+        <button
+          type="button"
+          onClick={toggleCreateTaskForm}
+          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold text-[var(--primary)]"
+        >
+          <span aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v8M8 12h8" />
+            </svg>
+          </span>
+          New
+        </button>
+      </nav>
     </main>
   )
 }
