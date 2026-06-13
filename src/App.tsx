@@ -15,6 +15,8 @@ import { AppHeader } from './components/AppHeader'
 import { AuthScreen } from './components/AuthScreen'
 import { SettingsModal } from './components/SettingsModal'
 import { TaskDetailDrawer } from './components/TaskDetailDrawer'
+import { CalendarView } from './components/CalendarView'
+import { TimelineView } from './components/TimelineView'
 import './App.css'
 
 function App() {
@@ -74,7 +76,7 @@ function App() {
   const [sectionFilter, setSectionFilter] = useState('all')
   const [visibilityFilter, setVisibilityFilter] = useState<'active' | 'archived' | 'all'>('active')
   const [groupBy, setGroupBy] = useState<'status' | 'priority' | 'scope'>('status')
-  const [viewMode, setViewMode] = useState<'card' | 'table' | 'kanban'>('table')
+  const [viewMode, setViewMode] = useState<'card' | 'table' | 'kanban' | 'timeline' | 'calendar'>('table')
   const [isCreateTaskFormOpen, setIsCreateTaskFormOpen] = useState(false)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [sidebarTool, setSidebarTool] = useState<SidebarTool>('workspaces')
@@ -1347,6 +1349,19 @@ function App() {
           <div className="min-w-0 space-y-4">
           <DashboardStats stats={stats} onNewTaskClick={toggleCreateTaskForm} />
 
+          {viewMode === 'calendar' ? (
+            <CalendarView
+              tasks={groupedTasks.flatMap((group) => group.tasks)}
+              selectedTaskId={selectedTaskId}
+              onOpenTask={setSelectedTaskId}
+            />
+          ) : viewMode === 'timeline' ? (
+            <TimelineView
+              tasks={groupedTasks.flatMap((group) => group.tasks)}
+              selectedTaskId={selectedTaskId}
+              onOpenTask={setSelectedTaskId}
+            />
+          ) : (
           <TaskList
             viewMode={viewMode}
             groupedTasks={groupedTasks}
@@ -1371,6 +1386,7 @@ function App() {
             groupBy={groupBy}
             setGroupBy={setGroupBy}
           />
+          )}
           </div>
 
           {selectedTask ? (

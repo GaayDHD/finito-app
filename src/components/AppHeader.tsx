@@ -1,9 +1,17 @@
+type ViewMode = 'card' | 'table' | 'kanban' | 'timeline' | 'calendar'
+
 type AppHeaderProps = {
-  viewMode: 'card' | 'table' | 'kanban'
-  setViewMode: (viewMode: 'card' | 'table' | 'kanban') => void
+  viewMode: ViewMode
+  setViewMode: (viewMode: ViewMode) => void
 }
 
-const comingSoonTabs = ['Timeline', 'Calendar']
+const viewTabs: { mode: ViewMode; label: string }[] = [
+  { mode: 'table', label: 'Table' },
+  { mode: 'card', label: 'Card' },
+  { mode: 'kanban', label: 'Kanban' },
+  { mode: 'timeline', label: 'Timeline' },
+  { mode: 'calendar', label: 'Calendar' },
+]
 
 export function AppHeader({
   viewMode,
@@ -23,38 +31,14 @@ export function AppHeader({
     <header className="sticky top-0 z-30 border-b border-[var(--outline-soft)] bg-[var(--background-paper)]">
       <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6">
         <nav className="flex items-center gap-1.5 overflow-x-auto py-2 sm:gap-5 sm:py-0 sm:pt-3">
-          <button
-            type="button"
-            onClick={() => setViewMode('table')}
-            className={tabClass(viewMode === 'table')}
-          >
-            Table
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setViewMode('card')}
-            className={tabClass(viewMode === 'card')}
-          >
-            Card
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setViewMode('kanban')}
-            className={tabClass(viewMode === 'kanban')}
-          >
-            Kanban
-          </button>
-
-          {comingSoonTabs.map((tab) => (
+          {viewTabs.map((tab) => (
             <button
-              key={tab}
+              key={tab.mode}
               type="button"
-              disabled
-              className={`${tabBase} cursor-not-allowed text-[var(--text-disabled)] opacity-60 sm:border-transparent`}
+              onClick={() => setViewMode(tab.mode)}
+              className={tabClass(viewMode === tab.mode)}
             >
-              {tab}
+              {tab.label}
             </button>
           ))}
         </nav>
