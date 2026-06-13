@@ -1,9 +1,9 @@
 type AppHeaderProps = {
-  viewMode: 'card' | 'table'
-  setViewMode: (viewMode: 'card' | 'table') => void
+  viewMode: 'card' | 'table' | 'kanban'
+  setViewMode: (viewMode: 'card' | 'table' | 'kanban') => void
 }
 
-const comingSoonTabs = ['Kanban', 'Timeline', 'Calendar']
+const comingSoonTabs = ['Timeline', 'Calendar']
 
 export function AppHeader({
   viewMode,
@@ -37,6 +37,14 @@ export function AppHeader({
             className={tabClass(viewMode === 'card')}
           >
             Card
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setViewMode('kanban')}
+            className={tabClass(viewMode === 'kanban')}
+          >
+            Kanban
           </button>
 
           {comingSoonTabs.map((tab) => (

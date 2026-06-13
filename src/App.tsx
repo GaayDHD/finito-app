@@ -34,6 +34,7 @@ function App() {
   const [updatingStatusTaskId, setUpdatingStatusTaskId] = useState<string | null>(null)
   const [updatingPriorityTaskId, setUpdatingPriorityTaskId] = useState<string | null>(null)
   const [updatingSectionTaskId, setUpdatingSectionTaskId] = useState<string | null>(null)
+  const [updatingDifficultyTaskId, setUpdatingDifficultyTaskId] = useState<string | null>(null)
   const [addingDependencyTaskId, setAddingDependencyTaskId] = useState<string | null>(null)
   const [removingDependencyId, setRemovingDependencyId] = useState<string | null>(null)
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null)
@@ -73,7 +74,7 @@ function App() {
   const [sectionFilter, setSectionFilter] = useState('all')
   const [visibilityFilter, setVisibilityFilter] = useState<'active' | 'archived' | 'all'>('active')
   const [groupBy, setGroupBy] = useState<'status' | 'priority' | 'scope'>('status')
-  const [viewMode, setViewMode] = useState<'card' | 'table'>('table')
+  const [viewMode, setViewMode] = useState<'card' | 'table' | 'kanban'>('table')
   const [isCreateTaskFormOpen, setIsCreateTaskFormOpen] = useState(false)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [sidebarTool, setSidebarTool] = useState<SidebarTool>('workspaces')
@@ -480,6 +481,45 @@ function App() {
     )
 
     setUpdatingPriorityTaskId(null)
+  }
+
+  async function updateTaskDifficulty(taskId: string, difficulty: string) {
+    const nextDifficulty = difficulty || 'not_scoped'
+
+    setUpdatingDifficultyTaskId(taskId)
+    setErrorMessage(null)
+
+    const { error } = await supabase.from('tasks').update({ difficulty: nextDifficulty }).eq('id', taskId)
+
+    if (error) {
+      setErrorMessage(error.message)
+      setUpdatingDifficultyTaskId(null)
+      return
+    }
+
+    const updatedTask = tasks.find((task) => task.id === taskId)
+
+    setTasks((currentTasks) =>
+      currentTasks.map((task) => (task.id === taskId ? { ...task, difficulty: nextDifficulty } : task)),
+    )
+
+    await logActivity(
+      'Updated task scope',
+      `${updatedTask?.title ?? 'Task'} → ${getLabel(difficultyOptions, nextDifficulty)}`,
+      taskId,
+    )
+
+    setUpdatingDifficultyTaskId(null)
+  }
+
+  function moveTaskToGroup(taskId: string, groupId: string) {
+    if (groupBy === 'status') {
+      updateTaskStatus(taskId, groupId)
+    } else if (groupBy === 'priority') {
+      updateTaskPriority(taskId, groupId === 'no_priority' ? '' : groupId)
+    } else {
+      updateTaskDifficulty(taskId, groupId === 'no_scope' ? '' : groupId)
+    }
   }
 
   async function updateTaskSection(taskId: string, sectionId: string) {
@@ -1054,6 +1094,11 @@ function App() {
     setDeletingTaskId(null)
   }
 
+  const pillSelectClass =
+    'h-7 max-w-[150px] cursor-pointer rounded-full border px-2.5 text-xs font-semibold outline-none transition'
+  const pillToneNeutral = 'border-[var(--outline)] bg-[var(--surface-muted)] text-[var(--text-secondary)]'
+  const pillTonePrimary = 'border-[var(--primary-main)]/30 bg-[var(--primary-light)] text-[var(--primary-dark)]'
+
   function renderTask(task: Task) {
     const blockingTasks = getBlockingTasks(task.id)
     const taskIsOverdue = isTaskOverdue(task)
@@ -1064,30 +1109,22 @@ function App() {
     return (
       <article
         key={task.id}
-        className="border-b border-[var(--outline-soft)] bg-white px-4 py-3 transition hover:bg-[var(--surface-muted)]"
+        className="border-b border-[var(--outline-soft)] bg-[var(--background-paper)] px-4 py-3 transition hover:bg-[var(--surface-muted)]"
       >
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-sm font-semibold">{task.title}</h3>
-          <span className="rounded-full bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-semibold text-[var(--text-secondary)]">
-            {getLabel(statusOptions, task.status)}
-          </span>
-          {task.priority && (
-            <span className="rounded-full border border-[var(--primary-main)]/30 bg-[var(--primary-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--primary-main)]">
-              {getLabel(priorityOptions, task.priority)}
-            </span>
-          )}
+        <div className="flex items-start gap-2">
+          <h3 className="min-w-0 flex-1 truncate text-sm font-semibold">{task.title}</h3>
           {task.archived_at && (
-            <span className="rounded-full bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-semibold text-[var(--text-muted)]">
+            <span className="shrink-0 rounded-full bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-semibold text-[var(--text-muted)]">
               Archived
             </span>
           )}
           {taskIsOverdue && (
-            <span className="rounded-full border border-[var(--error-main)]/35 bg-[var(--error-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--error-dark)]">
+            <span className="shrink-0 rounded-full border border-[var(--error-main)]/35 bg-[var(--error-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--error-dark)]">
               Overdue
             </span>
           )}
           {blockingTasks.length > 0 && (
-            <span className="rounded-full border border-[var(--error-main)]/35 bg-[var(--error-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--error-dark)]">
+            <span className="shrink-0 rounded-full border border-[var(--error-main)]/35 bg-[var(--error-light)] px-2.5 py-1 text-[11px] font-semibold text-[var(--error-dark)]">
               Blocked by {blockingTasks.length}
             </span>
           )}
@@ -1097,20 +1134,69 @@ function App() {
           <p className="mt-1 max-w-3xl truncate text-xs leading-5 text-[var(--text-disabled)]">{task.description}</p>
         )}
 
-        <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
-          <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[var(--text-disabled)]">
-            Scope: {getLabel(difficultyOptions, task.difficulty)}
-          </span>
-          <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[var(--text-disabled)]">
-            Start: {formatDate(task.start_date)}
-          </span>
-          <span className={`rounded-full px-3 py-1 ${taskIsOverdue ? 'bg-[var(--error-light)] text-[var(--error-dark)]' : 'bg-[var(--surface-subtle)] text-[var(--text-disabled)]'}`}>
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <select
+            aria-label={`Status for ${task.title}`}
+            value={task.status}
+            disabled={updatingStatusTaskId === task.id}
+            onClick={(event) => event.stopPropagation()}
+            onChange={(event) => updateTaskStatus(task.id, event.target.value)}
+            className={`${pillSelectClass} ${pillToneNeutral}`}
+          >
+            {statusOptions.map((status) => (
+              <option key={status.value} value={status.value}>{status.label}</option>
+            ))}
+          </select>
+
+          <select
+            aria-label={`Priority for ${task.title}`}
+            value={task.priority ?? ''}
+            disabled={updatingPriorityTaskId === task.id}
+            onClick={(event) => event.stopPropagation()}
+            onChange={(event) => updateTaskPriority(task.id, event.target.value)}
+            className={`${pillSelectClass} ${task.priority ? pillTonePrimary : pillToneNeutral}`}
+          >
+            <option value="">No priority</option>
+            {priorityOptions.map((priority) => (
+              <option key={priority.value} value={priority.value}>{priority.label}</option>
+            ))}
+          </select>
+
+          <select
+            aria-label={`Scope for ${task.title}`}
+            value={task.difficulty ?? 'not_scoped'}
+            disabled={updatingDifficultyTaskId === task.id}
+            onClick={(event) => event.stopPropagation()}
+            onChange={(event) => updateTaskDifficulty(task.id, event.target.value)}
+            className={`${pillSelectClass} ${pillToneNeutral}`}
+          >
+            {difficultyOptions.map((difficulty) => (
+              <option key={difficulty.value} value={difficulty.value}>{difficulty.label}</option>
+            ))}
+          </select>
+
+          {sections.length > 0 && (
+            <select
+              aria-label={`Section for ${task.title}`}
+              value={task.section_id ?? ''}
+              disabled={updatingSectionTaskId === task.id}
+              onClick={(event) => event.stopPropagation()}
+              onChange={(event) => updateTaskSection(task.id, event.target.value)}
+              className={`${pillSelectClass} ${pillToneNeutral}`}
+            >
+              {sections.map((section) => (
+                <option key={section.id} value={section.id}>{section.name}</option>
+              ))}
+            </select>
+          )}
+
+          <span className={`rounded-full px-3 py-1 text-[11px] ${taskIsOverdue ? 'bg-[var(--error-light)] text-[var(--error-dark)]' : 'bg-[var(--surface-subtle)] text-[var(--text-disabled)]'}`}>
             Due: {formatDate(task.due_date)}
           </span>
-          <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[var(--text-disabled)]">
+          <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[11px] text-[var(--text-disabled)]">
             Comments: {taskComments.length}
           </span>
-          <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[var(--text-disabled)]">
+          <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[11px] text-[var(--text-disabled)]">
             Subtasks: {completedSubtasks}/{subtasks.length}
           </span>
         </div>
@@ -1270,8 +1356,13 @@ function App() {
             sections={sections}
             updatingStatusTaskId={updatingStatusTaskId}
             updatingPriorityTaskId={updatingPriorityTaskId}
+            updatingDifficultyTaskId={updatingDifficultyTaskId}
+            updatingSectionTaskId={updatingSectionTaskId}
             updateTaskStatus={updateTaskStatus}
             updateTaskPriority={updateTaskPriority}
+            updateTaskDifficulty={updateTaskDifficulty}
+            updateTaskSection={updateTaskSection}
+            moveTaskToGroup={moveTaskToGroup}
             getTaskComments={getTaskComments}
             getSubtasks={getSubtasks}
             selectedTaskId={selectedTaskId}

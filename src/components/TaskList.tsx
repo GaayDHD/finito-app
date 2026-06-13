@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { Section, Task } from '../types'
 import { difficultyOptions, priorityOptions, statusOptions } from '../constants'
-import { formatDate, getLabel } from '../utils'
+import { formatDate } from '../utils'
 
 type TaskGroup = {
   id: string
@@ -31,7 +31,7 @@ type TableSort = {
 type TableFilters = Record<FilterField, string[]>
 
 type TaskListProps = {
-  viewMode: 'card' | 'table'
+  viewMode: 'card' | 'table' | 'kanban'
   groupedTasks: TaskGroup[]
   filteredTaskCount: number
   isLoading: boolean
@@ -39,8 +39,13 @@ type TaskListProps = {
   sections: Section[]
   updatingStatusTaskId: string | null
   updatingPriorityTaskId: string | null
+  updatingDifficultyTaskId: string | null
+  updatingSectionTaskId: string | null
   updateTaskStatus: (taskId: string, status: string) => void
   updateTaskPriority: (taskId: string, priority: string) => void
+  updateTaskDifficulty: (taskId: string, difficulty: string) => void
+  updateTaskSection: (taskId: string, sectionId: string) => void
+  moveTaskToGroup: (taskId: string, groupId: string) => void
   getTaskComments: (taskId: string) => unknown[]
   getSubtasks: (taskId: string) => Task[]
   selectedTaskId: string | null
@@ -188,8 +193,13 @@ export function TaskList({
   sections,
   updatingStatusTaskId,
   updatingPriorityTaskId,
+  updatingDifficultyTaskId,
+  updatingSectionTaskId,
   updateTaskStatus,
   updateTaskPriority,
+  updateTaskDifficulty,
+  updateTaskSection,
+  moveTaskToGroup,
   getTaskComments,
   getSubtasks,
   selectedTaskId,
@@ -198,6 +208,8 @@ export function TaskList({
   groupBy,
   setGroupBy,
 }: TaskListProps) {
+  const [dragTaskId, setDragTaskId] = useState<string | null>(null)
+  const [dragOverGroup, setDragOverGroup] = useState<string | null>(null)
   const [openHeaderMenu, setOpenHeaderMenu] = useState<string | null>(null)
   const [tableSort, setTableSort] = useState<TableSort | null>(null)
   const [tableFilters, setTableFilters] = useState<TableFilters>({
@@ -506,7 +518,7 @@ export function TaskList({
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] px-4 py-3 shadow-sm">
         <div>
           <h2 className="text-base font-semibold text-[var(--text-primary)]">
-            {isTable ? 'Table view' : 'Card view'}
+            {viewMode === 'table' ? 'Table view' : viewMode === 'kanban' ? 'Kanban board' : 'Card view'}
           </h2>
           <p className="text-xs text-[var(--text-muted)]">
             Grouped by {groupByOptions.find((option) => option.value === groupBy)?.label.toLowerCase()}
@@ -610,7 +622,6 @@ export function TaskList({
                   </div>
                   <div className="divide-y divide-[var(--outline-soft)]">
                     {group.tasks.map((task) => {
-                      const section = sections.find((currentSection) => currentSection.id === task.section_id)
                       const comments = getTaskComments(task.id)
                       const subtasks = getSubtasks(task.id)
                       const completedSubtasks = subtasks.filter((subtask) => subtask.status === 'done').length
@@ -668,12 +679,37 @@ export function TaskList({
                             </select>
                           </div>
 
-                          <div className="truncate text-center text-xs text-[var(--text-secondary)]">
-                            {getLabel(difficultyOptions, task.difficulty)}
+                          <div className="flex justify-center text-center">
+                            <select
+                              value={task.difficulty ?? 'not_scoped'}
+                              disabled={updatingDifficultyTaskId === task.id}
+                              onClick={(event) => event.stopPropagation()}
+                              onChange={(event) => updateTaskDifficulty(task.id, event.target.value)}
+                              className="h-7 max-w-[130px] cursor-pointer rounded-full border border-[var(--outline)] bg-[var(--surface-muted)] px-2 text-center text-xs font-semibold text-[var(--text-secondary)] outline-none"
+                            >
+                              {difficultyOptions.map((difficulty) => (
+                                <option key={difficulty.value} value={difficulty.value}>
+                                  {difficulty.label}
+                                </option>
+                              ))}
+                            </select>
                           </div>
 
-                          <div className="truncate text-center text-xs text-[var(--text-secondary)]">
-                            {section?.name ?? 'No section'}
+                          <div className="flex justify-center text-center">
+                            <select
+                              value={task.section_id ?? ''}
+                              disabled={updatingSectionTaskId === task.id || sections.length === 0}
+                              onClick={(event) => event.stopPropagation()}
+                              onChange={(event) => updateTaskSection(task.id, event.target.value)}
+                              className="h-7 max-w-[130px] cursor-pointer rounded-full border border-[var(--outline)] bg-[var(--surface-muted)] px-2 text-center text-xs font-semibold text-[var(--text-secondary)] outline-none"
+                            >
+                              {sections.length === 0 && <option value="">No section</option>}
+                              {sections.map((sectionOption) => (
+                                <option key={sectionOption.id} value={sectionOption.id}>
+                                  {sectionOption.name}
+                                </option>
+                              ))}
+                            </select>
                           </div>
 
                           <div className="text-center text-xs text-[var(--text-muted)]">
@@ -705,6 +741,68 @@ export function TaskList({
             </div>
           )}
         </>
+      )}
+
+      {!isLoading && !errorMessage && viewMode === 'kanban' && (
+        <div className="flex gap-3 overflow-x-auto pb-2">
+          {groupedTasks.map((group) => (
+            <section
+              key={group.id}
+              onDragOver={(event) => {
+                event.preventDefault()
+                setDragOverGroup(group.id)
+              }}
+              onDragLeave={() => setDragOverGroup((current) => (current === group.id ? null : current))}
+              onDrop={() => {
+                if (dragTaskId) {
+                  moveTaskToGroup(dragTaskId, group.id)
+                }
+                setDragTaskId(null)
+                setDragOverGroup(null)
+              }}
+              className={`flex w-72 shrink-0 flex-col rounded-2xl border bg-[var(--surface-muted)] transition ${
+                dragOverGroup === group.id
+                  ? 'border-[var(--primary-main)] ring-2 ring-[var(--primary-main)]/20'
+                  : 'border-[var(--outline-soft)]'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2 border-b border-[var(--outline-soft)] px-3 py-2.5">
+                <h3 className="truncate text-xs font-bold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+                  {group.name}
+                </h3>
+                <span className="shrink-0 rounded-full bg-[var(--background-paper)] px-2 py-0.5 text-[11px] font-semibold text-[var(--text-muted)]">
+                  {group.tasks.length}
+                </span>
+              </div>
+
+              <div className="flex flex-1 flex-col gap-2 p-2">
+                {group.tasks.map((task) => (
+                  <div
+                    key={task.id}
+                    draggable
+                    onDragStart={() => setDragTaskId(task.id)}
+                    onDragEnd={() => {
+                      setDragTaskId(null)
+                      setDragOverGroup(null)
+                    }}
+                    onClick={() => onOpenTask(task.id)}
+                    className={`cursor-pointer overflow-hidden rounded-xl border bg-[var(--background-paper)] shadow-sm transition hover:shadow-md ${
+                      selectedTaskId === task.id ? 'border-[var(--primary-main)] ring-2 ring-[var(--primary-main)]/20' : 'border-[var(--outline-soft)]'
+                    } ${dragTaskId === task.id ? 'opacity-50' : ''}`}
+                  >
+                    {renderTask(task)}
+                  </div>
+                ))}
+
+                {group.tasks.length === 0 && (
+                  <p className="rounded-xl border border-dashed border-[var(--outline)] px-3 py-6 text-center text-xs text-[var(--text-muted)]">
+                    Drop tasks here
+                  </p>
+                )}
+              </div>
+            </section>
+          ))}
+        </div>
       )}
     </div>
   )

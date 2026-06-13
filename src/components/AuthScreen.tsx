@@ -37,22 +37,13 @@ export function AuthScreen() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[var(--surface-muted)] px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-6 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[var(--outline-soft)]/70 bg-[var(--background-paper)]">
-            <img
-              src="https://res.cloudinary.com/dcd54tom6/image/upload/v1780118631/iTunes_512pt__1x_unphju.png"
-              alt="Finito logo"
-              className="h-9 w-9 rounded-lg object-contain"
-            />
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">Finito</h1>
-            <p className="text-xs text-[var(--text-muted)]">
-              {mode === 'sign_in' ? 'Sign in to your workspace' : 'Create your account'}
-            </p>
-          </div>
+    <main className="flex min-h-screen justify-center bg-[var(--surface-muted)] px-4 pt-16 sm:pt-24">
+      <div className="h-fit w-full max-w-sm rounded-2xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-6 shadow-sm">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">Finito</h1>
+          <p className="text-xs text-[var(--text-muted)]">
+            {mode === 'sign_in' ? 'Sign in to your workspace' : 'Create your account'}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-3">
