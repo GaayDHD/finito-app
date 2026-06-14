@@ -1,6 +1,138 @@
 @import "tailwindcss";
 
+/* ---- Atkinson Hyperlegible Next (body) ---- */
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444149/AtkinsonHyperlegibleNext-ExtraLight_bfnamv.otf") format("opentype");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444150/AtkinsonHyperlegibleNext-ExtraLightItalic_g93m8v.otf") format("opentype");
+  font-weight: 200;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444151/AtkinsonHyperlegibleNext-Light_pkgm13.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444152/AtkinsonHyperlegibleNext-LightItalic_pfqjwj.otf") format("opentype");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444155/AtkinsonHyperlegibleNext-Regular_zq3gjm.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444156/AtkinsonHyperlegibleNext-RegularItalic_ppenvj.otf") format("opentype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444153/AtkinsonHyperlegibleNext-Medium_dwbjcb.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444154/AtkinsonHyperlegibleNext-MediumItalic_xxd82l.otf") format("opentype");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444157/AtkinsonHyperlegibleNext-SemiBold_ixpe7a.otf") format("opentype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444159/AtkinsonHyperlegibleNext-SemiBoldItalic_f9386s.otf") format("opentype");
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444146/AtkinsonHyperlegibleNext-Bold_xyxita.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444147/AtkinsonHyperlegibleNext-BoldItalic_a9cql4.otf") format("opentype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444147/AtkinsonHyperlegibleNext-ExtraBold_fgw3jj.otf") format("opentype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444148/AtkinsonHyperlegibleNext-ExtraBoldItalic_lqkkoz.otf") format("opentype");
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ---- Atkinson Hyperlegible Mono (headings) ---- */
+@font-face {
+  font-family: "Atkinson Hyperlegible Mono";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444161/AtkinsonHyperlegibleMono-Bold_mqcex0.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Mono";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444162/AtkinsonHyperlegibleMono-BoldItalic_razksm.otf") format("opentype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Mono";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444163/AtkinsonHyperlegibleMono-ExtraBold_xs3noq.otf") format("opentype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Mono";
+  src: url("https://res.cloudinary.com/dcd54tom6/raw/upload/v1781444166/AtkinsonHyperlegibleMono-ExtraBoldItalic_huzxvv.otf") format("opentype");
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+}
+
 :root {
+  --font-sans: "Atkinson Hyperlegible Next", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-heading: "Atkinson Hyperlegible Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   color-scheme: light;
 
   /* Brand / primary */
@@ -54,9 +186,7 @@
   --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
   --shadow-card: 0 2px 24px rgba(0, 0, 0, 0.06), 0 24px 80px rgba(0, 0, 0, 0.08);
 
-  font-family:
-    -apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont,
-    "Segoe UI", Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
 
   -webkit-font-smoothing: antialiased;
   background: var(--background-default);
@@ -118,8 +248,19 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  font-family: var(--font-sans);
   background: var(--background-default);
   color: var(--text-primary);
+}
+
+/* Headings use Atkinson Hyperlegible Mono */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
 }
 
 button,
