@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Section } from '../types'
-import { difficultyOptions, priorityOptions, statusOptions } from '../constants'
+import { difficultyOptions, priorityOptions } from '../constants'
+import { StatusOptions } from './ui'
 
 type CreateTaskFormProps = {
   isOpen: boolean
@@ -54,8 +56,32 @@ export function CreateTaskForm({
   isCreating,
   createTask,
 }: CreateTaskFormProps) {
+  const [showTitleError, setShowTitleError] = useState(false)
+
+  useEffect(() => {
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsOpen(false)
+      }
+    }
+    if (isOpen) {
+      window.addEventListener('keydown', handleKey)
+      return () => window.removeEventListener('keydown', handleKey)
+    }
+  }, [isOpen, setIsOpen])
+
   if (!isOpen) {
     return null
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    if (!taskTitle.trim()) {
+      event.preventDefault()
+      setShowTitleError(true)
+      return
+    }
+    setShowTitleError(false)
+    createTask(event)
   }
 
   const fieldLabel = 'flex flex-col gap-1 text-xs font-medium text-[var(--text-muted)]'
@@ -65,7 +91,7 @@ export function CreateTaskForm({
       <div className="absolute inset-0 bg-black/40" onClick={() => setIsOpen(false)} />
 
       <form
-        onSubmit={createTask}
+        onSubmit={handleSubmit}
         className="relative z-10 flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl bg-[var(--background-paper)] shadow-2xl sm:rounded-2xl"
       >
         <div className="flex items-start justify-between gap-4 border-b border-[var(--outline-soft)] px-6 py-5">
@@ -86,7 +112,19 @@ export function CreateTaskForm({
         <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
           <label className={fieldLabel}>
             Title
-            <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} placeholder="Task title" autoFocus className={inputClass} />
+            <input
+              value={taskTitle}
+              onChange={(event) => {
+                setTaskTitle(event.target.value)
+                if (showTitleError && event.target.value.trim()) {
+                  setShowTitleError(false)
+                }
+              }}
+              placeholder="Task title"
+              autoFocus
+              className={`${inputClass} ${showTitleError ? 'border-[var(--error-main)] focus:border-[var(--error-main)] focus:ring-[var(--error-main)]/10' : ''}`}
+            />
+            {showTitleError && <span className="text-[11px] font-medium text-[var(--error-dark)]">Give your task a title to continue.</span>}
           </label>
 
           <label className={fieldLabel}>
@@ -99,9 +137,7 @@ export function CreateTaskForm({
               Status
               <select value={taskStatus} onChange={(event) => setTaskStatus(event.target.value)} className={inputClass}>
                 <option value="">Status</option>
-                {statusOptions.map((status) => (
-                  <option key={status.value} value={status.value}>{status.label}</option>
-                ))}
+                <StatusOptions />
               </select>
             </label>
 
