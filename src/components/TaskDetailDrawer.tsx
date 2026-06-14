@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import type { Section, Task, TaskComment, TaskDependency } from '../types'
-import { difficultyOptions, priorityOptions, statusOptions } from '../constants'
+import { difficultyOptions, priorityOptions } from '../constants'
 import { formatDate, getLabel } from '../utils'
+import { StatusOptions, SubtaskProgress } from './ui'
 
 type DependencyLink = {
   dependency: TaskDependency
@@ -124,8 +126,24 @@ export function TaskDetailDrawer({
   archiveTask,
   restoreTask,
 }: TaskDetailDrawerProps) {
+  useEffect(() => {
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
   return (
-    <div className="fixed inset-y-0 right-0 z-40 flex w-full max-w-xl flex-col border-l border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-2xl">
+    <div className="fixed inset-0 z-40">
+      <div
+        className="absolute inset-0 bg-black/30 transition-opacity"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div className="absolute inset-y-0 right-0 flex w-full max-w-xl flex-col border-l border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-2xl">
       <div className="flex items-start justify-between gap-4 border-b border-[var(--outline-soft)] px-6 py-5">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--text-muted)]">Task details</p>
@@ -154,11 +172,7 @@ export function TaskDetailDrawer({
               onChange={(event) => updateTaskStatus(selectedTask.id, event.target.value)}
               className="mt-2 w-full cursor-pointer rounded-lg border border-[var(--outline-soft)] bg-[var(--background-paper)] px-2 py-1.5 text-sm font-semibold text-[var(--text-primary)] outline-none transition focus:border-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {statusOptions.map((status) => (
-                <option key={status.value} value={status.value}>
-                  {status.label}
-                </option>
-              ))}
+              <StatusOptions />
             </select>
           </div>
           <div className="rounded-2xl border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-4">
@@ -212,6 +226,14 @@ export function TaskDetailDrawer({
             </span>
           </div>
 
+          {getSubtasks(selectedTask.id).length > 0 && (
+            <SubtaskProgress
+              done={getSubtasks(selectedTask.id).filter((subtask) => subtask.status === 'done').length}
+              total={getSubtasks(selectedTask.id).length}
+              className="mt-3"
+            />
+          )}
+
           {getSubtasks(selectedTask.id).length > 0 ? (
             <div className="mt-3 space-y-2">
               {getSubtasks(selectedTask.id).map((subtask) => (
@@ -235,11 +257,7 @@ export function TaskDetailDrawer({
                       onChange={(event) => updateTaskStatus(subtask.id, event.target.value)}
                       className="cursor-pointer rounded-lg border border-[var(--outline-soft)] bg-[var(--background-paper)] px-2 py-1 text-xs font-semibold text-[var(--text-primary)] outline-none transition focus:border-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {statusOptions.map((status) => (
-                        <option key={status.value} value={status.value}>
-                          {status.label}
-                        </option>
-                      ))}
+                      <StatusOptions />
                     </select>
                     <span className="text-xs text-[var(--text-secondary)]">
                       {subtask.priority ? getLabel(priorityOptions, subtask.priority) : 'No priority'}
@@ -581,6 +599,7 @@ export function TaskDetailDrawer({
           )}
         </div>
       </div>
+    </div>
     </div>
   )
 }
