@@ -1384,12 +1384,14 @@ function App() {
           {viewMode === 'calendar' ? (
             <CalendarView
               tasks={groupedTasks.flatMap((group) => group.tasks)}
+              getSubtasks={getSubtasks}
               selectedTaskId={selectedTaskId}
               onOpenTask={setSelectedTaskId}
             />
           ) : viewMode === 'timeline' ? (
             <TimelineView
               tasks={groupedTasks.flatMap((group) => group.tasks)}
+              getSubtasks={getSubtasks}
               selectedTaskId={selectedTaskId}
               onOpenTask={setSelectedTaskId}
             />

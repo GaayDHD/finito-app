@@ -1,7 +1,11 @@
 import type { Task } from '../types'
+import { getLabel } from '../utils'
+import { statusOptions } from '../constants'
+import { statusToneClass, SubtaskProgress } from './ui'
 
 type TimelineViewProps = {
   tasks: Task[]
+  getSubtasks: (taskId: string) => Task[]
   selectedTaskId: string | null
   onOpenTask: (taskId: string) => void
 }
@@ -29,7 +33,7 @@ function barTone(task: Task, end: Date, today: Date) {
   return 'bg-[var(--primary-main)]'
 }
 
-export function TimelineView({ tasks, selectedTaskId, onOpenTask }: TimelineViewProps) {
+export function TimelineView({ tasks, getSubtasks, selectedTaskId, onOpenTask }: TimelineViewProps) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -89,7 +93,7 @@ export function TimelineView({ tasks, selectedTaskId, onOpenTask }: TimelineView
       <div className="overflow-x-auto">
         <div className="min-w-[760px]">
           {/* Axis */}
-          <div className="grid grid-cols-[200px_1fr] border-b border-[var(--outline-soft)] bg-[var(--surface-muted)]">
+          <div className="grid grid-cols-[240px_1fr] border-b border-[var(--outline-soft)] bg-[var(--surface-muted)]">
             <div className="px-4 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Task</div>
             <div className="relative h-8">
               {ticks.map((tick, index) => (
@@ -109,18 +113,30 @@ export function TimelineView({ tasks, selectedTaskId, onOpenTask }: TimelineView
             {showToday && (
               <div
                 className="pointer-events-none absolute bottom-0 top-0 z-10 w-px bg-[var(--primary-main)]/60"
-                style={{ left: `calc(200px + (100% - 200px) * ${todayLeft / 100})` }}
+                style={{ left: `calc(240px + (100% - 240px) * ${todayLeft / 100})` }}
               />
             )}
 
             {dated.map(({ task, start, end }) => {
               const left = ((start.getTime() - min) / range) * 100
               const width = Math.max(((end.getTime() - start.getTime()) / range) * 100, 1.5)
+              const subtasks = getSubtasks(task.id)
+              const doneSubtasks = subtasks.filter((subtask) => subtask.status === 'done').length
 
               return (
-                <div key={task.id} className="grid grid-cols-[200px_1fr] items-center border-b border-[var(--outline-soft)]">
-                  <div className="truncate px-4 py-2.5 text-xs font-medium text-[var(--text-primary)]" title={task.title}>
-                    {task.title}
+                <div key={task.id} className="grid grid-cols-[240px_1fr] items-center border-b border-[var(--outline-soft)]">
+                  <div className="min-w-0 px-4 py-2.5">
+                    <p className="truncate text-xs font-medium text-[var(--text-primary)]" title={task.title}>
+                      {task.title}
+                    </p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className={`inline-flex shrink-0 items-center rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${statusToneClass(task.status)}`}>
+                        {getLabel(statusOptions, task.status)}
+                      </span>
+                      {subtasks.length > 0 && (
+                        <SubtaskProgress done={doneSubtasks} total={subtasks.length} className="min-w-0 flex-1" />
+                      )}
+                    </div>
                   </div>
                   <div className="relative h-9">
                     <button

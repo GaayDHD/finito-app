@@ -1,6 +1,32 @@
 import type { ReactNode } from 'react'
 import { statusGroups } from '../constants'
 
+/** Shared status pill colours so every view (table, card, timeline, calendar) matches (Law of Similarity). */
+export function statusToneClass(status: string) {
+  if (status === 'done') {
+    return 'border-[var(--success-main)]/25 bg-[var(--success-light)] text-[var(--success-dark)]'
+  }
+  if (status === 'blocked' || status.startsWith('stalled')) {
+    return 'border-[var(--error-main)]/25 bg-[var(--error-light)] text-[var(--error-dark)]'
+  }
+  if (status === 'awaiting_response' || status === 'approval_requested') {
+    return 'border-[var(--warning-main)]/25 bg-[var(--warning-light)] text-[var(--warning-dark)]'
+  }
+  if (status === 'in_progress' || status === 'planning') {
+    return 'border-[var(--info-main)]/25 bg-[var(--info-light)] text-[var(--info-dark)]'
+  }
+  return 'border-[var(--outline)] bg-[var(--surface-muted)] text-[var(--text-secondary)]'
+}
+
+/** Matching solid dot colour for compact spots where a full pill won't fit. */
+export function statusDotClass(status: string) {
+  if (status === 'done') return 'bg-[var(--success-main)]'
+  if (status === 'blocked' || status.startsWith('stalled')) return 'bg-[var(--error-main)]'
+  if (status === 'awaiting_response' || status === 'approval_requested') return 'bg-[var(--warning-main)]'
+  if (status === 'in_progress' || status === 'planning') return 'bg-[var(--info-main)]'
+  return 'bg-[var(--text-disabled)]'
+}
+
 /** Grouped <optgroup> status options for any status <select> (Hick's Law / Chunking). */
 export function StatusOptions() {
   return (

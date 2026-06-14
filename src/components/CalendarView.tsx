@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import type { Task } from '../types'
+import { statusDotClass, SubtaskProgress } from './ui'
 
 type CalendarViewProps = {
   tasks: Task[]
+  getSubtasks: (taskId: string) => Task[]
   selectedTaskId: string | null
   onOpenTask: (taskId: string) => void
 }
@@ -21,17 +23,19 @@ function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
 }
 
-function taskTone(task: Task, day: Date, today: Date) {
+function chipTone(task: Task, day: Date, today: Date) {
+  // Overdue (not done) always reads red; otherwise a calm neutral chip with a
+  // status dot carrying the colour, matching the other views.
+  if (task.status !== 'done' && day < today) {
+    return 'bg-[var(--error-light)] text-[var(--error-dark)]'
+  }
   if (task.status === 'done') {
     return 'bg-[var(--success-light)] text-[var(--success-dark)]'
   }
-  if (day < today) {
-    return 'bg-[var(--error-light)] text-[var(--error-dark)]'
-  }
-  return 'bg-[var(--primary-light)] text-[var(--primary-dark)]'
+  return 'bg-[var(--surface-muted)] text-[var(--text-secondary)]'
 }
 
-export function CalendarView({ tasks, selectedTaskId, onOpenTask }: CalendarViewProps) {
+export function CalendarView({ tasks, getSubtasks, selectedTaskId, onOpenTask }: CalendarViewProps) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -132,19 +136,32 @@ export function CalendarView({ tasks, selectedTaskId, onOpenTask }: CalendarView
               </div>
 
               <div className="space-y-1">
-                {dayTasks.slice(0, 3).map((task) => (
-                  <button
-                    key={task.id}
-                    type="button"
-                    onClick={() => onOpenTask(task.id)}
-                    className={`block w-full truncate rounded-md px-1.5 py-1 text-left text-[11px] font-medium transition ${taskTone(task, day, today)} ${
-                      selectedTaskId === task.id ? 'ring-2 ring-[var(--primary-main)]/40' : ''
-                    }`}
-                    title={task.title}
-                  >
-                    {task.title}
-                  </button>
-                ))}
+                {dayTasks.slice(0, 3).map((task) => {
+                  const subtasks = getSubtasks(task.id)
+                  const done = subtasks.filter((subtask) => subtask.status === 'done').length
+
+                  return (
+                    <button
+                      key={task.id}
+                      type="button"
+                      onClick={() => onOpenTask(task.id)}
+                      className={`block w-full rounded-md px-1.5 py-1 text-left transition ${chipTone(task, day, today)} ${
+                        selectedTaskId === task.id ? 'ring-2 ring-[var(--primary-main)]/40' : ''
+                      }`}
+                      title={task.title}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${statusDotClass(task.status)}`} />
+                        <span className="truncate text-[11px] font-medium">{task.title}</span>
+                      </span>
+                      {subtasks.length > 0 && (
+                        <span className="mt-1 block">
+                          <SubtaskProgress done={done} total={subtasks.length} />
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
                 {dayTasks.length > 3 && (
                   <p className="px-1.5 text-[10px] font-semibold text-[var(--text-muted)]">+{dayTasks.length - 3} more</p>
                 )}
@@ -165,10 +182,11 @@ export function CalendarView({ tasks, selectedTaskId, onOpenTask }: CalendarView
                 key={task.id}
                 type="button"
                 onClick={() => onOpenTask(task.id)}
-                className={`rounded-full border border-[var(--outline)] bg-[var(--surface-muted)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)] transition hover:bg-[var(--surface-subtle)] ${
+                className={`flex items-center gap-1.5 rounded-full border border-[var(--outline)] bg-[var(--surface-muted)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)] transition hover:bg-[var(--surface-subtle)] ${
                   selectedTaskId === task.id ? 'ring-2 ring-[var(--primary-main)]/40' : ''
                 }`}
               >
+                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${statusDotClass(task.status)}`} />
                 {task.title}
               </button>
             ))}

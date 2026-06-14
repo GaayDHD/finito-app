@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import type { Section, Task } from '../types'
 import { difficultyOptions, priorityOptions, statusOptions } from '../constants'
 import { formatDate } from '../utils'
-import { EmptyState, StatusOptions, TaskListSkeleton } from './ui'
+import { EmptyState, StatusOptions, statusToneClass, TaskListSkeleton } from './ui'
 
 type TaskGroup = {
   id: string
@@ -76,25 +76,6 @@ const columns: { id: string; label: string; field: SortField; align: 'left' | 'c
 // Every column except the task title can be hidden (Miller's Law).
 const toggleableColumns = columns.filter((column) => column.id !== 'task')
 
-function getStatusTone(status: string) {
-  if (status === 'done') {
-    return 'border-[var(--success-main)]/25 bg-[var(--success-light)] text-[var(--success-dark)]'
-  }
-
-  if (status === 'blocked' || status.startsWith('stalled')) {
-    return 'border-[var(--error-main)]/25 bg-[var(--error-light)] text-[var(--error-dark)]'
-  }
-
-  if (status === 'awaiting_response' || status === 'approval_requested') {
-    return 'border-[var(--warning-main)]/25 bg-[var(--warning-light)] text-[var(--warning-dark)]'
-  }
-
-  if (status === 'in_progress' || status === 'planning') {
-    return 'border-[var(--info-main)]/25 bg-[var(--info-light)] text-[var(--info-dark)]'
-  }
-
-  return 'border-[var(--outline)] bg-[var(--surface-muted)] text-[var(--text-secondary)]'
-}
 
 function getPriorityTone(priority: string | null) {
   if (priority === 'critical' || priority === 'overdue') {
@@ -731,7 +712,7 @@ export function TaskList({
                               disabled={updatingStatusTaskId === task.id}
                               onClick={(event) => event.stopPropagation()}
                               onChange={(event) => updateTaskStatus(task.id, event.target.value)}
-                              className={`h-8 max-w-[140px] cursor-pointer rounded-full border px-2.5 text-center text-xs font-semibold outline-none ${getStatusTone(task.status)}`}
+                              className={`h-8 max-w-[140px] cursor-pointer rounded-full border px-2.5 text-center text-xs font-semibold outline-none ${statusToneClass(task.status)}`}
                             >
                               <StatusOptions />
                             </select>
