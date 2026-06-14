@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { Section, Task } from '../types'
 import { difficultyOptions, priorityOptions, statusOptions } from '../constants'
@@ -62,16 +62,19 @@ const groupByOptions: { value: 'status' | 'priority' | 'scope'; label: string }[
   { value: 'scope', label: 'Scope' },
 ]
 
-const columns: { id: string; label: string; field: SortField; align: 'left' | 'center' }[] = [
-  { id: 'task', label: 'Task', field: 'title', align: 'left' },
-  { id: 'status', label: 'Status', field: 'status', align: 'center' },
-  { id: 'priority', label: 'Priority', field: 'priority', align: 'center' },
-  { id: 'scope', label: 'Scope', field: 'difficulty', align: 'center' },
-  { id: 'section', label: 'Section', field: 'section_id', align: 'center' },
-  { id: 'start', label: 'Start', field: 'start_date', align: 'center' },
-  { id: 'due', label: 'Due', field: 'due_date', align: 'center' },
-  { id: 'subtasks', label: 'Subtasks', field: 'subtasks', align: 'center' },
+const columns: { id: string; label: string; field: SortField; align: 'left' | 'center'; track: string; minWidth: number }[] = [
+  { id: 'task', label: 'Task', field: 'title', align: 'left', track: 'minmax(320px,1.8fr)', minWidth: 320 },
+  { id: 'status', label: 'Status', field: 'status', align: 'center', track: '150px', minWidth: 150 },
+  { id: 'priority', label: 'Priority', field: 'priority', align: 'center', track: '140px', minWidth: 140 },
+  { id: 'scope', label: 'Scope', field: 'difficulty', align: 'center', track: '140px', minWidth: 140 },
+  { id: 'section', label: 'Section', field: 'section_id', align: 'center', track: '150px', minWidth: 150 },
+  { id: 'start', label: 'Start', field: 'start_date', align: 'center', track: '120px', minWidth: 120 },
+  { id: 'due', label: 'Due', field: 'due_date', align: 'center', track: '120px', minWidth: 120 },
+  { id: 'subtasks', label: 'Subtasks', field: 'subtasks', align: 'center', track: '120px', minWidth: 120 },
 ]
+
+// Every column except the task title can be hidden (Miller's Law).
+const toggleableColumns = columns.filter((column) => column.id !== 'task')
 
 function getStatusTone(status: string) {
   if (status === 'done') {
@@ -211,6 +214,15 @@ export function TaskList({
   const [dragTaskId, setDragTaskId] = useState<string | null>(null)
   const [dragOverGroup, setDragOverGroup] = useState<string | null>(null)
   const [openHeaderMenu, setOpenHeaderMenu] = useState<string | null>(null)
+  const [columnsMenuOpen, setColumnsMenuOpen] = useState(false)
+  const [hiddenColumns, setHiddenColumns] = useState<Record<string, boolean>>(() => {
+    try {
+      const stored = localStorage.getItem('finito-hidden-columns')
+      return stored ? (JSON.parse(stored) as Record<string, boolean>) : {}
+    } catch {
+      return {}
+    }
+  })
   const [tableSort, setTableSort] = useState<TableSort | null>(null)
   const [tableFilters, setTableFilters] = useState<TableFilters>({
     title: [],
@@ -513,6 +525,19 @@ export function TaskList({
   const isTable = viewMode === 'table'
   const displayedCount = isTable ? tableVisibleCount : filteredTaskCount
 
+  useEffect(() => {
+    localStorage.setItem('finito-hidden-columns', JSON.stringify(hiddenColumns))
+  }, [hiddenColumns])
+
+  const isColumnVisible = (id: string) => id === 'task' || !hiddenColumns[id]
+  const visibleColumns = columns.filter((column) => isColumnVisible(column.id))
+  const gridTemplateColumns = visibleColumns.map((column) => column.track).join(' ')
+  const tableMinWidth = visibleColumns.reduce((total, column) => total + column.minWidth, 0)
+
+  function toggleColumn(id: string) {
+    setHiddenColumns((current) => ({ ...current, [id]: !current[id] }))
+  }
+
   if (isLoading) {
     return <TaskListSkeleton />
   }
@@ -572,6 +597,44 @@ export function TaskList({
               Clear table controls
             </button>
           )}
+          {isTable && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setColumnsMenuOpen((open) => !open)}
+                className="flex items-center gap-1.5 rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <path d="M9 3v18M15 3v18" />
+                </svg>
+                Columns
+              </button>
+
+              {columnsMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setColumnsMenuOpen(false)} aria-hidden="true" />
+                  <div className="absolute right-0 top-9 z-20 w-48 rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-1.5 shadow-xl">
+                    <p className="px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Show columns</p>
+                    {toggleableColumns.map((column) => (
+                      <label
+                        key={column.id}
+                        className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isColumnVisible(column.id)}
+                          onChange={() => toggleColumn(column.id)}
+                          className="h-4 w-4 accent-[var(--primary-main)]"
+                        />
+                        {column.label}
+                      </label>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
           <span className="rounded-full bg-[var(--primary-light)] px-3 py-1 text-xs font-semibold text-[var(--primary-main)]">
             {displayedCount} visible
           </span>
@@ -629,9 +692,9 @@ export function TaskList({
                 </span>
               </div>
               <div className="overflow-x-auto">
-                <div className="min-w-[1120px]">
-                  <div className="grid grid-cols-[minmax(320px,1.8fr)_150px_140px_140px_150px_120px_120px_120px] border-b border-[var(--outline-soft)] bg-[var(--surface-muted)] px-4 py-2">
-                    {columns.map((column) => (
+                <div style={{ minWidth: `${tableMinWidth}px` }}>
+                  <div className="grid border-b border-[var(--outline-soft)] bg-[var(--surface-muted)] px-4 py-2" style={{ gridTemplateColumns }}>
+                    {visibleColumns.map((column) => (
                       <div key={column.id}>{renderHeaderButton(column)}</div>
                     ))}
                   </div>
@@ -644,7 +707,8 @@ export function TaskList({
                         <div
                           key={task.id}
                           onClick={() => onOpenTask(task.id)}
-                          className={`grid cursor-pointer grid-cols-[minmax(320px,1.8fr)_150px_140px_140px_150px_120px_120px_120px] items-center gap-0 px-4 py-2 text-sm transition hover:bg-[var(--surface-muted)] ${
+                          style={{ gridTemplateColumns }}
+                          className={`grid cursor-pointer items-center gap-0 px-4 py-2 text-sm transition hover:bg-[var(--surface-muted)] ${
                             selectedTaskId === task.id ? 'bg-[var(--surface-subtle)]' : ''
                           }`}
                         >
@@ -660,6 +724,7 @@ export function TaskList({
                             )}
                           </div>
 
+                          {isColumnVisible('status') && (
                           <div className="flex justify-center text-center">
                             <select
                               value={task.status}
@@ -671,7 +736,9 @@ export function TaskList({
                               <StatusOptions />
                             </select>
                           </div>
+                          )}
 
+                          {isColumnVisible('priority') && (
                           <div className="flex justify-center text-center">
                             <select
                               value={task.priority ?? ''}
@@ -688,7 +755,9 @@ export function TaskList({
                               ))}
                             </select>
                           </div>
+                          )}
 
+                          {isColumnVisible('scope') && (
                           <div className="flex justify-center text-center">
                             <select
                               value={task.difficulty ?? 'not_scoped'}
@@ -704,7 +773,9 @@ export function TaskList({
                               ))}
                             </select>
                           </div>
+                          )}
 
+                          {isColumnVisible('section') && (
                           <div className="flex justify-center text-center">
                             <select
                               value={task.section_id ?? ''}
@@ -721,18 +792,25 @@ export function TaskList({
                               ))}
                             </select>
                           </div>
+                          )}
 
+                          {isColumnVisible('start') && (
                           <div className="text-center text-xs text-[var(--text-muted)]">
                             {formatDate(task.start_date)}
                           </div>
+                          )}
 
+                          {isColumnVisible('due') && (
                           <div className="text-center text-xs text-[var(--text-muted)]">
                             {formatDate(task.due_date)}
                           </div>
+                          )}
 
+                          {isColumnVisible('subtasks') && (
                           <div className="text-center text-xs font-medium text-[var(--text-secondary)]">
                             {completedSubtasks}/{subtasks.length}
                           </div>
+                          )}
                         </div>
                       )
                     })}
