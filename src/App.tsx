@@ -1135,7 +1135,6 @@ function App() {
   function renderTask(task: Task) {
     const blockingTasks = getBlockingTasks(task.id)
     const taskIsOverdue = isTaskOverdue(task)
-    const taskComments = getTaskComments(task.id)
     const subtasks = getSubtasks(task.id)
     const completedSubtasks = subtasks.filter((subtask) => subtask.status === 'done').length
 
@@ -1225,9 +1224,6 @@ function App() {
 
           <span className={`rounded-full px-3 py-1 text-[11px] ${taskIsOverdue ? 'bg-[var(--error-light)] text-[var(--error-dark)]' : 'bg-[var(--surface-subtle)] text-[var(--text-disabled)]'}`}>
             Due: {formatDate(task.due_date)}
-          </span>
-          <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[11px] text-[var(--text-disabled)]">
-            Comments: {taskComments.length}
           </span>
           <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[11px] text-[var(--text-disabled)]">
             Subtasks: {completedSubtasks}/{subtasks.length}

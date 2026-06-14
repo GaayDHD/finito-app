@@ -58,78 +58,111 @@ export function CreateTaskForm({
     return null
   }
 
+  const fieldLabel = 'flex flex-col gap-1 text-xs font-medium text-[var(--text-muted)]'
+
   return (
-    <form
-      onSubmit={createTask}
-      className="mb-4 rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-4 shadow-sm"
-    >
-      <div className="mb-3 flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-sm font-semibold text-[var(--text-primary)]">New task</h2>
-          <p className="text-xs text-[var(--text-muted)]">Create a task in the current project.</p>
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+      <div className="absolute inset-0 bg-black/40" onClick={() => setIsOpen(false)} />
+
+      <form
+        onSubmit={createTask}
+        className="relative z-10 flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl bg-[var(--background-paper)] shadow-2xl sm:rounded-2xl"
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--outline-soft)] px-6 py-5">
+          <div>
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">New task</h2>
+            <p className="text-sm text-[var(--text-muted)]">Create a task in the current project.</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsOpen(false)}
+            className="shrink-0 rounded-full border border-[var(--outline)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
+          >
+            Close
+          </button>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsOpen(false)}
-          className="rounded-lg border border-[var(--outline)] bg-[var(--background-paper)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
-        >
-          Close
-        </button>
-      </div>
+        <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
+          <label className={fieldLabel}>
+            Title
+            <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} placeholder="Task title" autoFocus className={inputClass} />
+          </label>
 
-      <div className="grid gap-2 sm:grid-cols-2">
-        <input value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} placeholder="Task title" className={inputClass} />
-        <input value={taskDescription} onChange={(event) => setTaskDescription(event.target.value)} placeholder="Description" className={inputClass} />
-      </div>
+          <label className={fieldLabel}>
+            Description
+            <input value={taskDescription} onChange={(event) => setTaskDescription(event.target.value)} placeholder="Description" className={inputClass} />
+          </label>
 
-      <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <select value={taskStatus} onChange={(event) => setTaskStatus(event.target.value)} className={inputClass}>
-          <option value="">Status</option>
-          {statusOptions.map((status) => (
-            <option key={status.value} value={status.value}>{status.label}</option>
-          ))}
-        </select>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className={fieldLabel}>
+              Status
+              <select value={taskStatus} onChange={(event) => setTaskStatus(event.target.value)} className={inputClass}>
+                <option value="">Status</option>
+                {statusOptions.map((status) => (
+                  <option key={status.value} value={status.value}>{status.label}</option>
+                ))}
+              </select>
+            </label>
 
-        <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value)} className={inputClass}>
-          <option value="">Priority</option>
-          {priorityOptions.map((priority) => (
-            <option key={priority.value} value={priority.value}>{priority.label}</option>
-          ))}
-        </select>
+            <label className={fieldLabel}>
+              Priority
+              <select value={taskPriority} onChange={(event) => setTaskPriority(event.target.value)} className={inputClass}>
+                <option value="">Priority</option>
+                {priorityOptions.map((priority) => (
+                  <option key={priority.value} value={priority.value}>{priority.label}</option>
+                ))}
+              </select>
+            </label>
 
-        <select value={taskDifficulty} onChange={(event) => setTaskDifficulty(event.target.value)} className={inputClass}>
-          <option value="">Scope</option>
-          {difficultyOptions.map((difficulty) => (
-            <option key={difficulty.value} value={difficulty.value}>{difficulty.label}</option>
-          ))}
-        </select>
+            <label className={fieldLabel}>
+              Scope
+              <select value={taskDifficulty} onChange={(event) => setTaskDifficulty(event.target.value)} className={inputClass}>
+                <option value="">Scope</option>
+                {difficultyOptions.map((difficulty) => (
+                  <option key={difficulty.value} value={difficulty.value}>{difficulty.label}</option>
+                ))}
+              </select>
+            </label>
 
-        <select value={taskSectionId || fallbackSectionId} onChange={(event) => setTaskSectionId(event.target.value)} className={inputClass}>
-          {sections.map((section) => (
-            <option key={section.id} value={section.id}>{section.name}</option>
-          ))}
-        </select>
-      </div>
+            <label className={fieldLabel}>
+              Section
+              <select value={taskSectionId || fallbackSectionId} onChange={(event) => setTaskSectionId(event.target.value)} className={inputClass}>
+                {sections.map((section) => (
+                  <option key={section.id} value={section.id}>{section.name}</option>
+                ))}
+              </select>
+            </label>
 
-      <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto]">
-        <label className="flex flex-col gap-1 text-xs font-medium text-[var(--text-muted)]">
-          Start date
-          <input type="date" value={taskStartDate} onChange={(event) => setTaskStartDate(event.target.value)} className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-[var(--text-muted)]">
-          Due date
-          <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} className={inputClass} />
-        </label>
+            <label className={fieldLabel}>
+              Start date
+              <input type="date" value={taskStartDate} onChange={(event) => setTaskStartDate(event.target.value)} className={inputClass} />
+            </label>
 
-        <button
-          type="submit"
-          disabled={isCreating}
-          className="h-10 self-end rounded-lg bg-[var(--primary-main)] px-4 text-sm font-semibold text-[var(--primary-contrast)] shadow-sm transition hover:bg-[var(--primary-dark)] disabled:cursor-not-allowed disabled:bg-[var(--surface-subtle)] disabled:text-[var(--text-disabled)]"
-        >
-          {isCreating ? 'Adding...' : 'Create task'}
-        </button>
-      </div>
-    </form>
+            <label className={fieldLabel}>
+              Due date
+              <input type="date" value={taskDueDate} onChange={(event) => setTaskDueDate(event.target.value)} className={inputClass} />
+            </label>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-[var(--outline-soft)] px-6 py-4">
+          <button
+            type="button"
+            onClick={() => setIsOpen(false)}
+            className="rounded-full border border-[var(--outline)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isCreating}
+            className="rounded-full bg-[var(--primary-main)] px-5 py-2 text-sm font-semibold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-dark)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isCreating ? 'Adding...' : 'Create task'}
+          </button>
+        </div>
+      </form>
+    </div>
   )
 }

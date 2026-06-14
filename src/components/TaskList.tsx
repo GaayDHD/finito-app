@@ -69,7 +69,6 @@ const columns: { id: string; label: string; field: SortField; align: 'left' | 'c
   { id: 'section', label: 'Section', field: 'section_id', align: 'center' },
   { id: 'start', label: 'Start', field: 'start_date', align: 'center' },
   { id: 'due', label: 'Due', field: 'due_date', align: 'center' },
-  { id: 'comments', label: 'Comments', field: 'comments', align: 'center' },
   { id: 'subtasks', label: 'Subtasks', field: 'subtasks', align: 'center' },
 ]
 
@@ -614,15 +613,14 @@ export function TaskList({
                 </span>
               </div>
               <div className="overflow-x-auto">
-                <div className="min-w-[1240px]">
-                  <div className="grid grid-cols-[minmax(320px,1.8fr)_150px_140px_140px_150px_120px_120px_120px_120px] border-b border-[var(--outline-soft)] bg-[var(--surface-muted)] px-4 py-2">
+                <div className="min-w-[1120px]">
+                  <div className="grid grid-cols-[minmax(320px,1.8fr)_150px_140px_140px_150px_120px_120px_120px] border-b border-[var(--outline-soft)] bg-[var(--surface-muted)] px-4 py-2">
                     {columns.map((column) => (
                       <div key={column.id}>{renderHeaderButton(column)}</div>
                     ))}
                   </div>
                   <div className="divide-y divide-[var(--outline-soft)]">
                     {group.tasks.map((task) => {
-                      const comments = getTaskComments(task.id)
                       const subtasks = getSubtasks(task.id)
                       const completedSubtasks = subtasks.filter((subtask) => subtask.status === 'done').length
 
@@ -630,7 +628,7 @@ export function TaskList({
                         <div
                           key={task.id}
                           onClick={() => onOpenTask(task.id)}
-                          className={`grid cursor-pointer grid-cols-[minmax(320px,1.8fr)_150px_140px_140px_150px_120px_120px_120px_120px] items-center gap-0 px-4 py-2 text-sm transition hover:bg-[var(--surface-muted)] ${
+                          className={`grid cursor-pointer grid-cols-[minmax(320px,1.8fr)_150px_140px_140px_150px_120px_120px_120px] items-center gap-0 px-4 py-2 text-sm transition hover:bg-[var(--surface-muted)] ${
                             selectedTaskId === task.id ? 'bg-[var(--surface-subtle)]' : ''
                           }`}
                         >
@@ -718,10 +716,6 @@ export function TaskList({
 
                           <div className="text-center text-xs text-[var(--text-muted)]">
                             {formatDate(task.due_date)}
-                          </div>
-
-                          <div className="text-center text-xs font-medium text-[var(--text-secondary)]">
-                            {comments.length}
                           </div>
 
                           <div className="text-center text-xs font-medium text-[var(--text-secondary)]">
