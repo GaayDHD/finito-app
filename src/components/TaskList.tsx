@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import type { Section, Task } from '../types'
 import { difficultyOptions, priorityOptions, statusOptions } from '../constants'
 import { formatDate } from '../utils'
+import { EmptyState, StatusOptions, TaskListSkeleton } from './ui'
 
 type TaskGroup = {
   id: string
@@ -512,6 +513,25 @@ export function TaskList({
   const isTable = viewMode === 'table'
   const displayedCount = isTable ? tableVisibleCount : filteredTaskCount
 
+  if (isLoading) {
+    return <TaskListSkeleton />
+  }
+
+  const emptyCard = (
+    <div className="rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-sm">
+      <EmptyState
+        icon={
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+            <path d="M9 11l3 3L22 4" />
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+          </svg>
+        }
+        title="No tasks to show"
+        description="Create a task, or adjust your search and filters to see results."
+      />
+    </div>
+  )
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] px-4 py-3 shadow-sm">
@@ -558,8 +578,6 @@ export function TaskList({
         </div>
       </div>
 
-      {isLoading && <p className="px-4 py-8 text-sm text-[var(--text-muted)]">Loading tasks...</p>}
-
       {errorMessage && (
         <div className="m-4 rounded-lg border border-[var(--error-main)]/25 bg-[var(--error-light)] p-3 text-sm text-[var(--error-dark)]">
           {errorMessage}
@@ -593,9 +611,7 @@ export function TaskList({
             </section>
           ))}
           {groupedTasks.every((group) => group.tasks.length === 0) && (
-            <div className="rounded-xl border border-dashed border-[var(--outline)] bg-[var(--background-paper)] px-4 py-10 text-center text-sm text-[var(--text-muted)]">
-              No tasks to show.
-            </div>
+            emptyCard
           )}
         </>
       )}
@@ -650,13 +666,9 @@ export function TaskList({
                               disabled={updatingStatusTaskId === task.id}
                               onClick={(event) => event.stopPropagation()}
                               onChange={(event) => updateTaskStatus(task.id, event.target.value)}
-                              className={`h-7 max-w-[130px] rounded-full border px-2 text-center text-xs font-semibold outline-none ${getStatusTone(task.status)}`}
+                              className={`h-8 max-w-[140px] cursor-pointer rounded-full border px-2.5 text-center text-xs font-semibold outline-none ${getStatusTone(task.status)}`}
                             >
-                              {statusOptions.map((status) => (
-                                <option key={status.value} value={status.value}>
-                                  {status.label}
-                                </option>
-                              ))}
+                              <StatusOptions />
                             </select>
                           </div>
 
@@ -666,7 +678,7 @@ export function TaskList({
                               disabled={updatingPriorityTaskId === task.id}
                               onClick={(event) => event.stopPropagation()}
                               onChange={(event) => updateTaskPriority(task.id, event.target.value)}
-                              className={`h-7 max-w-[120px] rounded-full border px-2 text-center text-xs font-semibold outline-none ${getPriorityTone(task.priority)}`}
+                              className={`h-8 max-w-[130px] cursor-pointer rounded-full border px-2.5 text-center text-xs font-semibold outline-none ${getPriorityTone(task.priority)}`}
                             >
                               <option value="">No priority</option>
                               {priorityOptions.map((priority) => (
@@ -683,7 +695,7 @@ export function TaskList({
                               disabled={updatingDifficultyTaskId === task.id}
                               onClick={(event) => event.stopPropagation()}
                               onChange={(event) => updateTaskDifficulty(task.id, event.target.value)}
-                              className="h-7 max-w-[130px] cursor-pointer rounded-full border border-[var(--outline)] bg-[var(--surface-muted)] px-2 text-center text-xs font-semibold text-[var(--text-secondary)] outline-none"
+                              className="h-8 max-w-[140px] cursor-pointer rounded-full border border-[var(--outline)] bg-[var(--surface-muted)] px-2.5 text-center text-xs font-semibold text-[var(--text-secondary)] outline-none"
                             >
                               {difficultyOptions.map((difficulty) => (
                                 <option key={difficulty.value} value={difficulty.value}>
@@ -699,7 +711,7 @@ export function TaskList({
                               disabled={updatingSectionTaskId === task.id || sections.length === 0}
                               onClick={(event) => event.stopPropagation()}
                               onChange={(event) => updateTaskSection(task.id, event.target.value)}
-                              className="h-7 max-w-[130px] cursor-pointer rounded-full border border-[var(--outline)] bg-[var(--surface-muted)] px-2 text-center text-xs font-semibold text-[var(--text-secondary)] outline-none"
+                              className="h-8 max-w-[140px] cursor-pointer rounded-full border border-[var(--outline)] bg-[var(--surface-muted)] px-2.5 text-center text-xs font-semibold text-[var(--text-secondary)] outline-none"
                             >
                               {sections.length === 0 && <option value="">No section</option>}
                               {sections.map((sectionOption) => (
@@ -730,9 +742,7 @@ export function TaskList({
             </section>
           ))}
           {tableGroups.every((group) => group.tasks.length === 0) && (
-            <div className="rounded-xl border border-dashed border-[var(--outline)] bg-[var(--background-paper)] px-4 py-10 text-center text-sm text-[var(--text-muted)]">
-              No tasks to show.
-            </div>
+            emptyCard
           )}
         </>
       )}

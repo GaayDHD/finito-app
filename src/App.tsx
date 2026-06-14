@@ -17,6 +17,7 @@ import { SettingsModal } from './components/SettingsModal'
 import { TaskDetailDrawer } from './components/TaskDetailDrawer'
 import { CalendarView } from './components/CalendarView'
 import { TimelineView } from './components/TimelineView'
+import { StatusOptions, SubtaskProgress } from './components/ui'
 import './App.css'
 
 function App() {
@@ -1128,7 +1129,7 @@ function App() {
   }
 
   const pillSelectClass =
-    'h-7 max-w-[150px] cursor-pointer rounded-full border px-2.5 text-xs font-semibold outline-none transition'
+    'h-8 max-w-[160px] cursor-pointer rounded-full border px-2.5 text-xs font-semibold outline-none transition'
   const pillToneNeutral = 'border-[var(--outline)] bg-[var(--surface-muted)] text-[var(--text-secondary)]'
   const pillTonePrimary = 'border-[var(--primary-main)]/30 bg-[var(--primary-light)] text-[var(--primary-dark)]'
 
@@ -1175,9 +1176,7 @@ function App() {
             onChange={(event) => updateTaskStatus(task.id, event.target.value)}
             className={`${pillSelectClass} ${pillToneNeutral}`}
           >
-            {statusOptions.map((status) => (
-              <option key={status.value} value={status.value}>{status.label}</option>
-            ))}
+            <StatusOptions />
           </select>
 
           <select
@@ -1225,10 +1224,14 @@ function App() {
           <span className={`rounded-full px-3 py-1 text-[11px] ${taskIsOverdue ? 'bg-[var(--error-light)] text-[var(--error-dark)]' : 'bg-[var(--surface-subtle)] text-[var(--text-disabled)]'}`}>
             Due: {formatDate(task.due_date)}
           </span>
-          <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[11px] text-[var(--text-disabled)]">
-            Subtasks: {completedSubtasks}/{subtasks.length}
-          </span>
         </div>
+
+        {subtasks.length > 0 && (
+          <div className="mt-2.5 flex items-center gap-2">
+            <span className="text-[11px] font-medium text-[var(--text-muted)]">Subtasks</span>
+            <SubtaskProgress done={completedSubtasks} total={subtasks.length} className="max-w-[200px] flex-1" />
+          </div>
+        )}
       </article>
     )
   }
