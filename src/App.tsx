@@ -64,6 +64,8 @@ function App() {
   const [taskSectionId, setTaskSectionId] = useState('')
   const [taskStartDate, setTaskStartDate] = useState('')
   const [taskDueDate, setTaskDueDate] = useState('')
+  const [taskSubtaskName, setTaskSubtaskName] = useState('')
+  const [taskDependencyId, setTaskDependencyId] = useState('')
 
   const [editTitle, setEditTitle] = useState('')
   const [editDescription, setEditDescription] = useState('')
@@ -385,9 +387,7 @@ function App() {
     await supabase.auth.signOut()
   }
 
-  async function createTask(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
+  async function createTask(mode: 'close' | 'reset' | 'duplicate' = 'close') {
     if (!taskTitle.trim()) {
       setErrorMessage('Task title is required.')
       return
@@ -401,20 +401,26 @@ function App() {
     setIsCreating(true)
     setErrorMessage(null)
 
-    const { error } = await supabase.from('tasks').insert({
-      project_id: projectId,
-      section_id: taskSectionId || fallbackSectionId || null,
-      parent_task_id: null,
-      title: taskTitle.trim(),
-      description: taskDescription.trim() || null,
-      status: taskStatus || 'not_started',
-      priority: taskPriority || null,
-      difficulty: taskDifficulty || 'not_scoped',
-      start_date: taskStartDate || null,
-      due_date: taskDueDate || null,
-      archived_at: null,
-      position: tasks.length + 1,
-    })
+    const sectionId = taskSectionId || fallbackSectionId || null
+
+    const { data: createdTask, error } = await supabase
+      .from('tasks')
+      .insert({
+        project_id: projectId,
+        section_id: sectionId,
+        parent_task_id: null,
+        title: taskTitle.trim(),
+        description: taskDescription.trim() || null,
+        status: taskStatus || 'not_started',
+        priority: taskPriority || null,
+        difficulty: taskDifficulty || 'not_scoped',
+        start_date: taskStartDate || null,
+        due_date: taskDueDate || null,
+        archived_at: null,
+        position: tasks.length + 1,
+      })
+      .select('id')
+      .single()
 
     if (error) {
       setErrorMessage(error.message)
@@ -422,17 +428,53 @@ function App() {
       return
     }
 
-    setTaskTitle('')
-    setTaskDescription('')
-    setTaskStatus('')
-    setTaskPriority('')
-    setTaskDifficulty('')
-    setTaskSectionId(taskSectionId || fallbackSectionId)
-    setTaskStartDate('')
-    setTaskDueDate('')
-    setIsCreating(false)
-    setIsCreateTaskFormOpen(false)
+    // Optional one subtask created inline with the parent.
+    if (taskSubtaskName.trim() && createdTask) {
+      await supabase.from('tasks').insert({
+        project_id: projectId,
+        section_id: sectionId,
+        parent_task_id: createdTask.id,
+        title: taskSubtaskName.trim(),
+        description: null,
+        status: 'not_started',
+        priority: null,
+        difficulty: 'not_scoped',
+        start_date: null,
+        due_date: taskDueDate || null,
+        archived_at: null,
+        position: 1,
+      })
+    }
+
+    // Optional blocker dependency on an existing task.
+    if (taskDependencyId && createdTask) {
+      await supabase.from('task_dependencies').insert({
+        task_id: createdTask.id,
+        depends_on_task_id: taskDependencyId,
+        dependency_type: 'blocks',
+      })
+    }
+
     await logActivity('Created task', taskTitle.trim())
+
+    if (mode === 'close' || mode === 'reset') {
+      setTaskTitle('')
+      setTaskDescription('')
+      setTaskStatus('')
+      setTaskPriority('')
+      setTaskDifficulty('')
+      setTaskSectionId(taskSectionId || fallbackSectionId)
+      setTaskStartDate('')
+      setTaskDueDate('')
+      setTaskSubtaskName('')
+      setTaskDependencyId('')
+    }
+    // 'duplicate' keeps every field as-is so the next task is pre-filled.
+
+    setIsCreating(false)
+    if (mode === 'close') {
+      setIsCreateTaskFormOpen(false)
+    }
     await loadProjectAndTasks()
   }
 
@@ -1337,6 +1379,11 @@ function App() {
           setTaskStartDate={setTaskStartDate}
           taskDueDate={taskDueDate}
           setTaskDueDate={setTaskDueDate}
+          taskSubtaskName={taskSubtaskName}
+          setTaskSubtaskName={setTaskSubtaskName}
+          taskDependencyId={taskDependencyId}
+          setTaskDependencyId={setTaskDependencyId}
+          tasks={tasks}
           sections={sections}
           isCreating={isCreating}
           createTask={createTask}
