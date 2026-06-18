@@ -66,6 +66,8 @@ function App() {
   const [taskDueDate, setTaskDueDate] = useState('')
   const [taskSubtaskName, setTaskSubtaskName] = useState('')
   const [taskDependencyId, setTaskDependencyId] = useState('')
+  const [taskDependencyDirection, setTaskDependencyDirection] = useState('')
+  const [taskDependencyType, setTaskDependencyType] = useState('')
 
   const [editTitle, setEditTitle] = useState('')
   const [editDescription, setEditDescription] = useState('')
@@ -446,13 +448,15 @@ function App() {
       })
     }
 
-    // Optional blocker dependency on an existing task.
+    // Optional dependency on an existing task: direction (this task is
+    // Blocked by / Blocking the target) + block type (SS/SF/FS/FF).
     if (taskDependencyId && createdTask) {
-      await supabase.from('task_dependencies').insert({
-        task_id: createdTask.id,
-        depends_on_task_id: taskDependencyId,
-        dependency_type: 'blocks',
-      })
+      const blockType = taskDependencyType || 'FS'
+      const link =
+        taskDependencyDirection === 'blocking'
+          ? { task_id: taskDependencyId, depends_on_task_id: createdTask.id }
+          : { task_id: createdTask.id, depends_on_task_id: taskDependencyId }
+      await supabase.from('task_dependencies').insert({ ...link, dependency_type: blockType })
     }
 
     await logActivity('Created task', taskTitle.trim())
@@ -468,6 +472,8 @@ function App() {
       setTaskDueDate('')
       setTaskSubtaskName('')
       setTaskDependencyId('')
+      setTaskDependencyDirection('')
+      setTaskDependencyType('')
     }
     // 'duplicate' keeps every field as-is so the next task is pre-filled.
 
@@ -1383,6 +1389,10 @@ function App() {
           setTaskSubtaskName={setTaskSubtaskName}
           taskDependencyId={taskDependencyId}
           setTaskDependencyId={setTaskDependencyId}
+          taskDependencyDirection={taskDependencyDirection}
+          setTaskDependencyDirection={setTaskDependencyDirection}
+          taskDependencyType={taskDependencyType}
+          setTaskDependencyType={setTaskDependencyType}
           tasks={tasks}
           sections={sections}
           isCreating={isCreating}

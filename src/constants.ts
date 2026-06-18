@@ -5,8 +5,8 @@ export const statusOptions = [
   { value: 'awaiting_response', label: 'Awaiting response' },
   { value: 'approval_requested', label: 'Approval requested' },
   { value: 'blocked', label: 'Blocked' },
-  { value: 'stalled_internal', label: 'Stalled - Internal' },
-  { value: 'stalled_external', label: 'Stalled - External' },
+  { value: 'stalled_internal', label: 'Stalled - internal' },
+  { value: 'stalled_external', label: 'Stalled - external' },
   { value: 'done', label: 'Done' },
 ]
 
@@ -32,8 +32,8 @@ export const statusGroups = [
     label: 'Stalled',
     options: [
       { value: 'blocked', label: 'Blocked' },
-      { value: 'stalled_internal', label: 'Stalled - Internal' },
-      { value: 'stalled_external', label: 'Stalled - External' },
+      { value: 'stalled_internal', label: 'Stalled - internal' },
+      { value: 'stalled_external', label: 'Stalled - external' },
     ],
   },
   {
@@ -48,13 +48,13 @@ export const priorityOptions = [
   { value: 'high', label: 'High' },
   { value: 'medium', label: 'Medium' },
   { value: 'low', label: 'Low' },
-  { value: 'need_to_scope', label: 'Need to Scope' },
+  { value: 'need_to_scope', label: 'Need to scope' },
 ]
 
 export const difficultyOptions = [
-  { value: 'not_scoped', label: 'Not scoped' },
-  { value: 'easy', label: 'Easy' },
-  { value: 'moderate', label: 'Moderate' },
-  { value: 'hard', label: 'Hard' },
   { value: 'complex', label: 'Complex' },
+  { value: 'hard', label: 'Hard' },
+  { value: 'moderate', label: 'Moderate' },
+  { value: 'easy', label: 'Easy' },
+  { value: 'not_scoped', label: 'Not scoped' },
 ]
