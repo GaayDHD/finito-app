@@ -27,8 +27,8 @@ type CreateTaskFormProps = {
   setTaskStartDate: (value: string) => void
   taskDueDate: string
   setTaskDueDate: (value: string) => void
-  taskSubtaskName: string
-  setTaskSubtaskName: (value: string) => void
+  taskSubtaskNames: string[]
+  setTaskSubtaskNames: (value: string[]) => void
   taskDependencyId: string
   setTaskDependencyId: (value: string) => void
   taskDependencyDirection: string
@@ -46,7 +46,8 @@ const ICON = {
   status: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781753835/icons8-status-16_jfi8zs.png',
   section: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781753834/icons8-section-16_rqjo45.png',
   scope: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781753832/icons8-ranking-16_zfp0ro.png',
-  priority: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781753832/icons8-ranking-16_zfp0ro.png',
+  priority: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781753831/icons8-priority-16_oleekz.png',
+  addSubtask: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781753831/icons8-priority-16_oleekz.png',
   description: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781753829/icons8-description-16_vcvcf6.png',
   dependency: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781753828/icons8-dependency-16_uz9mz1.png',
   blockedBy: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781756588/blocked-by_srpj5q.png',
@@ -140,8 +141,8 @@ export function CreateTaskForm({
   setTaskStartDate,
   taskDueDate,
   setTaskDueDate,
-  taskSubtaskName,
-  setTaskSubtaskName,
+  taskSubtaskNames,
+  setTaskSubtaskNames,
   taskDependencyId,
   setTaskDependencyId,
   taskDependencyDirection,
@@ -205,8 +206,8 @@ export function CreateTaskForm({
         className="relative z-10 flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-[var(--background-paper)] shadow-2xl"
       >
         {/* Header */}
-        <div className="flex items-center justify-between gap-4 border-b border-[var(--outline-soft)] px-7 pb-5 pt-8">
-          <h2 className="text-2xl font-semibold text-[var(--text-primary)]">Create new task</h2>
+        <div className="flex items-center justify-between gap-4 border-b border-[var(--outline-soft)] px-7 py-2.5">
+          <h2 className="text-base font-normal text-[var(--text-disabled)]" style={{ fontFamily: 'var(--font-sans)' }}>Create new task</h2>
           <button
             type="button"
             onClick={() => setIsOpen(false)}
@@ -231,7 +232,8 @@ export function CreateTaskForm({
             }}
             placeholder="Task name"
             autoFocus
-            className="w-full bg-transparent text-3xl font-semibold text-[var(--text-primary)] outline-none placeholder:text-[var(--text-disabled)]"
+            style={{ fontSize: '52px', fontWeight: 500, lineHeight: 1.1 }}
+            className="w-full bg-transparent text-[var(--text-primary)] outline-none placeholder:text-[var(--text-disabled)]"
           />
           {showTitleError && (
             <p className="mt-1 text-xs font-medium text-[var(--error-dark)]">Give your task a name to continue.</p>
@@ -257,14 +259,31 @@ export function CreateTaskForm({
             </button>
           )}
 
-          {/* Subtask name (only once added from the overflow) */}
+          {/* Subtasks (only once added from the overflow) */}
           {showSubtask && (
-            <input
-              value={taskSubtaskName}
-              onChange={(event) => setTaskSubtaskName(event.target.value)}
-              placeholder="Subtask name"
-              className="mt-4 w-full bg-transparent text-lg font-medium text-[var(--text-primary)] outline-none placeholder:text-[var(--text-disabled)]"
-            />
+            <div className="mt-4 space-y-2 pl-6">
+              {taskSubtaskNames.map((name, index) => (
+                <input
+                  key={index}
+                  value={name}
+                  onChange={(event) => {
+                    const next = [...taskSubtaskNames]
+                    next[index] = event.target.value
+                    setTaskSubtaskNames(next)
+                  }}
+                  placeholder="Subtask name"
+                  className="w-full bg-transparent text-lg font-medium text-[var(--text-primary)] outline-none placeholder:text-[var(--text-disabled)]"
+                />
+              ))}
+              <button
+                type="button"
+                onClick={() => setTaskSubtaskNames([...taskSubtaskNames, ''])}
+                className="flex items-center gap-1.5 text-sm font-medium text-[var(--text-muted)] transition hover:text-[var(--text-secondary)]"
+              >
+                <img src={ICON.addSubtask} alt="" aria-hidden="true" className="field-icon h-4 w-4" />
+                Add subtask
+              </button>
+            </div>
           )}
 
           {/* Fields */}
@@ -357,16 +376,16 @@ export function CreateTaskForm({
                 </>
               )}
             </div>
-
-            <button
-              type="button"
-              disabled
-              title="Custom fields aren't supported yet"
-              className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-[var(--surface-muted)] px-3 py-2 text-sm font-medium text-[var(--text-muted)] opacity-70"
-            >
-              <span className="text-base leading-none">+</span> Create new field
-            </button>
           </div>
+
+          <button
+            type="button"
+            disabled
+            title="Custom fields aren't supported yet"
+            className="mt-3 inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-[var(--surface-muted)] px-3 py-2 text-sm font-medium text-[var(--text-muted)] opacity-70"
+          >
+            <span className="text-base leading-none">+</span> Create new field
+          </button>
         </div>
 
         {/* Footer */}

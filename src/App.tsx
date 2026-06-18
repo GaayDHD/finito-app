@@ -64,7 +64,7 @@ function App() {
   const [taskSectionId, setTaskSectionId] = useState('')
   const [taskStartDate, setTaskStartDate] = useState('')
   const [taskDueDate, setTaskDueDate] = useState('')
-  const [taskSubtaskName, setTaskSubtaskName] = useState('')
+  const [taskSubtaskNames, setTaskSubtaskNames] = useState<string[]>([''])
   const [taskDependencyId, setTaskDependencyId] = useState('')
   const [taskDependencyDirection, setTaskDependencyDirection] = useState('')
   const [taskDependencyType, setTaskDependencyType] = useState('')
@@ -430,22 +430,25 @@ function App() {
       return
     }
 
-    // Optional one subtask created inline with the parent.
-    if (taskSubtaskName.trim() && createdTask) {
-      await supabase.from('tasks').insert({
-        project_id: projectId,
-        section_id: sectionId,
-        parent_task_id: createdTask.id,
-        title: taskSubtaskName.trim(),
-        description: null,
-        status: 'not_started',
-        priority: null,
-        difficulty: 'not_scoped',
-        start_date: null,
-        due_date: taskDueDate || null,
-        archived_at: null,
-        position: 1,
-      })
+    // Optional subtasks created inline with the parent.
+    const subtaskTitles = taskSubtaskNames.map((name) => name.trim()).filter(Boolean)
+    if (subtaskTitles.length > 0 && createdTask) {
+      await supabase.from('tasks').insert(
+        subtaskTitles.map((title, index) => ({
+          project_id: projectId,
+          section_id: sectionId,
+          parent_task_id: createdTask.id,
+          title,
+          description: null,
+          status: 'not_started',
+          priority: null,
+          difficulty: 'not_scoped',
+          start_date: null,
+          due_date: taskDueDate || null,
+          archived_at: null,
+          position: index + 1,
+        })),
+      )
     }
 
     // Optional dependency on an existing task: direction (this task is
@@ -470,7 +473,7 @@ function App() {
       setTaskSectionId(taskSectionId || fallbackSectionId)
       setTaskStartDate('')
       setTaskDueDate('')
-      setTaskSubtaskName('')
+      setTaskSubtaskNames([''])
       setTaskDependencyId('')
       setTaskDependencyDirection('')
       setTaskDependencyType('')
@@ -1385,8 +1388,8 @@ function App() {
           setTaskStartDate={setTaskStartDate}
           taskDueDate={taskDueDate}
           setTaskDueDate={setTaskDueDate}
-          taskSubtaskName={taskSubtaskName}
-          setTaskSubtaskName={setTaskSubtaskName}
+          taskSubtaskNames={taskSubtaskNames}
+          setTaskSubtaskNames={setTaskSubtaskNames}
           taskDependencyId={taskDependencyId}
           setTaskDependencyId={setTaskDependencyId}
           taskDependencyDirection={taskDependencyDirection}
