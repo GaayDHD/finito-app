@@ -1,30 +1,43 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { supabase } from '../lib/supabase'
+import { setRememberMe, supabase } from '../lib/supabase'
+
+const APP_ICON = 'https://res.cloudinary.com/dcd54tom6/image/upload/v1780118631/iTunes_512pt__1x_unphju.png'
+
+const labelClass =
+  'text-[10px] font-medium uppercase tracking-[1px] text-[var(--auth-field-label)]'
+const inputClass =
+  'mt-1.5 h-[42px] w-full rounded-[10px] border-[0.5px] border-[var(--auth-input-border)] bg-[var(--auth-input-bg)] px-3.5 text-[16px] text-[var(--auth-text)] outline-none transition placeholder:text-[var(--auth-field-label)] focus:border-[var(--primary)]'
 
 export function AuthScreen() {
   const [mode, setMode] = useState<'sign_in' | 'sign_up'>('sign_in')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [remember, setRemember] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [infoMessage, setInfoMessage] = useState<string | null>(null)
 
+  const isSignIn = mode === 'sign_in'
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setIsSubmitting(true)
     setErrorMessage(null)
     setInfoMessage(null)
 
-    if (mode === 'sign_in') {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (mode === 'sign_up' && password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters.')
+      return
+    }
 
-      if (error) {
-        setErrorMessage(error.message)
-      }
+    setIsSubmitting(true)
+
+    if (isSignIn) {
+      setRememberMe(remember)
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) setErrorMessage(error.message)
     } else {
       const { data, error } = await supabase.auth.signUp({ email, password })
-
       if (error) {
         setErrorMessage(error.message)
       } else if (!data.session) {
@@ -36,74 +49,114 @@ export function AuthScreen() {
     setIsSubmitting(false)
   }
 
+  async function handleForgotPassword() {
+    setErrorMessage(null)
+    setInfoMessage(null)
+    if (!email.trim()) {
+      setErrorMessage('Enter your email above, then tap “forgot password”.')
+      return
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim())
+    setErrorMessage(error ? error.message : null)
+    if (!error) setInfoMessage('Password reset email sent.')
+  }
+
+  function toggleMode() {
+    setMode(isSignIn ? 'sign_up' : 'sign_in')
+    setErrorMessage(null)
+    setInfoMessage(null)
+  }
+
   return (
-    <main className="flex min-h-screen justify-center bg-[var(--surface-muted)] px-4 pt-16 sm:pt-24">
-      <div className="h-fit w-full max-w-sm rounded-2xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-6 shadow-sm">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">Finito</h1>
-          <p className="text-xs text-[var(--text-muted)]">
-            {mode === 'sign_in' ? 'Sign in to your workspace' : 'Create your account'}
-          </p>
+    <main className="flex min-h-screen justify-center bg-[var(--background-default)] px-4 pt-16 sm:pt-24">
+      <div className="h-fit w-full max-w-[494px] rounded-[20px] border-[0.5px] border-[var(--auth-card-border)] bg-[var(--auth-card-bg)] px-8 pb-9 pt-11 shadow-[0_0_13px_3px_rgba(0,0,0,0.1)]">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[14px] bg-[var(--primary-light)]">
+          <img src={APP_ICON} alt="Finito" className="h-9 w-9 object-contain" />
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-3">
-          <label className="block text-sm font-semibold text-[var(--text-secondary)]">
-            Email
+        <h1
+          className="mt-7 text-center text-[42px] leading-tight text-[var(--auth-text)]"
+          style={{ fontFamily: '"Degular Display", var(--font-sans)', fontWeight: 400 }}
+        >
+          {isSignIn ? 'Welcome back' : 'Create Your Account'}
+        </h1>
+
+        <form onSubmit={handleSubmit} className="mt-8">
+          <label className="block">
+            <span className={labelClass}>Email</span>
             <input
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
               autoComplete="email"
-              className="mt-1 w-full rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary)]"
+              placeholder="you@email.com"
+              className={inputClass}
             />
           </label>
 
-          <label className="block text-sm font-semibold text-[var(--text-secondary)]">
-            Password
+          <label className="mt-5 block">
+            <span className={labelClass}>Password</span>
             <input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
               minLength={6}
-              autoComplete={mode === 'sign_in' ? 'current-password' : 'new-password'}
-              className="mt-1 w-full rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary)]"
+              autoComplete={isSignIn ? 'current-password' : 'new-password'}
+              placeholder="••••••••"
+              className={inputClass}
             />
           </label>
 
-          {errorMessage && (
-            <p className="rounded-xl border border-[var(--error-main)]/25 bg-[var(--error-light)] px-3 py-2 text-xs font-semibold text-[var(--error-dark)]">
-              {errorMessage}
-            </p>
+          {isSignIn ? (
+            <div className="mt-3.5 flex items-start justify-between">
+              <div>
+                <input
+                  id="remember-me"
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(event) => setRemember(event.target.checked)}
+                  className="size-5 cursor-pointer rounded-[5px] accent-[var(--primary)]"
+                />
+                <label htmlFor="remember-me" className={`mt-1.5 block cursor-pointer ${labelClass}`}>
+                  Remember me
+                </label>
+              </div>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className={`${labelClass} transition hover:text-[var(--auth-text)]`}
+              >
+                Forgot password
+              </button>
+            </div>
+          ) : (
+            <p className={`mt-3.5 ${labelClass} leading-relaxed`}>Passwords must be at least 6 characters</p>
           )}
 
+          {errorMessage && (
+            <p className="mt-3 text-[12px] font-medium text-[var(--error-dark)]">{errorMessage}</p>
+          )}
           {infoMessage && (
-            <p className="rounded-xl border border-[var(--success-main)]/25 bg-[var(--success-light)] px-3 py-2 text-xs font-semibold text-[var(--success-dark)]">
-              {infoMessage}
-            </p>
+            <p className="mt-3 text-[12px] font-medium text-[var(--success-dark)]">{infoMessage}</p>
           )}
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-xl bg-[var(--primary-main)] px-4 py-2.5 text-sm font-semibold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-dark)] disabled:opacity-60"
+            className="mx-auto mt-7 flex h-[42px] w-[226px] items-center justify-center rounded-[10px] bg-[var(--primary)] text-[16px] font-medium text-white transition hover:opacity-90 disabled:opacity-60"
           >
-            {isSubmitting ? 'Please wait…' : mode === 'sign_in' ? 'Sign in' : 'Create account'}
+            {isSubmitting ? 'Please wait…' : isSignIn ? 'Sign In' : 'Sign up'}
           </button>
         </form>
 
-        <button
-          type="button"
-          onClick={() => {
-            setMode(mode === 'sign_in' ? 'sign_up' : 'sign_in')
-            setErrorMessage(null)
-            setInfoMessage(null)
-          }}
-          className="mt-4 w-full text-center text-xs font-semibold text-[var(--primary)] transition hover:opacity-80"
-        >
-          {mode === 'sign_in' ? "Don't have an account? Create one" : 'Already have an account? Sign in'}
-        </button>
+        <p className="mt-7 text-center text-[16px] text-[var(--auth-text)]">
+          {isSignIn ? 'Don’t have an account yet? ' : 'Already have an account? '}
+          <button type="button" onClick={toggleMode} className="font-medium text-[var(--auth-link)] transition hover:opacity-80">
+            {isSignIn ? 'Sign up' : 'Log in'}
+          </button>
+        </p>
       </div>
     </main>
   )
