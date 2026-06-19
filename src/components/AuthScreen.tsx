@@ -159,6 +159,7 @@ export function AuthScreen() {
               type="button"
               onClick={handleForgotPassword}
               className={`absolute right-[24px] top-[297px] ${fieldLabelClass} transition hover:text-[var(--auth-text)]`}
+              style={{ fontSize: 8 }}
             >
               Forgot password
             </button>
