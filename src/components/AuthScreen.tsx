@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { setRememberMe, supabase } from '../lib/supabase'
 
-const APP_ICON = 'https://res.cloudinary.com/dcd54tom6/image/upload/v1780118631/iTunes_512pt__1x_unphju.png'
+const APP_ICON = 'https://res.cloudinary.com/djiec5oir/image/upload/v1781866947/app_icon_login.svg'
 
 const labelClass =
   'text-[10px] font-medium uppercase tracking-[1px] text-[var(--auth-field-label)]'
