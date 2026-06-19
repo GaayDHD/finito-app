@@ -1,3 +1,5 @@
+import { Icon } from './icons'
+
 type ViewMode = 'card' | 'table' | 'kanban' | 'timeline' | 'calendar'
 
 type AppHeaderProps = {
@@ -48,18 +50,10 @@ export function AppHeader({
         </nav>
 
         <div className="relative my-2 hidden w-full max-w-[240px] sm:block">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          <Icon
+            name="search"
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]"
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="m21 21-4.3-4.3" />
-          </svg>
+          />
           <input
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
@@ -73,7 +67,7 @@ export function AppHeader({
               aria-label="Clear search"
               className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]"
             >
-              ×
+              <Icon name="x" className="h-3.5 w-3.5" />
             </button>
           )}
         </div>

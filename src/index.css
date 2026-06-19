@@ -301,11 +301,6 @@ textarea {
   field-sizing: content;
 }
 
-/* PNG field icons are monochrome; flip them for dark mode legibility */
-:root[data-theme="dark"] img.field-icon {
-  filter: invert(1) brightness(1.4);
-}
-
 ::selection {
   background: rgba(102, 0, 255, 0.15);
 }

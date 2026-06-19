@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Icon } from './icons'
 
 type DashboardStatsProps = {
   stats: {
@@ -81,9 +82,7 @@ export function DashboardStats({ stats, onNewTaskClick }: DashboardStatsProps) {
         onClick={onNewTaskClick}
         className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-[var(--primary-main)] px-5 text-sm font-semibold text-[var(--primary-contrast)] shadow-sm transition hover:bg-[var(--primary-dark)]"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" className="h-4 w-4">
-          <path d="M12 5v14M5 12h14" />
-        </svg>
+        <Icon name="add" className="h-4 w-4" strokeWidth={2.2} />
         New Task
       </button>
     </section>

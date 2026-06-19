@@ -4,6 +4,8 @@ import type { Section, Task } from '../types'
 import { difficultyOptions, priorityOptions } from '../constants'
 import { formatDate } from '../utils'
 import { StatusOptions } from './ui'
+import { Icon } from './icons'
+import type { IconName } from './icons'
 
 type CreateMode = 'close' | 'reset' | 'duplicate'
 
@@ -41,20 +43,6 @@ type CreateTaskFormProps = {
   createTask: (mode: CreateMode) => void
 }
 
-const ICON = {
-  subtask: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781754200/icons8-subtask-16_v5bsry.png',
-  status: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781753835/icons8-status-16_jfi8zs.png',
-  section: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781753834/icons8-section-16_rqjo45.png',
-  scope: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781753832/icons8-ranking-16_zfp0ro.png',
-  priority: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781753831/icons8-priority-16_oleekz.png',
-  addSubtask: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781753831/icons8-priority-16_oleekz.png',
-  description: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781753829/icons8-description-16_vcvcf6.png',
-  dependency: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781753828/icons8-dependency-16_uz9mz1.png',
-  blockedBy: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781756588/blocked-by_srpj5q.png',
-  blocking: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781756591/blocking_kzw33m.png',
-  date: 'https://res.cloudinary.com/djiec5oir/image/upload/v1781753826/icons8-date-16_glzit2.png',
-}
-
 const blockTypes = [
   { value: 'SS', label: 'Start to start' },
   { value: 'SF', label: 'Start to finish' },
@@ -66,19 +54,15 @@ const pillBase = 'inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 t
 const pillIdle = 'border-[var(--outline)] bg-[var(--background-paper)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]'
 const pillSet = 'border-[var(--primary-main)]/30 bg-[var(--primary-light)] text-[var(--primary-dark)]'
 
-function Icon({ src }: { src: string }) {
-  return <img src={src} alt="" aria-hidden="true" className="field-icon h-4 w-4 shrink-0" />
-}
-
 function PillSelect({
-  iconSrc,
+  iconName,
   placeholder,
   value,
   onChange,
   children,
   filled,
 }: {
-  iconSrc: string
+  iconName: IconName
   placeholder: string
   value: string
   onChange: (value: string) => void
@@ -88,7 +72,7 @@ function PillSelect({
   const isSet = value !== ''
   return (
     <span className={`${pillBase} ${filled && isSet ? 'border-transparent bg-[var(--surface-subtle)] font-semibold text-[var(--text-primary)]' : isSet ? pillSet : pillIdle}`}>
-      <Icon src={iconSrc} />
+      <Icon name={iconName} className="h-4 w-4 shrink-0" />
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -106,7 +90,7 @@ function DatePill({ label, value, onChange }: { label: string; value: string; on
   const isSet = value !== ''
   return (
     <span className={`relative ${pillBase} ${isSet ? pillSet : pillIdle}`}>
-      <Icon src={ICON.date} />
+      <Icon name="date" className="h-4 w-4 shrink-0" />
       <span className="font-medium">{isSet ? formatDate(value) : label}</span>
       <input
         ref={ref}
@@ -194,8 +178,8 @@ export function CreateTaskForm({
 
   const dependencyOptions = tasks.filter((task) => !task.parent_task_id)
   const descriptionVisible = showDescription || taskDescription.trim() !== ''
-  const directionIcon =
-    taskDependencyDirection === 'blocking' ? ICON.blocking : taskDependencyDirection === 'blocked' ? ICON.blockedBy : ICON.dependency
+  const directionIcon: IconName =
+    taskDependencyDirection === 'blocking' ? 'blocking' : taskDependencyDirection === 'blocked' ? 'blocked-by' : 'dependency'
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:pt-16">
@@ -214,9 +198,7 @@ export function CreateTaskForm({
             aria-label="Close"
             className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-subtle)] text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-4 w-4">
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
+            <Icon name="x" className="h-4 w-4" />
           </button>
         </div>
 
@@ -254,7 +236,7 @@ export function CreateTaskForm({
               onClick={() => setShowDescription(true)}
               className="mt-3 flex items-center gap-2 text-sm text-[var(--text-muted)] transition hover:text-[var(--text-secondary)]"
             >
-              <Icon src={ICON.description} />
+              <Icon name="description" className="h-4 w-4 shrink-0" />
               Add description
             </button>
           )}
@@ -280,7 +262,7 @@ export function CreateTaskForm({
                 onClick={() => setTaskSubtaskNames([...taskSubtaskNames, ''])}
                 className="flex items-center gap-1.5 text-sm font-medium text-[var(--text-muted)] transition hover:text-[var(--text-secondary)]"
               >
-                <img src={ICON.addSubtask} alt="" aria-hidden="true" className="field-icon h-4 w-4" />
+                <Icon name="add" className="h-4 w-4 shrink-0" />
                 Add subtask
               </button>
             </div>
@@ -289,23 +271,23 @@ export function CreateTaskForm({
           {/* Fields */}
           <p className="mt-6 text-xs font-semibold text-[var(--text-muted)]">Fields</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <PillSelect iconSrc={ICON.status} placeholder="Status" value={taskStatus} onChange={setTaskStatus} filled>
+            <PillSelect iconName="status" placeholder="Status" value={taskStatus} onChange={setTaskStatus} filled>
               <StatusOptions />
             </PillSelect>
 
-            <PillSelect iconSrc={ICON.priority} placeholder="Priority" value={taskPriority} onChange={setTaskPriority}>
+            <PillSelect iconName="priority" placeholder="Priority" value={taskPriority} onChange={setTaskPriority}>
               {priorityOptions.map((priority) => (
                 <option key={priority.value} value={priority.value}>{priority.label}</option>
               ))}
             </PillSelect>
 
-            <PillSelect iconSrc={ICON.scope} placeholder="Scope" value={taskDifficulty} onChange={setTaskDifficulty}>
+            <PillSelect iconName="scope" placeholder="Scope" value={taskDifficulty} onChange={setTaskDifficulty}>
               {difficultyOptions.map((difficulty) => (
                 <option key={difficulty.value} value={difficulty.value}>{difficulty.label}</option>
               ))}
             </PillSelect>
 
-            <PillSelect iconSrc={ICON.section} placeholder="Section" value={taskSectionId || fallbackSectionId} onChange={setTaskSectionId}>
+            <PillSelect iconName="section" placeholder="Section" value={taskSectionId || fallbackSectionId} onChange={setTaskSectionId}>
               {sections.map((section) => (
                 <option key={section.id} value={section.id}>{section.name}</option>
               ))}
@@ -318,7 +300,7 @@ export function CreateTaskForm({
             {showDependency && (
               <>
                 <span className={`${pillBase} ${taskDependencyDirection ? pillSet : pillIdle}`}>
-                  <Icon src={directionIcon} />
+                  <Icon name={directionIcon} className="h-4 w-4 shrink-0" />
                   <select
                     value={taskDependencyDirection}
                     onChange={(event) => setTaskDependencyDirection(event.target.value)}
@@ -330,13 +312,13 @@ export function CreateTaskForm({
                   </select>
                 </span>
 
-                <PillSelect iconSrc={ICON.dependency} placeholder="Block type" value={taskDependencyType} onChange={setTaskDependencyType}>
+                <PillSelect iconName="dependency" placeholder="Block type" value={taskDependencyType} onChange={setTaskDependencyType}>
                   {blockTypes.map((type) => (
                     <option key={type.value} value={type.value}>{type.label}</option>
                   ))}
                 </PillSelect>
 
-                <PillSelect iconSrc={ICON.dependency} placeholder="Task" value={taskDependencyId} onChange={setTaskDependencyId}>
+                <PillSelect iconName="dependency" placeholder="Task" value={taskDependencyId} onChange={setTaskDependencyId}>
                   {dependencyOptions.map((task) => (
                     <option key={task.id} value={task.id}>{task.title}</option>
                   ))}
@@ -363,14 +345,14 @@ export function CreateTaskForm({
                       onClick={() => { setShowSubtask((v) => !v); setOverflowOpen(false) }}
                       className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
                     >
-                      <Icon src={ICON.subtask} /> Subtask {showSubtask && <span className="ml-auto text-[var(--primary-main)]">✓</span>}
+                      <Icon name="subtask" className="h-4 w-4 shrink-0" /> Subtask {showSubtask && <span className="ml-auto text-[var(--primary-main)]">✓</span>}
                     </button>
                     <button
                       type="button"
                       onClick={() => { setShowDependency((v) => !v); setOverflowOpen(false) }}
                       className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
                     >
-                      <Icon src={ICON.dependency} /> Dependency {showDependency && <span className="ml-auto text-[var(--primary-main)]">✓</span>}
+                      <Icon name="dependency" className="h-4 w-4 shrink-0" /> Dependency {showDependency && <span className="ml-auto text-[var(--primary-main)]">✓</span>}
                     </button>
                   </div>
                 </>
@@ -397,9 +379,7 @@ export function CreateTaskForm({
             aria-label="Add attachment (coming soon)"
             className="flex h-9 w-9 cursor-not-allowed items-center justify-center rounded-lg text-[var(--text-disabled)] opacity-70"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-            </svg>
+            <Icon name="attachment" className="h-5 w-5" />
           </button>
 
           <div className="relative flex">
@@ -417,9 +397,7 @@ export function CreateTaskForm({
               aria-label="More create options"
               className="flex items-center rounded-r-lg border-l border-white/25 bg-[var(--primary-main)] px-2.5 text-[var(--primary-contrast)] transition hover:bg-[var(--primary-dark)] disabled:opacity-60"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                <path d="M6 9l6 6 6-6" />
-              </svg>
+              <Icon name="chevron" className="h-4 w-4" strokeWidth={2.2} />
             </button>
 
             {createMenuOpen && (
