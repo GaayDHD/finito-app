@@ -147,7 +147,7 @@ export function AuthScreen() {
               type="checkbox"
               checked={remember}
               onChange={(event) => setRemember(event.target.checked)}
-              className="absolute left-[24px] top-[297px] size-[16px] cursor-pointer accent-[var(--primary)]"
+              className="absolute left-[24px] top-[297px] size-[10px] cursor-pointer accent-[var(--primary)]"
             />
             <label
               htmlFor="remember-me"
