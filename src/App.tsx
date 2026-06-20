@@ -583,6 +583,40 @@ function App() {
     }
   }
 
+  // Inline "Add task" from a list-view group: the new task inherits the
+  // group's value for whatever field is currently grouped on.
+  async function addTaskToGroup(groupId: string, title: string) {
+    const trimmed = title.trim()
+    if (!trimmed || !projectId) {
+      return
+    }
+
+    const newTask = {
+      project_id: projectId,
+      section_id: fallbackSectionId || null,
+      parent_task_id: null,
+      title: trimmed,
+      description: null,
+      status: groupBy === 'status' ? groupId : 'not_started',
+      priority: groupBy === 'priority' ? (groupId === 'no_priority' ? null : groupId) : null,
+      difficulty: groupBy === 'scope' ? (groupId === 'no_scope' ? 'not_scoped' : groupId) : 'not_scoped',
+      start_date: null,
+      due_date: null,
+      archived_at: null,
+      position: tasks.length + 1,
+    }
+
+    const { error } = await supabase.from('tasks').insert(newTask)
+
+    if (error) {
+      setErrorMessage(error.message)
+      return
+    }
+
+    await logActivity('Created task', trimmed)
+    await loadProjectAndTasks()
+  }
+
   async function updateTaskSection(taskId: string, sectionId: string) {
     setUpdatingSectionTaskId(taskId)
     setErrorMessage(null)
@@ -1455,6 +1489,7 @@ function App() {
             updateTaskDifficulty={updateTaskDifficulty}
             updateTaskSection={updateTaskSection}
             moveTaskToGroup={moveTaskToGroup}
+            addTaskToGroup={addTaskToGroup}
             getTaskComments={getTaskComments}
             getSubtasks={getSubtasks}
             selectedTaskId={selectedTaskId}

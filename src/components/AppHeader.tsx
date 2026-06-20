@@ -10,7 +10,7 @@ type AppHeaderProps = {
 }
 
 const viewTabs: { mode: ViewMode; label: string }[] = [
-  { mode: 'table', label: 'Table' },
+  { mode: 'table', label: 'List' },
   { mode: 'card', label: 'Card' },
   { mode: 'kanban', label: 'Kanban' },
   { mode: 'timeline', label: 'Timeline' },

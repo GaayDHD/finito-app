@@ -1,9 +1,145 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { Section, Task } from '../types'
 import { difficultyOptions, priorityOptions, statusOptions } from '../constants'
 import { formatDate } from '../utils'
 import { EmptyState, StatusOptions, statusToneClass, TaskListSkeleton } from './ui'
+
+// Status-toggle glyphs (Tabler outline). The circle is #777777; the tick is
+// the brand purple. Rendered inline so the two-tone colouring works.
+const DASHED_ARCS =
+  '<path d="M8.56 3.69a9 9 0 0 0 -2.92 1.95" /><path d="M3.69 8.56a9 9 0 0 0 -.69 3.44" /><path d="M3.69 15.44a9 9 0 0 0 1.95 2.92" /><path d="M8.56 20.31a9 9 0 0 0 3.44 .69" /><path d="M15.44 20.31a9 9 0 0 0 2.92 -1.95" /><path d="M20.31 15.44a9 9 0 0 0 .69 -3.44" /><path d="M20.31 8.56a9 9 0 0 0 -1.95 -2.92" /><path d="M15.44 3.69a9 9 0 0 0 -3.44 -.69" />'
+const TICK = '<path stroke="#6600ff" d="M9 12l2 2l4 -4" />'
+const ICON_DOTTED =
+  '<path d="M7.5 4.21l0 .01" /><path d="M4.21 7.5l0 .01" /><path d="M3 12l0 .01" /><path d="M4.21 16.5l0 .01" /><path d="M7.5 19.79l0 .01" /><path d="M12 21l0 .01" /><path d="M16.5 19.79l0 .01" /><path d="M19.79 16.5l0 .01" /><path d="M21 12l0 .01" /><path d="M19.79 7.5l0 .01" /><path d="M16.5 4.21l0 .01" /><path d="M12 3l0 .01" />'
+const ICON_DASHED_CHECK = DASHED_ARCS + TICK
+const ICON_CIRCLE_CHECK = '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />' + TICK
+const ICON_DASHED_PLUS = DASHED_ARCS + '<path d="M9 12h6" /><path d="M12 9v6" />'
+
+function StatusGlyph({ markup, className }: { markup: string; className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#777777"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      dangerouslySetInnerHTML={{ __html: markup }}
+    />
+  )
+}
+
+// Quick-complete toggle to the left of the task name: dotted circle when
+// incomplete (→ dashed circle + tick on hover), solid circle + tick when done.
+// Clicking flips the task between done and not started without opening the panel.
+function StatusToggle({
+  done,
+  disabled,
+  onToggle,
+}: {
+  done: boolean
+  disabled: boolean
+  onToggle: () => void
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      aria-label={done ? 'Mark task as not done' : 'Mark task as done'}
+      title={done ? 'Mark as not done' : 'Mark as done'}
+      onClick={(event) => {
+        event.stopPropagation()
+        onToggle()
+      }}
+      className="group/status relative flex h-5 w-5 shrink-0 items-center justify-center disabled:opacity-50"
+    >
+      {done ? (
+        <StatusGlyph markup={ICON_CIRCLE_CHECK} className="h-5 w-5" />
+      ) : (
+        <>
+          <StatusGlyph markup={ICON_DOTTED} className="h-5 w-5 transition group-hover/status:opacity-0" />
+          <StatusGlyph
+            markup={ICON_DASHED_CHECK}
+            className="absolute inset-0 h-5 w-5 opacity-0 transition group-hover/status:opacity-100"
+          />
+        </>
+      )}
+    </button>
+  )
+}
+
+// Ghost "Add task" row shown at the bottom of every list-view group. Clicking
+// it reveals an inline name input; the created task inherits the group's value.
+function AddTaskRow({
+  groupId,
+  onAdd,
+}: {
+  groupId: string
+  onAdd: (groupId: string, title: string) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+  const doneRef = useRef(false)
+
+  useEffect(() => {
+    if (editing) {
+      inputRef.current?.focus()
+    }
+  }, [editing])
+
+  function start() {
+    doneRef.current = false
+    setEditing(true)
+  }
+
+  function finish(save: boolean) {
+    if (doneRef.current) {
+      return
+    }
+    doneRef.current = true
+    const trimmed = value.trim()
+    if (save && trimmed) {
+      onAdd(groupId, trimmed)
+    }
+    setValue('')
+    setEditing(false)
+  }
+
+  return (
+    <div className="px-4 py-2 text-sm">
+      {editing ? (
+        <div className="flex items-center gap-2">
+          <StatusGlyph markup={ICON_DASHED_PLUS} className="h-5 w-5 shrink-0" />
+          <input
+            ref={inputRef}
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') finish(true)
+              if (event.key === 'Escape') finish(false)
+            }}
+            onBlur={() => finish(true)}
+            placeholder="Task name"
+            className="w-full bg-transparent font-medium text-[var(--text-primary)] outline-none placeholder:text-[var(--text-disabled)]"
+          />
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={start}
+          className="flex items-center gap-2 text-[var(--text-muted)] transition hover:text-[var(--text-secondary)]"
+        >
+          <StatusGlyph markup={ICON_DASHED_PLUS} className="h-5 w-5 shrink-0" />
+          <span className="font-medium">Add task</span>
+        </button>
+      )}
+    </div>
+  )
+}
 
 type TaskGroup = {
   id: string
@@ -47,6 +183,7 @@ type TaskListProps = {
   updateTaskDifficulty: (taskId: string, difficulty: string) => void
   updateTaskSection: (taskId: string, sectionId: string) => void
   moveTaskToGroup: (taskId: string, groupId: string) => void
+  addTaskToGroup: (groupId: string, title: string) => void
   getTaskComments: (taskId: string) => unknown[]
   getSubtasks: (taskId: string) => Task[]
   selectedTaskId: string | null
@@ -184,6 +321,7 @@ export function TaskList({
   updateTaskDifficulty,
   updateTaskSection,
   moveTaskToGroup,
+  addTaskToGroup,
   getTaskComments,
   getSubtasks,
   selectedTaskId,
@@ -543,7 +681,7 @@ export function TaskList({
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] px-4 py-3 shadow-sm">
         <div>
           <h2 className="text-base font-semibold text-[var(--text-primary)]">
-            {viewMode === 'table' ? 'Table view' : viewMode === 'kanban' ? 'Kanban board' : 'Card view'}
+            {viewMode === 'table' ? 'List view' : viewMode === 'kanban' ? 'Kanban board' : 'Card view'}
           </h2>
           <p className="text-xs text-[var(--text-muted)]">
             Grouped by {groupByOptions.find((option) => option.value === groupBy)?.label.toLowerCase()}
@@ -662,7 +800,7 @@ export function TaskList({
 
       {!isLoading && !errorMessage && viewMode === 'table' && (
         <>
-          {tableGroups.filter((group) => group.tasks.length > 0).map((group) => (
+          {tableGroups.map((group) => (
             <section key={group.id} className="overflow-hidden rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-sm">
               <div className="flex items-center justify-between bg-[var(--surface-subtle)] px-4 py-2">
                 <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
@@ -695,11 +833,15 @@ export function TaskList({
                         >
                           <div className="min-w-0 pr-4 text-left">
                             <div className="flex items-center gap-2">
-                              <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--primary-main)]" />
-                              <p className="truncate font-medium text-[var(--text-primary)]">{task.title}</p>
+                              <StatusToggle
+                                done={task.status === 'done'}
+                                disabled={updatingStatusTaskId === task.id}
+                                onToggle={() => updateTaskStatus(task.id, task.status === 'done' ? 'not_started' : 'done')}
+                              />
+                              <p className={`truncate font-medium text-[var(--text-primary)] ${task.status === 'done' ? 'line-through opacity-60' : ''}`}>{task.title}</p>
                             </div>
                             {task.description && (
-                              <p className="mt-0.5 truncate pl-4 text-xs text-[var(--text-muted)]">
+                              <p className="mt-0.5 truncate pl-7 text-xs text-[var(--text-muted)]">
                                 {task.description}
                               </p>
                             )}
@@ -795,14 +937,12 @@ export function TaskList({
                         </div>
                       )
                     })}
+                    <AddTaskRow groupId={group.id} onAdd={addTaskToGroup} />
                   </div>
                 </div>
               </div>
             </section>
           ))}
-          {tableGroups.every((group) => group.tasks.length === 0) && (
-            emptyCard
-          )}
         </>
       )}
 
