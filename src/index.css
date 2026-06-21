@@ -203,6 +203,9 @@
   --auth-field-label: #777777;
   --auth-text: #000000;
   --auth-link: #6600ff;
+  --auth-mobile-bg: #f5f5f7;
+  --auth-meta: #777777;
+  --auth-placeholder: #aaaaaa;
 
   font-family: var(--font-sans);
 
@@ -267,7 +270,10 @@
   --auth-input-border: #696969;
   --auth-field-label: #929292;
   --auth-text: #ffffff;
-  --auth-link: #bc96ff;
+  --auth-link: #d1b2ff;
+  --auth-mobile-bg: #2c2c2c;
+  --auth-meta: #ffffff;
+  --auth-placeholder: #aaaaaa;
 }
 
 body {
