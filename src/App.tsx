@@ -1377,7 +1377,7 @@ function App() {
         setSearchQuery={setSearchQuery}
       />
 
-      <section className="mx-auto max-w-[1600px] px-4 py-5 pb-24 sm:px-5 lg:pb-5">
+      <section className="mx-auto max-w-[1600px] px-4 pb-24 sm:px-5 lg:pb-5">
 
         <CreateTaskForm
           isOpen={isCreateTaskFormOpen}

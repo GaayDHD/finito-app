@@ -10,7 +10,7 @@ const degular: CSSProperties = { fontFamily: '"Degular Display", var(--font-sans
 // Every field's text is 14px on every screen, per spec.
 const fieldStyle: CSSProperties = { fontSize: 14, color: 'var(--auth-text)' }
 
-const desktopLabel = 'absolute text-[10px] font-medium uppercase tracking-[0.6px] text-[var(--auth-field-label)]'
+const desktopLabel = 'absolute text-[10px] font-medium uppercase leading-none tracking-[0.6px] text-[var(--auth-field-label)]'
 const desktopInput =
   'absolute h-[39px] w-[334px] rounded-[8px] border-[0.5px] border-[var(--auth-input-border)] bg-[var(--auth-input-bg)] px-[14px] outline-none transition focus:border-[var(--primary)]'
 const mobileInput =
@@ -31,13 +31,11 @@ function CheckBox({
   checked,
   onChange,
   size,
-  style,
   ariaLabel,
 }: {
   checked: boolean
   onChange: (value: boolean) => void
   size: number
-  style?: CSSProperties
   ariaLabel: string
 }) {
   return (
@@ -47,8 +45,8 @@ function CheckBox({
       aria-checked={checked}
       aria-label={ariaLabel}
       onClick={() => onChange(!checked)}
-      className="absolute flex shrink-0 items-center justify-center rounded-[4px] border-[0.5px] border-[var(--auth-input-border)] bg-[var(--auth-input-bg)]"
-      style={{ width: size, height: size, ...style }}
+      className="flex shrink-0 items-center justify-center rounded-[4px] border-[0.5px] border-[var(--auth-input-border)] bg-[var(--auth-input-bg)]"
+      style={{ width: size, height: size }}
     >
       {checked && (
         <svg
@@ -211,17 +209,19 @@ export function AuthScreen() {
           Welcome back
         </h1>
 
-        <span className={`${desktopLabel} left-[40px] top-[144px]`}>Email</span>
+        <span className={`${desktopLabel} left-[40px] top-[141px]`}>Email</span>
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className={`${desktopInput} left-[33px] top-[158px]`} style={fieldStyle} />
 
-        <span className={`${desktopLabel} left-[40px] top-[219px]`}>Password</span>
+        <span className={`${desktopLabel} left-[40px] top-[216px]`}>Password</span>
         <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" className={`${desktopInput} left-[33px] top-[233px]`} style={fieldStyle} />
 
-        <CheckBox checked={remember} onChange={setRemember} size={21} ariaLabel="Remember me" style={{ left: 33, top: 283 }} />
-        <span className={`${desktopLabel} left-[61px] top-[290px]`}>Remember me</span>
-        <button type="button" onClick={handleForgotPassword} className={`${desktopLabel} left-[367px] top-[290px] -translate-x-full text-right hover:text-[var(--auth-text)]`}>
-          Forgot password?
-        </button>
+        <div className="absolute left-[33px] top-[283px] flex w-[334px] items-center">
+          <CheckBox checked={remember} onChange={setRemember} size={21} ariaLabel="Remember me" />
+          <span className="ml-2 text-[10px] font-medium text-[var(--auth-field-label)]">Remember me</span>
+          <button type="button" onClick={handleForgotPassword} className="ml-auto text-[10px] font-medium text-[var(--auth-field-label)] transition hover:text-[var(--auth-text)]">
+            Forgot password?
+          </button>
+        </div>
 
         <button type="submit" disabled={isSubmitting} className="absolute left-[33px] top-[347px] flex h-[39px] w-[334px] items-center justify-center rounded-full bg-[var(--primary)] text-[14px] font-medium text-white transition hover:opacity-90 disabled:opacity-60">
           {isSubmitting ? 'Please wait…' : 'Log In'}
@@ -229,7 +229,7 @@ export function AuthScreen() {
 
         <p className="absolute left-[200px] top-[405px] -translate-x-1/2 whitespace-nowrap text-[14px] text-[var(--auth-text)]">
           Don’t have an account yet?{' '}
-          <button type="button" onClick={toggleMode} className="text-[var(--auth-link)] hover:opacity-80">Sign up</button>
+          <button type="button" onClick={toggleMode} className="text-[var(--auth-link)] transition hover:underline">Sign up</button>
         </p>
       </form>
     </div>
@@ -243,19 +243,19 @@ export function AuthScreen() {
           Create an account
         </h1>
 
-        <span className={`${desktopLabel} left-[40px] top-[144px]`}>Name</span>
+        <span className={`${desktopLabel} left-[40px] top-[141px]`}>Name</span>
         <input type="text" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" className={`${desktopInput} left-[33px] top-[158px]`} style={fieldStyle} />
 
-        <span className={`${desktopLabel} left-[40px] top-[218px]`}>Email</span>
+        <span className={`${desktopLabel} left-[40px] top-[215px]`}>Email</span>
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className={`${desktopInput} left-[33px] top-[232px]`} style={fieldStyle} />
 
-        <span className={`${desktopLabel} left-[40px] top-[293px]`}>Password</span>
+        <span className={`${desktopLabel} left-[40px] top-[290px]`}>Password</span>
         <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" className={`${desktopInput} left-[33px] top-[307px]`} style={fieldStyle} />
 
-        <CheckBox checked={agreed} onChange={setAgreed} size={21} ariaLabel="I agree to the Terms of Service" style={{ left: 33, top: 386 }} />
-        <span className="absolute left-[62px] top-[392px] text-[10px] tracking-[0.2px] text-[var(--auth-field-label)]">
-          I agree to the {termsLink}
-        </span>
+        <div className="absolute left-[33px] top-[386px] flex items-center">
+          <CheckBox checked={agreed} onChange={setAgreed} size={21} ariaLabel="I agree to the Terms of Service" />
+          <span className="ml-2 text-[10px] tracking-[0.2px] text-[var(--auth-field-label)]">I agree to the {termsLink}</span>
+        </div>
 
         <button type="submit" disabled={isSubmitting || !agreed} className="absolute left-[33px] top-[416px] flex h-[39px] w-[334px] items-center justify-center rounded-full bg-[var(--primary)] text-[14px] font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
           {isSubmitting ? 'Please wait…' : 'Create Account'}
@@ -263,7 +263,7 @@ export function AuthScreen() {
 
         <p className="absolute left-[200px] top-[475px] -translate-x-1/2 whitespace-nowrap text-[14px] text-[var(--auth-text)]">
           Already have an account?{' '}
-          <button type="button" onClick={toggleMode} className="text-[var(--auth-link)] hover:opacity-80">Log in</button>
+          <button type="button" onClick={toggleMode} className="text-[var(--auth-link)] transition hover:underline">Log in</button>
         </p>
       </form>
     </div>
@@ -271,7 +271,7 @@ export function AuthScreen() {
 
   // ===================== MOBILE =====================
   const mobileBody = isSignIn ? (
-    <form onSubmit={handleSubmit} className="relative mx-auto h-[574px] w-full max-w-[395px]">
+    <form onSubmit={handleSubmit} className="relative mx-auto h-[574px] w-full max-w-[395px] -translate-y-[47px]">
       <h1 className="absolute left-1/2 top-[71px] -translate-x-1/2 whitespace-nowrap text-center text-[30px] tracking-[1.2px] text-[var(--auth-text)]" style={degular}>
         Welcome back
       </h1>
@@ -279,11 +279,13 @@ export function AuthScreen() {
       <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" {...mobilePlaceholderProps('Email')} className={`${mobileInput} top-[159px]`} style={fieldStyle} />
       <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" {...mobilePlaceholderProps('Password')} className={`${mobileInput} top-[231px]`} style={fieldStyle} />
 
-      <CheckBox checked={remember} onChange={setRemember} size={23} ariaLabel="Remember me" style={{ left: 25, top: 296 }} />
-      <span className="absolute left-[58px] top-[302px] text-[12px] tracking-[0.72px] text-[var(--auth-meta)]">Remember me</span>
-      <button type="button" onClick={handleForgotPassword} className="absolute right-[25px] top-[302px] text-right text-[12px] tracking-[0.72px] text-[var(--auth-meta)] hover:opacity-80">
-        Forgot password?
-      </button>
+      <div className="absolute left-[25px] right-[25px] top-[296px] flex items-center">
+        <CheckBox checked={remember} onChange={setRemember} size={23} ariaLabel="Remember me" />
+        <span className="ml-3 text-[10px] font-medium text-[var(--auth-meta)]">Remember me</span>
+        <button type="button" onClick={handleForgotPassword} className="ml-auto text-[10px] font-medium text-[var(--auth-meta)] transition hover:opacity-80">
+          Forgot password?
+        </button>
+      </div>
 
       <button type="submit" disabled={isSubmitting} className="absolute left-[25px] right-[25px] top-[481px] flex h-[51px] items-center justify-center rounded-full bg-[var(--primary)] text-[14px] font-medium text-white transition hover:opacity-90 disabled:opacity-60">
         {isSubmitting ? 'Please wait…' : 'Log In'}
@@ -291,11 +293,11 @@ export function AuthScreen() {
 
       <p className="absolute left-1/2 top-[556px] -translate-x-1/2 whitespace-nowrap text-[14px] font-medium text-[var(--auth-text)]">
         Don’t have an account yet?{' '}
-        <button type="button" onClick={toggleMode} className="font-medium text-[var(--auth-link)] hover:opacity-80">Sign up</button>
+        <button type="button" onClick={toggleMode} className="font-medium text-[var(--auth-link)] transition hover:underline">Sign up</button>
       </p>
     </form>
   ) : (
-    <form onSubmit={handleSubmit} className="relative mx-auto h-[574px] w-full max-w-[395px]">
+    <form onSubmit={handleSubmit} className="relative mx-auto h-[574px] w-full max-w-[395px] -translate-y-[47px]">
       <h1 className="absolute left-1/2 top-[71px] -translate-x-1/2 whitespace-nowrap text-center text-[30px] tracking-[1.2px] text-[var(--auth-text)]" style={degular}>
         Create an account
       </h1>
@@ -304,10 +306,10 @@ export function AuthScreen() {
       <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" {...mobilePlaceholderProps('Email')} className={`${mobileInput} top-[231px]`} style={fieldStyle} />
       <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" {...mobilePlaceholderProps('Password')} className={`${mobileInput} top-[303px]`} style={fieldStyle} />
 
-      <CheckBox checked={agreed} onChange={setAgreed} size={23} ariaLabel="I agree to the Terms of Service" style={{ left: 25, top: 440 }} />
-      <span className="absolute left-[61px] top-[446px] text-[12px] tracking-[0.24px] text-[var(--auth-text)]">
-        I agree to the {termsLink}
-      </span>
+      <div className="absolute left-[25px] right-[25px] top-[440px] flex items-center">
+        <CheckBox checked={agreed} onChange={setAgreed} size={23} ariaLabel="I agree to the Terms of Service" />
+        <span className="ml-3 text-[12px] tracking-[0.24px] text-[var(--auth-text)]">I agree to the {termsLink}</span>
+      </div>
 
       <button type="submit" disabled={isSubmitting || !agreed} className="absolute left-[25px] right-[25px] top-[481px] flex h-[51px] items-center justify-center rounded-full bg-[var(--primary)] text-[14px] font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
         {isSubmitting ? 'Please wait…' : 'Create Account'}
@@ -315,7 +317,7 @@ export function AuthScreen() {
 
       <p className="absolute left-1/2 top-[556px] -translate-x-1/2 whitespace-nowrap text-[14px] font-medium text-[var(--auth-text)]">
         Already have an account?{' '}
-        <button type="button" onClick={toggleMode} className="font-medium text-[var(--auth-link)] hover:opacity-80">Log in</button>
+        <button type="button" onClick={toggleMode} className="font-medium text-[var(--auth-link)] transition hover:underline">Log in</button>
       </p>
     </form>
   )
@@ -324,11 +326,11 @@ export function AuthScreen() {
     <>
       {messages}
       {/* Desktop */}
-      <main className="hidden min-h-screen items-center justify-center bg-[var(--background-default)] px-4 md:flex">
+      <main className="hidden min-h-screen items-start justify-center bg-[var(--background-default)] px-4 pt-16 md:flex">
         {desktopCard}
       </main>
       {/* Mobile */}
-      <main className="flex min-h-screen justify-center bg-[var(--auth-mobile-bg)] md:hidden">
+      <main className="flex min-h-screen items-start justify-center bg-[var(--auth-mobile-bg)] md:hidden">
         {mobileBody}
       </main>
     </>
