@@ -4,6 +4,8 @@ import type { Section, Task } from '../types'
 import { difficultyOptions, priorityOptions, statusOptions } from '../constants'
 import { formatDate } from '../utils'
 import { Badge, Checkbox, EmptyState, ICON_DASHED_PLUS, priorityToneClass, StatusGlyph, StatusOptions, StatusToggle, statusToneClass, TaskListSkeleton } from './ui'
+import { Icon } from './icons'
+import type { IconName } from './icons'
 
 // Ghost "Add task" row shown at the bottom of every list-view group. Clicking
 // it reveals an inline name input; the created task inherits the group's value.
@@ -133,15 +135,15 @@ const groupByOptions: { value: 'status' | 'priority' | 'scope'; label: string }[
   { value: 'scope', label: 'Scope' },
 ]
 
-const columns: { id: string; label: string; field: SortField; align: 'left' | 'center'; track: string; minWidth: number }[] = [
-  { id: 'task', label: 'Task', field: 'title', align: 'left', track: 'minmax(320px,1.8fr)', minWidth: 320 },
-  { id: 'status', label: 'Status', field: 'status', align: 'center', track: '150px', minWidth: 150 },
-  { id: 'priority', label: 'Priority', field: 'priority', align: 'center', track: '140px', minWidth: 140 },
-  { id: 'scope', label: 'Scope', field: 'difficulty', align: 'center', track: '140px', minWidth: 140 },
-  { id: 'section', label: 'Section', field: 'section_id', align: 'center', track: '150px', minWidth: 150 },
-  { id: 'start', label: 'Start', field: 'start_date', align: 'center', track: '120px', minWidth: 120 },
-  { id: 'due', label: 'Due', field: 'due_date', align: 'center', track: '120px', minWidth: 120 },
-  { id: 'subtasks', label: 'Subtasks', field: 'subtasks', align: 'center', track: '120px', minWidth: 120 },
+const columns: { id: string; label: string; field: SortField; align: 'left' | 'center'; track: string; minWidth: number; icon?: IconName }[] = [
+  { id: 'task', label: 'Task', field: 'title', align: 'left', track: 'minmax(320px,1.8fr)', minWidth: 320, icon: 'subtask' },
+  { id: 'status', label: 'Status', field: 'status', align: 'center', track: '150px', minWidth: 150, icon: 'status' },
+  { id: 'priority', label: 'Priority', field: 'priority', align: 'center', track: '140px', minWidth: 140, icon: 'priority' },
+  { id: 'scope', label: 'Scope', field: 'difficulty', align: 'center', track: '140px', minWidth: 140, icon: 'scope' },
+  { id: 'section', label: 'Section', field: 'section_id', align: 'center', track: '150px', minWidth: 150, icon: 'section' },
+  { id: 'start', label: 'Start', field: 'start_date', align: 'center', track: '120px', minWidth: 120, icon: 'date' },
+  { id: 'due', label: 'Due', field: 'due_date', align: 'center', track: '120px', minWidth: 120, icon: 'date' },
+  { id: 'subtasks', label: 'Subtasks', field: 'subtasks', align: 'center', track: '120px', minWidth: 120, icon: 'subtask' },
 ]
 
 // Every column except the task title can be hidden (Miller's Law).
@@ -532,7 +534,7 @@ export function TaskList({
     )
   }
 
-  function renderHeaderButton(column: { id: string; label: string; field: SortField; align: 'left' | 'center' }) {
+  function renderHeaderButton(column: { id: string; label: string; field: SortField; align: 'left' | 'center'; icon?: IconName }) {
     const isSorted = tableSort?.field === column.field
     const hasFilter = tableFilters[column.field].length > 0
 
@@ -541,14 +543,13 @@ export function TaskList({
         <button
           type="button"
           onClick={() => setOpenHeaderMenu((currentValue) => (currentValue === column.id ? null : column.id))}
-          className={`inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-muted)] transition hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)] ${
-            column.align === 'center' ? 'justify-center text-center' : 'justify-start text-left'
-          }`}
+          className="group/h inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[12px] font-medium text-[var(--text-muted)] transition hover:bg-[var(--surface-subtle)] hover:text-[var(--text-secondary)]"
         >
+          {column.icon && <Icon name={column.icon} className="h-3.5 w-3.5 shrink-0 text-[var(--text-disabled)]" />}
           {column.label}
-          {isSorted && <span>{tableSort.direction === 'asc' ? '↑' : '↓'}</span>}
+          {isSorted && <span className="text-[var(--text-secondary)]">{tableSort.direction === 'asc' ? '↑' : '↓'}</span>}
           {hasFilter && <span className="h-1.5 w-1.5 rounded-full bg-[var(--primary-main)]" />}
-          <span className="text-[10px]">⌄</span>
+          <span className="text-[9px] opacity-0 transition group-hover/h:opacity-100">⌄</span>
         </button>
         {renderHeaderMenu(column)}
       </div>
@@ -722,7 +723,7 @@ export function TaskList({
               </div>
               <div className="overflow-x-auto">
                 <div style={{ minWidth: `${tableMinWidth}px` }}>
-                  <div className="grid border-b border-[var(--outline-soft)] bg-[var(--surface-muted)] px-4 py-2" style={{ gridTemplateColumns }}>
+                  <div className="grid border-b border-[var(--outline-soft)] bg-[var(--surface-muted)] px-4 py-1.5 [&>div]:flex [&>div]:items-center [&>div]:border-r [&>div]:border-[var(--outline-soft)] [&>div]:px-2 [&>div:first-child]:pl-0 [&>div:last-child]:border-r-0" style={{ gridTemplateColumns }}>
                     {visibleColumns.map((column) => (
                       <div key={column.id}>{renderHeaderButton(column)}</div>
                     ))}
@@ -737,24 +738,22 @@ export function TaskList({
                           key={task.id}
                           onClick={() => onOpenTask(task.id)}
                           style={{ gridTemplateColumns }}
-                          className={`grid cursor-pointer items-center gap-0 px-4 py-2 text-sm transition hover:bg-[var(--surface-muted)] ${
+                          className={`grid cursor-pointer items-stretch gap-0 px-4 text-[13px] transition hover:bg-[var(--surface-muted)] [&>div]:flex [&>div]:min-h-[38px] [&>div]:items-center [&>div]:border-r [&>div]:border-[var(--outline-soft)] [&>div]:px-2 [&>div:first-child]:pl-0 [&>div:last-child]:border-r-0 ${
                             selectedTaskId === task.id ? 'bg-[var(--surface-subtle)]' : ''
-                          }`}
+                          } ${task.status === 'done' ? 'opacity-55' : ''}`}
                         >
-                          <div className="min-w-0 pr-4 text-left">
-                            <div className="flex items-center gap-2">
-                              <StatusToggle
-                                done={task.status === 'done'}
-                                disabled={updatingStatusTaskId === task.id}
-                                onToggle={() => updateTaskStatus(task.id, task.status === 'done' ? 'not_started' : 'done')}
-                              />
-                              <p className={`truncate font-medium text-[var(--text-primary)] ${task.status === 'done' ? 'line-through opacity-60' : ''}`}>{task.title}</p>
+                          <div className="min-w-0 gap-2 text-left">
+                            <StatusToggle
+                              done={task.status === 'done'}
+                              disabled={updatingStatusTaskId === task.id}
+                              onToggle={() => updateTaskStatus(task.id, task.status === 'done' ? 'not_started' : 'done')}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className={`truncate font-medium text-[var(--text-primary)] ${task.status === 'done' ? 'line-through' : ''}`}>{task.title}</p>
+                              {task.description && (
+                                <p className="truncate text-xs text-[var(--text-muted)]">{task.description}</p>
+                              )}
                             </div>
-                            {task.description && (
-                              <p className="mt-0.5 truncate pl-7 text-xs text-[var(--text-muted)]">
-                                {task.description}
-                              </p>
-                            )}
                           </div>
 
                           {isColumnVisible('status') && (
@@ -828,19 +827,19 @@ export function TaskList({
                           )}
 
                           {isColumnVisible('start') && (
-                          <div className="text-center text-xs text-[var(--text-muted)]">
+                          <div className="justify-center text-center text-xs text-[var(--text-muted)]">
                             {formatDate(task.start_date)}
                           </div>
                           )}
 
                           {isColumnVisible('due') && (
-                          <div className="text-center text-xs text-[var(--text-muted)]">
+                          <div className="justify-center text-center text-xs text-[var(--text-muted)]">
                             {formatDate(task.due_date)}
                           </div>
                           )}
 
                           {isColumnVisible('subtasks') && (
-                          <div className="text-center text-xs font-medium text-[var(--text-secondary)]">
+                          <div className="justify-center text-center text-xs font-medium text-[var(--text-secondary)]">
                             {completedSubtasks}/{subtasks.length}
                           </div>
                           )}
