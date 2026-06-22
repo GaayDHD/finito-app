@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
+import { Button, Input } from './ui'
 
 export type ThemePreference = 'light' | 'dark' | 'system'
 
@@ -92,9 +93,6 @@ export function SettingsModal({
     await signOut()
   }
 
-  const fieldClass =
-    'h-10 w-full rounded-lg border border-[var(--outline)] bg-[var(--background-paper)] px-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary-main)] focus:ring-4 focus:ring-[var(--primary-main)]/10'
-
   function feedbackClass(tone: 'ok' | 'error') {
     return tone === 'ok'
       ? 'text-[var(--success-dark)]'
@@ -115,13 +113,9 @@ export function SettingsModal({
             <h2 className="text-lg font-semibold text-[var(--text-primary)]">Settings</h2>
             <p className="text-sm text-[var(--text-muted)]">Manage your account, appearance, and security.</p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="shrink-0 rounded-full border border-[var(--outline)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
-          >
+          <Button variant="secondary" size="sm" onClick={onClose} className="shrink-0">
             Close
-          </button>
+          </Button>
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
@@ -141,24 +135,19 @@ export function SettingsModal({
               </div>
 
               <form onSubmit={updateEmail}>
-                <label className={labelClass}>
-                  New email
-                  <input
+                <span className={labelClass}>New email</span>
+                <div className="mt-1">
+                  <Input
                     type="email"
                     value={newEmail}
                     onChange={(event) => setNewEmail(event.target.value)}
                     placeholder="new@email.com"
-                    className={`mt-1 ${fieldClass}`}
                   />
-                </label>
+                </div>
                 <div className="mt-2 flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={updatingEmail || !newEmail.trim()}
-                    className="rounded-full bg-[var(--primary-main)] px-4 py-2 text-sm font-semibold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-dark)] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
+                  <Button type="submit" variant="primary" size="sm" disabled={updatingEmail || !newEmail.trim()}>
                     {updatingEmail ? 'Sending…' : 'Update email'}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
@@ -198,14 +187,9 @@ export function SettingsModal({
                 <h3 className="text-sm font-semibold text-[var(--text-primary)]">Security</h3>
                 <p className="text-xs text-[var(--text-muted)]">We&apos;ll email a secure link to reset your password.</p>
               </div>
-              <button
-                type="button"
-                disabled={sendingReset}
-                onClick={sendPasswordReset}
-                className="rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-subtle)] disabled:opacity-60"
-              >
+              <Button variant="secondary" size="sm" disabled={sendingReset} onClick={sendPasswordReset}>
                 {sendingReset ? 'Sending…' : 'Send password reset'}
-              </button>
+              </Button>
             </div>
             {resetFeedback && (
               <p className={`mt-2 text-xs ${feedbackClass(resetFeedback.tone)}`}>{resetFeedback.text}</p>
@@ -221,31 +205,22 @@ export function SettingsModal({
 
             {confirmDelete ? (
               <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  disabled={deleting}
-                  onClick={deleteAccount}
-                  className="rounded-full bg-[var(--error-main)] px-4 py-2 text-sm font-semibold text-[var(--error-contrast)] transition hover:bg-[var(--error-dark)] disabled:opacity-60"
-                >
+                <Button variant="danger" size="sm" disabled={deleting} onClick={deleteAccount}>
                   {deleting ? 'Deleting…' : 'Yes, delete my account'}
-                </button>
-                <button
-                  type="button"
-                  disabled={deleting}
-                  onClick={() => setConfirmDelete(false)}
-                  className="rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
-                >
+                </Button>
+                <Button variant="secondary" size="sm" disabled={deleting} onClick={() => setConfirmDelete(false)}>
                   Cancel
-                </button>
+                </Button>
               </div>
             ) : (
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => setConfirmDelete(true)}
-                className="mt-3 rounded-full border border-[var(--error-main)]/50 bg-[var(--background-paper)] px-4 py-2 text-sm font-semibold text-[var(--error-dark)] transition hover:bg-[var(--error-light)]"
+                className="mt-3 border-[var(--error-main)]/50 text-[var(--error-dark)] hover:bg-[var(--error-light)]"
               >
                 Delete account
-              </button>
+              </Button>
             )}
 
             {deleteError && <p className="mt-2 text-xs text-[var(--error-dark)]">{deleteError}</p>}
@@ -253,13 +228,9 @@ export function SettingsModal({
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-[var(--outline-soft)] px-6 py-4">
-          <button
-            type="button"
-            onClick={signOut}
-            className="rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
-          >
+          <Button variant="secondary" size="sm" onClick={signOut}>
             Sign out
-          </button>
+          </Button>
         </div>
       </div>
     </div>

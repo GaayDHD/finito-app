@@ -1,4 +1,5 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { useState } from 'react'
+import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react'
 import { statusGroups } from '../constants'
 import { Icon } from './icons'
 import type { IconName } from './icons'
@@ -212,8 +213,9 @@ export function Button({
 }
 
 type IconButtonVariant = 'ghost' | 'outline' | 'soft' | 'primary'
-const ICONBTN_SIZE: Record<ButtonSize, string> = { sm: 'h-7 w-7', md: 'h-[34px] w-[34px]', lg: 'h-10 w-10' }
-const ICONBTN_GLYPH: Record<ButtonSize, string> = { sm: 'h-[15px] w-[15px]', md: 'h-[18px] w-[18px]', lg: 'h-5 w-5' }
+type IconButtonSize = 'xs' | 'sm' | 'md' | 'lg'
+const ICONBTN_SIZE: Record<IconButtonSize, string> = { xs: 'h-5 w-5', sm: 'h-7 w-7', md: 'h-[34px] w-[34px]', lg: 'h-10 w-10' }
+const ICONBTN_GLYPH: Record<IconButtonSize, string> = { xs: 'h-3.5 w-3.5', sm: 'h-[15px] w-[15px]', md: 'h-[18px] w-[18px]', lg: 'h-5 w-5' }
 const ICONBTN_VARIANT: Record<IconButtonVariant, string> = {
   ghost: 'border border-transparent bg-transparent text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]',
   outline: 'border border-[var(--outline)] bg-[var(--background-paper)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]',
@@ -232,7 +234,7 @@ export function IconButton({
 }: {
   icon: IconName
   variant?: IconButtonVariant
-  size?: ButtonSize
+  size?: IconButtonSize
   className?: string
 } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'>) {
   return (
@@ -242,6 +244,140 @@ export function IconButton({
       {...rest}
     >
       <Icon name={icon} className={ICONBTN_GLYPH[size]} />
+    </button>
+  )
+}
+
+/** Text input — 'field' (8px radius) or 'pill' (full radius) shape, optional
+ *  leading icon and label/micro-label. Focus deepens border + adds a ring. */
+export function Input({
+  shape = 'field',
+  icon,
+  label,
+  microLabel,
+  fullWidth = true,
+  style,
+  ...rest
+}: {
+  shape?: 'field' | 'pill'
+  icon?: IconName
+  label?: string
+  microLabel?: string
+  fullWidth?: boolean
+} & Omit<InputHTMLAttributes<HTMLInputElement>, 'size'>) {
+  const [focused, setFocused] = useState(false)
+  const { onFocus, onBlur, ...inputRest } = rest
+  const radius = shape === 'pill' ? 'var(--radius-full)' : 'var(--radius-sm)'
+
+  const field = (
+    <div className="relative" style={{ width: fullWidth ? '100%' : undefined }}>
+      {icon && (
+        <span className="pointer-events-none absolute left-3 top-1/2 flex -translate-y-1/2 text-[var(--text-muted)]">
+          <Icon name={icon} className="h-4 w-4" />
+        </span>
+      )}
+      <input
+        onFocus={(event) => {
+          setFocused(true)
+          onFocus?.(event)
+        }}
+        onBlur={(event) => {
+          setFocused(false)
+          onBlur?.(event)
+        }}
+        style={{
+          width: '100%',
+          height: 38,
+          padding: icon ? '0 14px 0 36px' : '0 14px',
+          borderRadius: radius,
+          border: `1px solid ${focused ? 'var(--primary-main)' : 'var(--outline)'}`,
+          background: 'var(--background-paper)',
+          color: 'var(--text-primary)',
+          fontFamily: 'var(--font-sans)',
+          fontSize: 14,
+          outline: 'none',
+          boxShadow: focused ? 'var(--ring-primary)' : 'none',
+          transition: 'border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard)',
+          ...style,
+        }}
+        {...inputRest}
+      />
+    </div>
+  )
+
+  if (!label && !microLabel) return field
+
+  return (
+    <label className="flex flex-col gap-1.5" style={{ width: fullWidth ? '100%' : undefined }}>
+      {microLabel && (
+        <span className="text-[10px] font-medium uppercase tracking-[0.6px] text-[var(--auth-field-label)]">{microLabel}</span>
+      )}
+      {label && <span className="text-[13px] font-semibold text-[var(--text-secondary)]">{label}</span>}
+      {field}
+    </label>
+  )
+}
+
+/** Square, 4px-radius custom checkbox with a brand-purple tick. Controlled. */
+export function Checkbox({
+  checked = false,
+  onChange,
+  size = 20,
+  disabled = false,
+  ariaLabel,
+  label,
+  className = '',
+}: {
+  checked?: boolean
+  onChange?: (next: boolean) => void
+  size?: number
+  disabled?: boolean
+  ariaLabel?: string
+  label?: ReactNode
+  className?: string
+}) {
+  const boxClass = 'flex shrink-0 items-center justify-center rounded-[4px] border transition'
+  const boxStyle = {
+    width: size,
+    height: size,
+    borderColor: checked ? 'var(--primary-main)' : 'var(--auth-input-border)',
+    background: checked ? 'var(--primary-soft)' : 'var(--auth-input-bg)',
+  }
+  const glyph = checked ? (
+    <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary-main)" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" style={{ width: size * 0.66, height: size * 0.66 }}>
+      <path d="M5 12l5 5l9 -9" />
+    </svg>
+  ) : null
+
+  if (!label) {
+    return (
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={checked}
+        aria-label={ariaLabel}
+        disabled={disabled}
+        onClick={() => onChange?.(!checked)}
+        className={`${boxClass} disabled:cursor-not-allowed disabled:opacity-50`}
+        style={boxStyle}
+      >
+        {glyph}
+      </button>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={ariaLabel}
+      disabled={disabled}
+      onClick={() => onChange?.(!checked)}
+      className={`inline-flex items-center gap-2 text-left disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+    >
+      <span className={boxClass} style={boxStyle}>{glyph}</span>
+      <span className="text-[13px] text-[var(--text-secondary)]">{label}</span>
     </button>
   )
 }

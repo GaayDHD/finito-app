@@ -379,7 +379,7 @@ export function CreateTaskForm({
             <button
               type="submit"
               disabled={isCreating}
-              className="rounded-l-lg bg-[var(--primary-main)] px-5 py-2.5 text-sm font-semibold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-dark)] disabled:opacity-60"
+              className="rounded-l-full bg-[var(--primary-main)] py-2.5 pl-5 pr-4 text-sm font-semibold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-dark)] disabled:opacity-60"
             >
               {isCreating ? 'Creating…' : 'Create task'}
             </button>
@@ -388,7 +388,7 @@ export function CreateTaskForm({
               disabled={isCreating}
               onClick={() => setCreateMenuOpen((open) => !open)}
               aria-label="More create options"
-              className="flex items-center rounded-r-lg border-l border-white/25 bg-[var(--primary-main)] px-2.5 text-[var(--primary-contrast)] transition hover:bg-[var(--primary-dark)] disabled:opacity-60"
+              className="flex items-center rounded-r-full border-l border-white/25 bg-[var(--primary-main)] pl-2.5 pr-3.5 text-[var(--primary-contrast)] transition hover:bg-[var(--primary-dark)] disabled:opacity-60"
             >
               <Icon name="chevron" className="h-4 w-4" strokeWidth={2.2} />
             </button>

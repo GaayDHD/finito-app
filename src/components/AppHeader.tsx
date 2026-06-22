@@ -1,4 +1,5 @@
 import { Icon } from './icons'
+import { IconButton } from './ui'
 
 type ViewMode = 'card' | 'table' | 'kanban' | 'timeline' | 'calendar'
 
@@ -72,14 +73,14 @@ export function AppHeader({
             className="h-9 w-full rounded-full border border-[var(--outline)] bg-[var(--background-paper)] pl-9 pr-9 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--primary-main)] focus:ring-4 focus:ring-[var(--primary-main)]/10 placeholder:text-[var(--text-muted)]"
           />
           {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
+            <IconButton
+              icon="x"
+              variant="ghost"
+              size="xs"
               aria-label="Clear search"
-              className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]"
-            >
-              <Icon name="x" className="h-3.5 w-3.5" />
-            </button>
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2"
+            />
           )}
         </div>
       </div>

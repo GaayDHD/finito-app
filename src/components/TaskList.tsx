@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import type { Section, Task } from '../types'
 import { difficultyOptions, priorityOptions, statusOptions } from '../constants'
 import { formatDate } from '../utils'
-import { EmptyState, ICON_DASHED_PLUS, priorityToneClass, StatusGlyph, StatusOptions, StatusToggle, statusToneClass, TaskListSkeleton } from './ui'
+import { Checkbox, EmptyState, ICON_DASHED_PLUS, priorityToneClass, StatusGlyph, StatusOptions, StatusToggle, statusToneClass, TaskListSkeleton } from './ui'
 
 // Ghost "Add task" row shown at the bottom of every list-view group. Clicking
 // it reveals an inline name input; the created task inherits the group's value.
@@ -650,18 +650,14 @@ export function TaskList({
                   <div className="absolute right-0 top-9 z-20 w-48 rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-1.5 shadow-xl">
                     <p className="px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Show columns</p>
                     {toggleableColumns.map((column) => (
-                      <label
+                      <Checkbox
                         key={column.id}
-                        className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isColumnVisible(column.id)}
-                          onChange={() => toggleColumn(column.id)}
-                          className="h-4 w-4 accent-[var(--primary-main)]"
-                        />
-                        {column.label}
-                      </label>
+                        checked={isColumnVisible(column.id)}
+                        onChange={() => toggleColumn(column.id)}
+                        size={16}
+                        label={column.label}
+                        className="w-full rounded-lg px-2.5 py-1.5 transition hover:bg-[var(--surface-muted)]"
+                      />
                     ))}
                   </div>
                 </>
