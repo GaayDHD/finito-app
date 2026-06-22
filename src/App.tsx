@@ -17,7 +17,7 @@ import { SettingsModal } from './components/SettingsModal'
 import { TaskDetailDrawer } from './components/TaskDetailDrawer'
 import { CalendarView } from './components/CalendarView'
 import { TimelineView } from './components/TimelineView'
-import { StatusOptions, SubtaskProgress } from './components/ui'
+import { StatusOptions, StatusToggle, SubtaskProgress } from './components/ui'
 import { Icon } from './components/icons'
 import './App.css'
 
@@ -1231,7 +1231,12 @@ function App() {
         className="border-b border-[var(--outline-soft)] bg-[var(--background-paper)] px-4 py-3 transition hover:bg-[var(--surface-muted)]"
       >
         <div className="flex items-start gap-2">
-          <h3 className="min-w-0 flex-1 truncate text-sm font-semibold">{task.title}</h3>
+          <StatusToggle
+            done={task.status === 'done'}
+            disabled={updatingStatusTaskId === task.id}
+            onToggle={() => updateTaskStatus(task.id, task.status === 'done' ? 'not_started' : 'done')}
+          />
+          <h3 className={`min-w-0 flex-1 truncate text-sm font-semibold ${task.status === 'done' ? 'line-through opacity-60' : ''}`}>{task.title}</h3>
           {task.archived_at && (
             <span className="shrink-0 rounded-full bg-[var(--surface-subtle)] px-2.5 py-1 text-[11px] font-semibold text-[var(--text-muted)]">
               Archived
@@ -1250,10 +1255,10 @@ function App() {
         </div>
 
         {task.description && (
-          <p className="mt-1 max-w-3xl truncate text-xs leading-5 text-[var(--text-disabled)]">{task.description}</p>
+          <p className="mt-1 max-w-3xl truncate pl-7 text-xs leading-5 text-[var(--text-disabled)]">{task.description}</p>
         )}
 
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-7">
           <select
             aria-label={`Status for ${task.title}`}
             value={task.status}
@@ -1313,7 +1318,7 @@ function App() {
         </div>
 
         {subtasks.length > 0 && (
-          <div className="mt-2.5 flex items-center gap-2">
+          <div className="mt-2.5 flex items-center gap-2 pl-7">
             <span className="text-[11px] font-medium text-[var(--text-muted)]">Subtasks</span>
             <SubtaskProgress done={completedSubtasks} total={subtasks.length} className="max-w-[200px] flex-1" />
           </div>

@@ -3,73 +3,7 @@ import type { ReactNode } from 'react'
 import type { Section, Task } from '../types'
 import { difficultyOptions, priorityOptions, statusOptions } from '../constants'
 import { formatDate } from '../utils'
-import { EmptyState, StatusOptions, statusToneClass, TaskListSkeleton } from './ui'
-
-// Status-toggle glyphs (Tabler outline). The circle is #777777; the tick is
-// the brand purple. Rendered inline so the two-tone colouring works.
-const DASHED_ARCS =
-  '<path d="M8.56 3.69a9 9 0 0 0 -2.92 1.95" /><path d="M3.69 8.56a9 9 0 0 0 -.69 3.44" /><path d="M3.69 15.44a9 9 0 0 0 1.95 2.92" /><path d="M8.56 20.31a9 9 0 0 0 3.44 .69" /><path d="M15.44 20.31a9 9 0 0 0 2.92 -1.95" /><path d="M20.31 15.44a9 9 0 0 0 .69 -3.44" /><path d="M20.31 8.56a9 9 0 0 0 -1.95 -2.92" /><path d="M15.44 3.69a9 9 0 0 0 -3.44 -.69" />'
-const TICK = '<path stroke="#6600ff" d="M9 12l2 2l4 -4" />'
-const ICON_DOTTED =
-  '<path d="M7.5 4.21l0 .01" /><path d="M4.21 7.5l0 .01" /><path d="M3 12l0 .01" /><path d="M4.21 16.5l0 .01" /><path d="M7.5 19.79l0 .01" /><path d="M12 21l0 .01" /><path d="M16.5 19.79l0 .01" /><path d="M19.79 16.5l0 .01" /><path d="M21 12l0 .01" /><path d="M19.79 7.5l0 .01" /><path d="M16.5 4.21l0 .01" /><path d="M12 3l0 .01" />'
-const ICON_DASHED_CHECK = DASHED_ARCS + TICK
-const ICON_CIRCLE_CHECK = '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />' + TICK
-const ICON_DASHED_PLUS = DASHED_ARCS + '<path d="M9 12h6" /><path d="M12 9v6" />'
-
-function StatusGlyph({ markup, className }: { markup: string; className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="#777777"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-      dangerouslySetInnerHTML={{ __html: markup }}
-    />
-  )
-}
-
-// Quick-complete toggle to the left of the task name: dotted circle when
-// incomplete (→ dashed circle + tick on hover), solid circle + tick when done.
-// Clicking flips the task between done and not started without opening the panel.
-function StatusToggle({
-  done,
-  disabled,
-  onToggle,
-}: {
-  done: boolean
-  disabled: boolean
-  onToggle: () => void
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      aria-label={done ? 'Mark task as not done' : 'Mark task as done'}
-      title={done ? 'Mark as not done' : 'Mark as done'}
-      onClick={(event) => {
-        event.stopPropagation()
-        onToggle()
-      }}
-      className="group/status relative flex h-5 w-5 shrink-0 items-center justify-center disabled:opacity-50"
-    >
-      {done ? (
-        <StatusGlyph markup={ICON_CIRCLE_CHECK} className="h-5 w-5" />
-      ) : (
-        <>
-          <StatusGlyph markup={ICON_DOTTED} className="h-5 w-5 transition group-hover/status:opacity-0" />
-          <StatusGlyph
-            markup={ICON_DASHED_CHECK}
-            className="absolute inset-0 h-5 w-5 opacity-0 transition group-hover/status:opacity-100"
-          />
-        </>
-      )}
-    </button>
-  )
-}
+import { EmptyState, ICON_DASHED_PLUS, StatusGlyph, StatusOptions, StatusToggle, statusToneClass, TaskListSkeleton } from './ui'
 
 // Ghost "Add task" row shown at the bottom of every list-view group. Clicking
 // it reveals an inline name input; the created task inherits the group's value.
