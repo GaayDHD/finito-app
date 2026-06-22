@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Icon } from './icons'
+import { Button } from './ui'
 
 type DashboardStatsProps = {
   stats: {
@@ -47,13 +47,9 @@ export function DashboardStats({ stats, onNewTaskClick }: DashboardStatsProps) {
         className="group relative"
         onMouseLeave={() => setPinned(false)}
       >
-        <button
-          type="button"
-          onClick={() => setPinned((value) => !value)}
-          className="inline-flex h-10 items-center rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-4 text-sm font-semibold text-[var(--text-primary)] shadow-sm transition hover:bg-[var(--surface-muted)]"
-        >
+        <Button variant="secondary" onClick={() => setPinned((value) => !value)}>
           Task Overview
-        </button>
+        </Button>
 
         <div
           className={`absolute left-0 top-12 z-20 w-72 rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-2 shadow-xl transition ${
@@ -77,14 +73,9 @@ export function DashboardStats({ stats, onNewTaskClick }: DashboardStatsProps) {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={onNewTaskClick}
-        className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-[var(--primary-main)] px-5 text-sm font-semibold text-[var(--primary-contrast)] shadow-sm transition hover:bg-[var(--primary-dark)]"
-      >
-        <Icon name="add" className="h-4 w-4" strokeWidth={2.2} />
+      <Button variant="primary" icon="add" className="shrink-0" onClick={onNewTaskClick}>
         New Task
-      </button>
+      </Button>
     </section>
   )
 }

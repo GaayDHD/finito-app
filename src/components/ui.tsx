@@ -1,5 +1,7 @@
-import type { ReactNode } from 'react'
+import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { statusGroups } from '../constants'
+import { Icon } from './icons'
+import type { IconName } from './icons'
 
 /** Shared status pill colours so every view (table, card, timeline, calendar) matches (Law of Similarity). */
 export function statusToneClass(status: string) {
@@ -151,6 +153,95 @@ export function StatusToggle({
           />
         </>
       )}
+    </button>
+  )
+}
+
+// ---- Buttons (design-system primitives) ----
+type ButtonVariant = 'primary' | 'secondary' | 'soft' | 'ghost' | 'danger'
+type ButtonSize = 'sm' | 'md' | 'lg'
+
+const BTN_SIZE: Record<ButtonSize, string> = {
+  sm: 'h-8 gap-1.5 px-3.5',
+  md: 'h-10 gap-2 px-5',
+  lg: 'h-12 gap-2 px-[26px]',
+}
+const BTN_FONT: Record<ButtonSize, number> = { sm: 13, md: 14, lg: 15 }
+const BTN_ICON: Record<ButtonSize, string> = { sm: 'h-[15px] w-[15px]', md: 'h-4 w-4', lg: 'h-[18px] w-[18px]' }
+const BTN_VARIANT: Record<ButtonVariant, string> = {
+  primary: 'border border-transparent bg-[var(--primary-main)] text-[var(--primary-contrast)] shadow-sm hover:bg-[var(--primary-dark)]',
+  secondary: 'border border-[var(--outline)] bg-[var(--background-paper)] text-[var(--text-primary)] shadow-sm hover:bg-[var(--primary-light)]',
+  soft: 'border border-transparent bg-[var(--primary-light)] text-[var(--primary-dark)] hover:opacity-90',
+  ghost: 'border border-transparent bg-transparent text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]',
+  danger: 'border border-transparent bg-[var(--error-main)] text-[var(--error-contrast)] shadow-sm hover:opacity-90',
+}
+
+/** Pill button — brand-purple primary plus secondary, soft, ghost and danger
+ *  variants, three sizes. Mirrors the design system's Button. */
+export function Button({
+  children,
+  variant = 'primary',
+  size = 'md',
+  icon,
+  iconRight,
+  fullWidth = false,
+  type = 'button',
+  className = '',
+  ...rest
+}: {
+  children?: ReactNode
+  variant?: ButtonVariant
+  size?: ButtonSize
+  icon?: IconName
+  iconRight?: IconName
+  fullWidth?: boolean
+  className?: string
+} & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'>) {
+  return (
+    <button
+      type={type}
+      className={`inline-flex items-center justify-center whitespace-nowrap rounded-full transition disabled:cursor-not-allowed disabled:opacity-55 ${BTN_SIZE[size]} ${BTN_VARIANT[variant]} ${fullWidth ? 'w-full' : ''} ${className}`}
+      style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: BTN_FONT[size], lineHeight: 1 }}
+      {...rest}
+    >
+      {icon && <Icon name={icon} className={`${BTN_ICON[size]} shrink-0`} strokeWidth={2.2} />}
+      {children}
+      {iconRight && <Icon name={iconRight} className={`${BTN_ICON[size]} shrink-0`} strokeWidth={2.2} />}
+    </button>
+  )
+}
+
+type IconButtonVariant = 'ghost' | 'outline' | 'soft' | 'primary'
+const ICONBTN_SIZE: Record<ButtonSize, string> = { sm: 'h-7 w-7', md: 'h-[34px] w-[34px]', lg: 'h-10 w-10' }
+const ICONBTN_GLYPH: Record<ButtonSize, string> = { sm: 'h-[15px] w-[15px]', md: 'h-[18px] w-[18px]', lg: 'h-5 w-5' }
+const ICONBTN_VARIANT: Record<IconButtonVariant, string> = {
+  ghost: 'border border-transparent bg-transparent text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]',
+  outline: 'border border-[var(--outline)] bg-[var(--background-paper)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]',
+  soft: 'border border-transparent bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]',
+  primary: 'border border-transparent bg-[var(--primary-main)] text-[var(--primary-contrast)] hover:bg-[var(--primary-dark)]',
+}
+
+/** Square, pill-rounded icon-only control — close buttons, clear-search, toolbar. */
+export function IconButton({
+  icon,
+  variant = 'ghost',
+  size = 'md',
+  type = 'button',
+  className = '',
+  ...rest
+}: {
+  icon: IconName
+  variant?: IconButtonVariant
+  size?: ButtonSize
+  className?: string
+} & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'>) {
+  return (
+    <button
+      type={type}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-50 ${ICONBTN_SIZE[size]} ${ICONBTN_VARIANT[variant]} ${className}`}
+      {...rest}
+    >
+      <Icon name={icon} className={ICONBTN_GLYPH[size]} />
     </button>
   )
 }

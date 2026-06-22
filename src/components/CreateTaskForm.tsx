@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import type { Section, Task } from '../types'
 import { difficultyOptions, priorityOptions } from '../constants'
 import { formatDate } from '../utils'
-import { StatusOptions } from './ui'
+import { IconButton, StatusOptions } from './ui'
 import { Icon } from './icons'
 import type { IconName } from './icons'
 
@@ -192,14 +192,7 @@ export function CreateTaskForm({
         {/* Header */}
         <div className="flex items-center justify-between gap-4 border-b border-[var(--outline-soft)] px-7 py-2.5">
           <h2 className="text-base font-normal text-[var(--text-disabled)]" style={{ fontFamily: 'var(--font-sans)' }}>Create new task</h2>
-          <button
-            type="button"
-            onClick={() => setIsOpen(false)}
-            aria-label="Close"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-subtle)] text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]"
-          >
-            <Icon name="x" className="h-4 w-4" />
-          </button>
+          <IconButton icon="x" variant="soft" size="sm" aria-label="Close" onClick={() => setIsOpen(false)} />
         </div>
 
         {/* Body */}
