@@ -36,7 +36,17 @@ export function AppHeader({
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--outline-soft)] bg-[var(--background-paper)]">
       <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6">
-        <nav className="flex items-center gap-1.5 overflow-x-auto py-2 sm:gap-5 sm:py-0 sm:pt-3">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-6">
+          <div className="flex shrink-0 items-center gap-2 py-2 sm:py-0">
+            <img src="/app-logo_finito.svg" alt="Finito" className="h-7 w-7" />
+            <span
+              className="hidden text-[22px] leading-none text-[var(--text-primary)] sm:inline"
+              style={{ fontFamily: 'var(--font-display)', fontWeight: 500 }}
+            >
+              Finito
+            </span>
+          </div>
+          <nav className="flex items-center gap-1.5 overflow-x-auto py-2 sm:gap-5 sm:py-0 sm:pt-3">
           {viewTabs.map((tab) => (
             <button
               key={tab.mode}
@@ -47,7 +57,8 @@ export function AppHeader({
               {tab.label}
             </button>
           ))}
-        </nav>
+          </nav>
+        </div>
 
         <div className="relative my-2 hidden w-full max-w-[240px] sm:block">
           <Icon
