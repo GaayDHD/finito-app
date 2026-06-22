@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import type { Section, Task } from '../types'
 import { difficultyOptions, priorityOptions, statusOptions } from '../constants'
 import { formatDate } from '../utils'
-import { Checkbox, EmptyState, ICON_DASHED_PLUS, priorityToneClass, StatusGlyph, StatusOptions, StatusToggle, statusToneClass, TaskListSkeleton } from './ui'
+import { Badge, Checkbox, EmptyState, ICON_DASHED_PLUS, priorityToneClass, StatusGlyph, StatusOptions, StatusToggle, statusToneClass, TaskListSkeleton } from './ui'
 
 // Ghost "Add task" row shown at the bottom of every list-view group. Clicking
 // it reveals an inline name input; the created task inherits the group's value.
@@ -664,9 +664,9 @@ export function TaskList({
               )}
             </div>
           )}
-          <span className="rounded-full bg-[var(--primary-light)] px-3 py-1 text-xs font-semibold text-[var(--primary-main)]">
+          <Badge tone="primary" className="uppercase tracking-[0.04em]">
             {displayedCount} visible
-          </span>
+          </Badge>
         </div>
       </div>
 

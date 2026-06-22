@@ -21,17 +21,18 @@ export function statusToneClass(status: string) {
   return 'border-[var(--outline)] bg-[var(--surface-muted)] text-[var(--text-secondary)]'
 }
 
-/** Shared priority pill colours (mirrors the design system's priorityTone):
- *  critical/overdue = error, high = warning, medium = brand, low = success. */
+/** Shared priority pill colours, per the design-system data-display card:
+ *  critical/overdue = high-emphasis neutral (solid dark outline),
+ *  high = error, medium = warning, low = success, else neutral. */
 export function priorityToneClass(priority: string | null | undefined) {
   if (priority === 'critical' || priority === 'overdue') {
-    return 'border-[var(--error-main)]/25 bg-[var(--error-light)] text-[var(--error-dark)]'
+    return 'border-[var(--text-primary)] bg-[var(--surface-subtle)] text-[var(--text-primary)]'
   }
   if (priority === 'high') {
-    return 'border-[var(--warning-main)]/25 bg-[var(--warning-light)] text-[var(--warning-dark)]'
+    return 'border-[var(--error-main)]/25 bg-[var(--error-light)] text-[var(--error-dark)]'
   }
   if (priority === 'medium') {
-    return 'border-[var(--primary-main)]/25 bg-[var(--primary-light)] text-[var(--primary-dark)]'
+    return 'border-[var(--warning-main)]/25 bg-[var(--warning-light)] text-[var(--warning-dark)]'
   }
   if (priority === 'low') {
     return 'border-[var(--success-main)]/25 bg-[var(--success-light)] text-[var(--success-dark)]'
@@ -379,6 +380,38 @@ export function Checkbox({
       <span className={boxClass} style={boxStyle}>{glyph}</span>
       <span className="text-[13px] text-[var(--text-secondary)]">{label}</span>
     </button>
+  )
+}
+
+type BadgeTone = 'neutral' | 'primary' | 'success' | 'warning' | 'error' | 'info'
+const BADGE_TONE: Record<BadgeTone, { bg: string; text: string; dot: string }> = {
+  neutral: { bg: 'bg-[var(--surface-subtle)]', text: 'text-[var(--text-secondary)]', dot: 'bg-[var(--text-disabled)]' },
+  primary: { bg: 'bg-[var(--primary-light)]', text: 'text-[var(--primary-dark)]', dot: 'bg-[var(--primary-main)]' },
+  success: { bg: 'bg-[var(--success-light)]', text: 'text-[var(--success-dark)]', dot: 'bg-[var(--success-main)]' },
+  warning: { bg: 'bg-[var(--warning-light)]', text: 'text-[var(--warning-dark)]', dot: 'bg-[var(--warning-main)]' },
+  error: { bg: 'bg-[var(--error-light)]', text: 'text-[var(--error-dark)]', dot: 'bg-[var(--error-main)]' },
+  info: { bg: 'bg-[var(--info-light)]', text: 'text-[var(--info-dark)]', dot: 'bg-[var(--info-main)]' },
+}
+
+/** Small rounded pill — counter / label badge with a semantic tone and an
+ *  optional leading dot. Mirrors the design system's Badge. */
+export function Badge({
+  children,
+  tone = 'neutral',
+  dot = false,
+  className = '',
+}: {
+  children: ReactNode
+  tone?: BadgeTone
+  dot?: boolean
+  className?: string
+}) {
+  const t = BADGE_TONE[tone]
+  return (
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold ${t.bg} ${t.text} ${className}`}>
+      {dot && <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${t.dot}`} />}
+      {children}
+    </span>
   )
 }
 
