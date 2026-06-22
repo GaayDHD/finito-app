@@ -18,6 +18,24 @@ export function statusToneClass(status: string) {
   return 'border-[var(--outline)] bg-[var(--surface-muted)] text-[var(--text-secondary)]'
 }
 
+/** Shared priority pill colours (mirrors the design system's priorityTone):
+ *  critical/overdue = error, high = warning, medium = brand, low = success. */
+export function priorityToneClass(priority: string | null | undefined) {
+  if (priority === 'critical' || priority === 'overdue') {
+    return 'border-[var(--error-main)]/25 bg-[var(--error-light)] text-[var(--error-dark)]'
+  }
+  if (priority === 'high') {
+    return 'border-[var(--warning-main)]/25 bg-[var(--warning-light)] text-[var(--warning-dark)]'
+  }
+  if (priority === 'medium') {
+    return 'border-[var(--primary-main)]/25 bg-[var(--primary-light)] text-[var(--primary-dark)]'
+  }
+  if (priority === 'low') {
+    return 'border-[var(--success-main)]/25 bg-[var(--success-light)] text-[var(--success-dark)]'
+  }
+  return 'border-[var(--outline)] bg-[var(--surface-muted)] text-[var(--text-secondary)]'
+}
+
 /** Matching solid dot colour for compact spots where a full pill won't fit. */
 export function statusDotClass(status: string) {
   if (status === 'done') return 'bg-[var(--success-main)]'

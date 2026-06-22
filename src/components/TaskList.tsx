@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import type { Section, Task } from '../types'
 import { difficultyOptions, priorityOptions, statusOptions } from '../constants'
 import { formatDate } from '../utils'
-import { EmptyState, ICON_DASHED_PLUS, StatusGlyph, StatusOptions, StatusToggle, statusToneClass, TaskListSkeleton } from './ui'
+import { EmptyState, ICON_DASHED_PLUS, priorityToneClass, StatusGlyph, StatusOptions, StatusToggle, statusToneClass, TaskListSkeleton } from './ui'
 
 // Ghost "Add task" row shown at the bottom of every list-view group. Clicking
 // it reveals an inline name input; the created task inherits the group's value.
@@ -147,26 +147,6 @@ const columns: { id: string; label: string; field: SortField; align: 'left' | 'c
 // Every column except the task title can be hidden (Miller's Law).
 const toggleableColumns = columns.filter((column) => column.id !== 'task')
 
-
-function getPriorityTone(priority: string | null) {
-  if (priority === 'critical' || priority === 'overdue') {
-    return 'border-[var(--error-main)]/25 bg-[var(--error-light)] text-[var(--error-dark)]'
-  }
-
-  if (priority === 'high') {
-    return 'border-[var(--warning-main)]/25 bg-[var(--warning-light)] text-[var(--warning-dark)]'
-  }
-
-  if (priority === 'medium') {
-    return 'border-[var(--primary-main)]/25 bg-[var(--primary-light)] text-[var(--primary-dark)]'
-  }
-
-  if (priority === 'low') {
-    return 'border-[var(--success-main)]/25 bg-[var(--success-light)] text-[var(--success-dark)]'
-  }
-
-  return 'border-[var(--outline)] bg-[var(--surface-muted)] text-[var(--text-secondary)]'
-}
 
 function normaliseFilterValue(value: string | number | null | undefined) {
   if (value === null || value === undefined || value === '') {
@@ -802,7 +782,7 @@ export function TaskList({
                               disabled={updatingPriorityTaskId === task.id}
                               onClick={(event) => event.stopPropagation()}
                               onChange={(event) => updateTaskPriority(task.id, event.target.value)}
-                              className={`h-8 max-w-[130px] cursor-pointer rounded-full border px-2.5 text-center text-xs font-semibold outline-none ${getPriorityTone(task.priority)}`}
+                              className={`h-8 max-w-[130px] cursor-pointer rounded-full border px-2.5 text-center text-xs font-semibold outline-none ${priorityToneClass(task.priority)}`}
                             >
                               <option value="">No priority</option>
                               {priorityOptions.map((priority) => (
