@@ -46,7 +46,7 @@ function AddTaskRow({
   }
 
   return (
-    <div className="px-4 py-2 text-sm">
+    <div className="px-4 py-2 text-[13px]">
       {editing ? (
         <div className="flex items-center gap-2">
           <StatusGlyph markup={ICON_DASHED_PLUS} className="h-5 w-5 shrink-0" />
@@ -543,7 +543,8 @@ export function TaskList({
         <button
           type="button"
           onClick={() => setOpenHeaderMenu((currentValue) => (currentValue === column.id ? null : column.id))}
-          className="group/h inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[12px] font-medium text-[var(--text-muted)] transition hover:bg-[var(--surface-subtle)] hover:text-[var(--text-secondary)]"
+          style={{ fontSize: 13 }}
+          className="group/h inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 font-medium text-[var(--text-muted)] transition hover:bg-[var(--surface-subtle)] hover:text-[var(--text-secondary)]"
         >
           {column.icon && <Icon name={column.icon} className="h-3.5 w-3.5 shrink-0 text-[var(--text-disabled)]" />}
           {column.label}
@@ -595,7 +596,7 @@ export function TaskList({
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] px-4 py-3 shadow-sm">
         <div>
-          <h2 className="text-base font-semibold text-[var(--text-primary)]">
+          <h2 className="text-[13px] font-semibold text-[var(--text-primary)]">
             {viewMode === 'table' ? 'List view' : viewMode === 'kanban' ? 'Kanban board' : 'Card view'}
           </h2>
           <p className="text-xs text-[var(--text-muted)]">
@@ -604,14 +605,15 @@ export function TaskList({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-[var(--text-muted)]">Group by</span>
+            <span className="text-[13px] font-medium text-[var(--text-muted)]">Group by</span>
             <div className="flex rounded-full border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-0.5">
               {groupByOptions.map((option) => (
                 <button
                   key={option.value}
                   type="button"
                   onClick={() => setGroupBy(option.value)}
-                  className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
+                  style={{ fontSize: 13 }}
+                  className={`rounded-full px-2.5 py-1 font-semibold transition ${
                     groupBy === option.value
                       ? 'bg-[var(--primary-main)] text-white shadow-sm'
                       : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
@@ -626,7 +628,8 @@ export function TaskList({
             <button
               type="button"
               onClick={clearTableControls}
-              className="rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
+              style={{ fontSize: 13 }}
+              className="rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-3 py-1 font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
             >
               Clear table controls
             </button>
@@ -636,7 +639,8 @@ export function TaskList({
               <button
                 type="button"
                 onClick={() => setColumnsMenuOpen((open) => !open)}
-                className="flex items-center gap-1.5 rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
+                style={{ fontSize: 13 }}
+                className="flex items-center gap-1.5 rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-3 py-1 font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
                   <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -682,10 +686,10 @@ export function TaskList({
           {groupedTasks.filter((group) => group.tasks.length > 0).map((group) => (
             <section key={group.id} className="overflow-hidden rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-sm">
               <div className="flex items-center justify-between bg-[var(--surface-muted)] px-4 py-2">
-                <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                <h3 className="text-[13px] font-bold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                   {group.name}
                 </h3>
-                <span className="text-xs font-medium text-[var(--text-muted)]">
+                <span className="text-[13px] font-medium text-[var(--text-muted)]">
                   {group.tasks.length} tasks
                 </span>
               </div>
@@ -714,10 +718,10 @@ export function TaskList({
           {tableGroups.map((group) => (
             <section key={group.id} className="overflow-hidden rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-sm">
               <div className="flex items-center justify-between bg-[var(--surface-subtle)] px-4 py-2">
-                <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                <h3 className="text-[13px] font-bold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                   {group.name}
                 </h3>
-                <span className="text-xs font-medium text-[var(--text-muted)]">
+                <span className="text-[13px] font-medium text-[var(--text-muted)]">
                   {group.tasks.length} tasks
                 </span>
               </div>
@@ -827,19 +831,19 @@ export function TaskList({
                           )}
 
                           {isColumnVisible('start') && (
-                          <div className="justify-center text-center text-xs text-[var(--text-muted)]">
+                          <div className="justify-center text-center text-[13px] text-[var(--text-muted)]">
                             {formatDate(task.start_date)}
                           </div>
                           )}
 
                           {isColumnVisible('due') && (
-                          <div className="justify-center text-center text-xs text-[var(--text-muted)]">
+                          <div className="justify-center text-center text-[13px] text-[var(--text-muted)]">
                             {formatDate(task.due_date)}
                           </div>
                           )}
 
                           {isColumnVisible('subtasks') && (
-                          <div className="justify-center text-center text-xs font-medium text-[var(--text-secondary)]">
+                          <div className="justify-center text-center text-[13px] font-medium text-[var(--text-secondary)]">
                             {completedSubtasks}/{subtasks.length}
                           </div>
                           )}
@@ -879,7 +883,7 @@ export function TaskList({
               }`}
             >
               <div className="flex items-center justify-between gap-2 border-b border-[var(--outline-soft)] px-3 py-2.5">
-                <h3 className="truncate text-xs font-bold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+                <h3 className="truncate text-[13px] font-bold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
                   {group.name}
                 </h3>
                 <span className="shrink-0 rounded-full bg-[var(--background-paper)] px-2 py-0.5 text-[11px] font-semibold text-[var(--text-muted)]">

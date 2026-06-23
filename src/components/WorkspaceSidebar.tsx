@@ -60,7 +60,8 @@ export function WorkspaceSidebar({
         <button
           type="button"
           onClick={onClick}
-          className={`group flex w-full items-center gap-3 rounded-full p-3 text-sm font-semibold transition-all ease-linear ${
+          style={{ fontSize: 13 }}
+          className={`group flex w-full items-center gap-3 rounded-full p-3 font-semibold transition-all ease-linear ${
             isActive
               ? 'bg-[var(--primary-main)] text-white shadow-sm'
               : 'text-[var(--text-secondary)] hover:bg-[var(--primary-light)] hover:text-[var(--primary-dark)] hover:shadow-inner'
@@ -88,7 +89,7 @@ export function WorkspaceSidebar({
         <div className="mt-4 border-t border-[var(--outline-soft)] pt-4">
           {activeTool === 'workspaces' ? (
             <div className="space-y-2">
-              <p className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">Workspaces</p>
+              <p className="px-1 text-[13px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">Workspaces</p>
               {workspaces.map((workspace) => {
                 const isCurrent = workspace.id === currentWorkspaceId
 
@@ -105,7 +106,7 @@ export function WorkspaceSidebar({
                     title={isCurrent ? 'Current workspace' : 'Switch to this workspace'}
                   >
                     <span
-                      className={`min-w-0 truncate text-xs font-semibold ${
+                      className={`min-w-0 truncate text-[13px] font-semibold ${
                         isCurrent ? 'text-[var(--primary-dark)]' : 'text-[var(--text-secondary)]'
                       }`}
                     >
@@ -159,17 +160,18 @@ export function WorkspaceSidebar({
                 <button
                   type="button"
                   onClick={() => setIsAddingWorkspace(true)}
-                  className="flex min-h-9 w-full items-center justify-between rounded-xl border border-dashed border-[var(--outline)] bg-transparent px-3 py-2 text-left text-xs font-semibold text-[var(--text-muted)] transition hover:border-[var(--primary-main)]/35 hover:text-[var(--primary-main)]"
+                  style={{ fontSize: 13 }}
+                  className="flex min-h-9 w-full items-center justify-between rounded-xl border border-dashed border-[var(--outline)] bg-transparent px-3 py-2 text-left font-semibold text-[var(--text-muted)] transition hover:border-[var(--primary-main)]/35 hover:text-[var(--primary-main)]"
                   title="Add workspace"
                 >
                   <span>Add workspace</span>
-                  <span className="text-sm leading-none">+</span>
+                  <span className="leading-none">+</span>
                 </button>
               )}
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="px-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">Recent activity</p>
+              <p className="px-1 text-[13px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">Recent activity</p>
 
               {activityLogs.length > 0 ? (
                 activityLogs.slice(0, 8).map((log) => (

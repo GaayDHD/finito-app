@@ -168,7 +168,7 @@ const BTN_SIZE: Record<ButtonSize, string> = {
   md: 'h-10 gap-2 px-5',
   lg: 'h-12 gap-2 px-[26px]',
 }
-const BTN_FONT: Record<ButtonSize, number> = { sm: 13, md: 14, lg: 15 }
+const BTN_FONT: Record<ButtonSize, number> = { sm: 13, md: 13, lg: 15 }
 const BTN_ICON: Record<ButtonSize, string> = { sm: 'h-[15px] w-[15px]', md: 'h-4 w-4', lg: 'h-[18px] w-[18px]' }
 const BTN_VARIANT: Record<ButtonVariant, string> = {
   primary: 'border border-transparent bg-[var(--primary-main)] text-[var(--primary-contrast)] shadow-sm hover:bg-[var(--primary-dark)]',
