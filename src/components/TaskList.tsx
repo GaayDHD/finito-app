@@ -539,7 +539,7 @@ export function TaskList({
     const hasFilter = tableFilters[column.field].length > 0
 
     return (
-      <div className={`relative flex ${column.align === 'center' ? 'justify-center' : 'justify-start'}`}>
+      <div className={`relative flex w-full ${column.align === 'center' ? 'justify-center' : 'justify-start'}`}>
         <button
           type="button"
           onClick={() => setOpenHeaderMenu((currentValue) => (currentValue === column.id ? null : column.id))}

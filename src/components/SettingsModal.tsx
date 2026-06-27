@@ -135,13 +135,14 @@ export function SettingsModal({
               </div>
 
               <form onSubmit={updateEmail}>
-                <span className={labelClass}>New email</span>
+                <span className={labelClass} id="new-email-label">New email</span>
                 <div className="mt-1">
                   <Input
                     type="email"
                     value={newEmail}
                     onChange={(event) => setNewEmail(event.target.value)}
                     placeholder="new@email.com"
+                    aria-labelledby="new-email-label"
                   />
                 </div>
                 <div className="mt-2 flex justify-end">
