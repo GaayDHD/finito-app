@@ -1619,7 +1619,8 @@ function App() {
                   openMobileTool(item.tool)
                 }
               }}
-              className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold transition ${
+              style={{ fontSize: 11 }}
+              className={`flex flex-1 flex-col items-center gap-1 py-2.5 font-semibold transition ${
                 isActive ? 'text-[var(--primary)]' : 'text-[var(--text-muted)]'
               }`}
             >
@@ -1634,7 +1635,8 @@ function App() {
             setIsMobileSheetOpen(false)
             setIsSettingsOpen(true)
           }}
-          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold text-[var(--text-muted)]"
+          style={{ fontSize: 11 }}
+          className="flex flex-1 flex-col items-center gap-1 py-2.5 font-semibold text-[var(--text-muted)]"
         >
           <span aria-hidden="true">{settingsIcon}</span>
           Settings
@@ -1642,7 +1644,8 @@ function App() {
         <button
           type="button"
           onClick={toggleCreateTaskForm}
-          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold text-[var(--primary)]"
+          style={{ fontSize: 11 }}
+          className="flex flex-1 flex-col items-center gap-1 py-2.5 font-semibold text-[var(--primary)]"
         >
           <span aria-hidden="true">
             <Icon name="add" className="h-[22px] w-[22px]" />
