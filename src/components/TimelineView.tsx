@@ -2,6 +2,7 @@ import type { Task } from '../types'
 import { getLabel } from '../utils'
 import { statusOptions } from '../constants'
 import { statusToneClass, SubtaskProgress } from './ui'
+import { Icon } from './icons'
 
 type TimelineViewProps = {
   tasks: Task[]
@@ -86,7 +87,7 @@ export function TimelineView({ tasks, getSubtasks, selectedTaskId, onOpenTask }:
   return (
     <section className="overflow-hidden rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-sm">
       <div className="border-b border-[var(--outline-soft)] px-4 py-3">
-        <h2 className="text-base font-semibold text-[var(--text-primary)]">Timeline</h2>
+        <h2 className="text-[13px] font-semibold text-[var(--text-primary)]">Timeline</h2>
         <p className="text-xs text-[var(--text-muted)]">Tasks spanning their start and due dates.</p>
       </div>
 
@@ -94,7 +95,10 @@ export function TimelineView({ tasks, getSubtasks, selectedTaskId, onOpenTask }:
         <div className="min-w-[760px]">
           {/* Axis */}
           <div className="grid grid-cols-[240px_1fr] border-b border-[var(--outline-soft)] bg-[var(--surface-muted)]">
-            <div className="px-4 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Task</div>
+            <div className="flex items-center gap-1.5 border-r border-[var(--outline-soft)] px-4 py-2 text-[13px] font-medium text-[var(--text-muted)]">
+              <Icon name="subtask" className="h-3.5 w-3.5 text-[var(--text-disabled)]" />
+              Task
+            </div>
             <div className="relative h-8">
               {ticks.map((tick, index) => (
                 <div
@@ -125,8 +129,8 @@ export function TimelineView({ tasks, getSubtasks, selectedTaskId, onOpenTask }:
 
               return (
                 <div key={task.id} className="grid grid-cols-[240px_1fr] items-center border-b border-[var(--outline-soft)]">
-                  <div className="min-w-0 px-4 py-2.5">
-                    <p className="truncate text-xs font-medium text-[var(--text-primary)]" title={task.title}>
+                  <div className="min-w-0 border-r border-[var(--outline-soft)] px-4 py-2.5">
+                    <p className="truncate text-[13px] font-medium text-[var(--text-primary)]" title={task.title}>
                       {task.title}
                     </p>
                     <div className="mt-1 flex items-center gap-2">
@@ -160,7 +164,7 @@ export function TimelineView({ tasks, getSubtasks, selectedTaskId, onOpenTask }:
 
       {undated.length > 0 && (
         <div className="border-t border-[var(--outline-soft)] px-4 py-3">
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+          <p className="mb-2 text-[13px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
             No dates ({undated.length})
           </p>
           <div className="flex flex-wrap gap-1.5">

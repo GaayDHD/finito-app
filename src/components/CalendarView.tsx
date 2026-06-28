@@ -68,7 +68,7 @@ export function CalendarView({ tasks, getSubtasks, selectedTaskId, onOpenTask }:
     <section className="overflow-hidden rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--outline-soft)] px-4 py-3">
         <div>
-          <h2 className="text-base font-semibold text-[var(--text-primary)]">
+          <h2 className="text-[13px] font-semibold text-[var(--text-primary)]">
             {monthNames[month]} {year}
           </h2>
           <p className="text-xs text-[var(--text-muted)]">Tasks shown on their due date.</p>
@@ -102,7 +102,7 @@ export function CalendarView({ tasks, getSubtasks, selectedTaskId, onOpenTask }:
 
       <div className="grid grid-cols-7 border-b border-[var(--outline-soft)] bg-[var(--surface-muted)]">
         {weekdays.map((weekday) => (
-          <div key={weekday} className="px-2 py-2 text-center text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">
+          <div key={weekday} className="px-2 py-2 text-center text-[13px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">
             {weekday}
           </div>
         ))}
@@ -173,7 +173,7 @@ export function CalendarView({ tasks, getSubtasks, selectedTaskId, onOpenTask }:
 
       {unscheduled.length > 0 && (
         <div className="border-t border-[var(--outline-soft)] px-4 py-3">
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+          <p className="mb-2 text-[13px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
             No due date ({unscheduled.length})
           </p>
           <div className="flex flex-wrap gap-1.5">

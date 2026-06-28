@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Icon } from './icons'
+import { Badge, Button } from './ui'
 
 type DashboardStatsProps = {
   stats: {
@@ -14,32 +14,16 @@ type DashboardStatsProps = {
 }
 
 const statItems = [
-  { key: 'total', label: 'Total', tone: 'neutral' },
-  { key: 'visible', label: 'Visible', tone: 'neutral' },
-  { key: 'done', label: 'Done', tone: 'success' },
-  { key: 'blocked', label: 'Blocked', tone: 'error' },
-  { key: 'overdue', label: 'Overdue', tone: 'warning' },
-  { key: 'archived', label: 'Archived', tone: 'neutral' },
+  { key: 'total', label: 'Total', tone: 'neutral', dot: false },
+  { key: 'visible', label: 'Visible', tone: 'primary', dot: false },
+  { key: 'done', label: 'Done', tone: 'success', dot: true },
+  { key: 'blocked', label: 'Blocked', tone: 'error', dot: true },
+  { key: 'overdue', label: 'Overdue', tone: 'warning', dot: true },
+  { key: 'archived', label: 'Archived', tone: 'neutral', dot: true },
 ] as const
 
 export function DashboardStats({ stats, onNewTaskClick }: DashboardStatsProps) {
   const [pinned, setPinned] = useState(false)
-
-  const getToneClass = (tone: string) => {
-    if (tone === 'success') {
-      return 'bg-[var(--success-light)] text-[var(--success-dark)]'
-    }
-
-    if (tone === 'error') {
-      return 'bg-[var(--error-light)] text-[var(--error-dark)]'
-    }
-
-    if (tone === 'warning') {
-      return 'bg-[var(--warning-light)] text-[var(--warning-dark)]'
-    }
-
-    return 'bg-[var(--surface-subtle)] text-[var(--text-secondary)]'
-  }
 
   return (
     <section className="flex flex-wrap items-center justify-between gap-3">
@@ -47,13 +31,9 @@ export function DashboardStats({ stats, onNewTaskClick }: DashboardStatsProps) {
         className="group relative"
         onMouseLeave={() => setPinned(false)}
       >
-        <button
-          type="button"
-          onClick={() => setPinned((value) => !value)}
-          className="inline-flex h-10 items-center rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-4 text-sm font-semibold text-[var(--text-primary)] shadow-sm transition hover:bg-[var(--surface-muted)]"
-        >
+        <Button variant="secondary" onClick={() => setPinned((value) => !value)}>
           Task Overview
-        </button>
+        </Button>
 
         <div
           className={`absolute left-0 top-12 z-20 w-72 rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-2 shadow-xl transition ${
@@ -62,29 +42,23 @@ export function DashboardStats({ stats, onNewTaskClick }: DashboardStatsProps) {
               : 'pointer-events-none translate-y-1 opacity-0 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100'
           }`}
         >
-          <div className="space-y-1">
+          <div className="flex flex-wrap gap-2">
             {statItems.map((item) => {
               const value = item.key === 'archived' ? stats.archived ?? 0 : stats[item.key]
 
               return (
-                <div key={item.key} className="flex items-center justify-between rounded-lg px-3 py-2">
-                  <span className="text-sm font-medium text-[var(--text-secondary)]">{item.label}</span>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${getToneClass(item.tone)}`}>{value}</span>
-                </div>
+                <Badge key={item.key} tone={item.tone} dot={item.dot} className="uppercase tracking-[0.04em]">
+                  {value} {item.label}
+                </Badge>
               )
             })}
           </div>
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={onNewTaskClick}
-        className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-[var(--primary-main)] px-5 text-sm font-semibold text-[var(--primary-contrast)] shadow-sm transition hover:bg-[var(--primary-dark)]"
-      >
-        <Icon name="add" className="h-4 w-4" strokeWidth={2.2} />
+      <Button variant="primary" icon="add" className="shrink-0" onClick={onNewTaskClick}>
         New Task
-      </button>
+      </Button>
     </section>
   )
 }

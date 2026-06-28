@@ -3,7 +3,9 @@ import type { ReactNode } from 'react'
 import type { Section, Task } from '../types'
 import { difficultyOptions, priorityOptions, statusOptions } from '../constants'
 import { formatDate } from '../utils'
-import { EmptyState, ICON_DASHED_PLUS, StatusGlyph, StatusOptions, StatusToggle, statusToneClass, TaskListSkeleton } from './ui'
+import { Badge, Checkbox, EmptyState, ICON_DASHED_PLUS, priorityToneClass, StatusGlyph, StatusOptions, StatusToggle, statusToneClass, TaskListSkeleton } from './ui'
+import { Icon } from './icons'
+import type { IconName } from './icons'
 
 // Ghost "Add task" row shown at the bottom of every list-view group. Clicking
 // it reveals an inline name input; the created task inherits the group's value.
@@ -44,7 +46,7 @@ function AddTaskRow({
   }
 
   return (
-    <div className="px-4 py-2 text-sm">
+    <div className="px-4 py-2 text-[13px]">
       {editing ? (
         <div className="flex items-center gap-2">
           <StatusGlyph markup={ICON_DASHED_PLUS} className="h-5 w-5 shrink-0" />
@@ -133,40 +135,20 @@ const groupByOptions: { value: 'status' | 'priority' | 'scope'; label: string }[
   { value: 'scope', label: 'Scope' },
 ]
 
-const columns: { id: string; label: string; field: SortField; align: 'left' | 'center'; track: string; minWidth: number }[] = [
-  { id: 'task', label: 'Task', field: 'title', align: 'left', track: 'minmax(320px,1.8fr)', minWidth: 320 },
-  { id: 'status', label: 'Status', field: 'status', align: 'center', track: '150px', minWidth: 150 },
-  { id: 'priority', label: 'Priority', field: 'priority', align: 'center', track: '140px', minWidth: 140 },
-  { id: 'scope', label: 'Scope', field: 'difficulty', align: 'center', track: '140px', minWidth: 140 },
-  { id: 'section', label: 'Section', field: 'section_id', align: 'center', track: '150px', minWidth: 150 },
-  { id: 'start', label: 'Start', field: 'start_date', align: 'center', track: '120px', minWidth: 120 },
-  { id: 'due', label: 'Due', field: 'due_date', align: 'center', track: '120px', minWidth: 120 },
-  { id: 'subtasks', label: 'Subtasks', field: 'subtasks', align: 'center', track: '120px', minWidth: 120 },
+const columns: { id: string; label: string; field: SortField; align: 'left' | 'center'; track: string; minWidth: number; icon?: IconName }[] = [
+  { id: 'task', label: 'Task', field: 'title', align: 'left', track: 'minmax(320px,1.8fr)', minWidth: 320, icon: 'subtask' },
+  { id: 'status', label: 'Status', field: 'status', align: 'center', track: '150px', minWidth: 150, icon: 'status' },
+  { id: 'priority', label: 'Priority', field: 'priority', align: 'center', track: '140px', minWidth: 140, icon: 'priority' },
+  { id: 'scope', label: 'Scope', field: 'difficulty', align: 'center', track: '140px', minWidth: 140, icon: 'scope' },
+  { id: 'section', label: 'Section', field: 'section_id', align: 'center', track: '150px', minWidth: 150, icon: 'section' },
+  { id: 'start', label: 'Start', field: 'start_date', align: 'center', track: '120px', minWidth: 120, icon: 'date' },
+  { id: 'due', label: 'Due', field: 'due_date', align: 'center', track: '120px', minWidth: 120, icon: 'date' },
+  { id: 'subtasks', label: 'Subtasks', field: 'subtasks', align: 'center', track: '120px', minWidth: 120, icon: 'subtask' },
 ]
 
 // Every column except the task title can be hidden (Miller's Law).
 const toggleableColumns = columns.filter((column) => column.id !== 'task')
 
-
-function getPriorityTone(priority: string | null) {
-  if (priority === 'critical' || priority === 'overdue') {
-    return 'border-[var(--error-main)]/25 bg-[var(--error-light)] text-[var(--error-dark)]'
-  }
-
-  if (priority === 'high') {
-    return 'border-[var(--warning-main)]/25 bg-[var(--warning-light)] text-[var(--warning-dark)]'
-  }
-
-  if (priority === 'medium') {
-    return 'border-[var(--primary-main)]/25 bg-[var(--primary-light)] text-[var(--primary-dark)]'
-  }
-
-  if (priority === 'low') {
-    return 'border-[var(--success-main)]/25 bg-[var(--success-light)] text-[var(--success-dark)]'
-  }
-
-  return 'border-[var(--outline)] bg-[var(--surface-muted)] text-[var(--text-secondary)]'
-}
 
 function normaliseFilterValue(value: string | number | null | undefined) {
   if (value === null || value === undefined || value === '') {
@@ -552,23 +534,22 @@ export function TaskList({
     )
   }
 
-  function renderHeaderButton(column: { id: string; label: string; field: SortField; align: 'left' | 'center' }) {
+  function renderHeaderButton(column: { id: string; label: string; field: SortField; align: 'left' | 'center'; icon?: IconName }) {
     const isSorted = tableSort?.field === column.field
     const hasFilter = tableFilters[column.field].length > 0
 
     return (
-      <div className={`relative flex ${column.align === 'center' ? 'justify-center' : 'justify-start'}`}>
+      <div className={`relative flex w-full ${column.align === 'center' ? 'justify-center' : 'justify-start'}`}>
         <button
           type="button"
           onClick={() => setOpenHeaderMenu((currentValue) => (currentValue === column.id ? null : column.id))}
-          className={`inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-muted)] transition hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)] ${
-            column.align === 'center' ? 'justify-center text-center' : 'justify-start text-left'
-          }`}
+          className="group/h inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[13px] font-medium text-[var(--text-muted)] transition hover:bg-[var(--surface-subtle)] hover:text-[var(--text-secondary)]"
         >
+          {column.icon && <Icon name={column.icon} className="h-3.5 w-3.5 shrink-0 text-[var(--text-disabled)]" />}
           {column.label}
-          {isSorted && <span>{tableSort.direction === 'asc' ? '↑' : '↓'}</span>}
+          {isSorted && <span className="text-[var(--text-secondary)]">{tableSort.direction === 'asc' ? '↑' : '↓'}</span>}
           {hasFilter && <span className="h-1.5 w-1.5 rounded-full bg-[var(--primary-main)]" />}
-          <span className="text-[10px]">⌄</span>
+          <span className="text-[9px] opacity-0 transition group-hover/h:opacity-100">⌄</span>
         </button>
         {renderHeaderMenu(column)}
       </div>
@@ -614,7 +595,7 @@ export function TaskList({
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] px-4 py-3 shadow-sm">
         <div>
-          <h2 className="text-base font-semibold text-[var(--text-primary)]">
+          <h2 className="text-[13px] font-semibold text-[var(--text-primary)]">
             {viewMode === 'table' ? 'List view' : viewMode === 'kanban' ? 'Kanban board' : 'Card view'}
           </h2>
           <p className="text-xs text-[var(--text-muted)]">
@@ -623,14 +604,14 @@ export function TaskList({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-[var(--text-muted)]">Group by</span>
+            <span className="text-[13px] font-medium text-[var(--text-muted)]">Group by</span>
             <div className="flex rounded-full border border-[var(--outline-soft)] bg-[var(--surface-muted)] p-0.5">
               {groupByOptions.map((option) => (
                 <button
                   key={option.value}
                   type="button"
                   onClick={() => setGroupBy(option.value)}
-                  className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
+                  className={`rounded-full px-2.5 py-1 text-[13px] font-semibold transition ${
                     groupBy === option.value
                       ? 'bg-[var(--primary-main)] text-white shadow-sm'
                       : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
@@ -645,7 +626,7 @@ export function TaskList({
             <button
               type="button"
               onClick={clearTableControls}
-              className="rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
+              className="rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-3 py-1 text-[13px] font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
             >
               Clear table controls
             </button>
@@ -655,7 +636,7 @@ export function TaskList({
               <button
                 type="button"
                 onClick={() => setColumnsMenuOpen((open) => !open)}
-                className="flex items-center gap-1.5 rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
+                className="flex items-center gap-1.5 rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-3 py-1 text-[13px] font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
                   <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -670,27 +651,23 @@ export function TaskList({
                   <div className="absolute right-0 top-9 z-20 w-48 rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] p-1.5 shadow-xl">
                     <p className="px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Show columns</p>
                     {toggleableColumns.map((column) => (
-                      <label
+                      <Checkbox
                         key={column.id}
-                        className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isColumnVisible(column.id)}
-                          onChange={() => toggleColumn(column.id)}
-                          className="h-4 w-4 accent-[var(--primary-main)]"
-                        />
-                        {column.label}
-                      </label>
+                        checked={isColumnVisible(column.id)}
+                        onChange={() => toggleColumn(column.id)}
+                        size={16}
+                        label={column.label}
+                        className="w-full rounded-lg px-2.5 py-1.5 transition hover:bg-[var(--surface-muted)]"
+                      />
                     ))}
                   </div>
                 </>
               )}
             </div>
           )}
-          <span className="rounded-full bg-[var(--primary-light)] px-3 py-1 text-xs font-semibold text-[var(--primary-main)]">
+          <Badge tone="primary" className="uppercase tracking-[0.04em]">
             {displayedCount} visible
-          </span>
+          </Badge>
         </div>
       </div>
 
@@ -705,10 +682,10 @@ export function TaskList({
           {groupedTasks.filter((group) => group.tasks.length > 0).map((group) => (
             <section key={group.id} className="overflow-hidden rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-sm">
               <div className="flex items-center justify-between bg-[var(--surface-muted)] px-4 py-2">
-                <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                <h3 className="text-[13px] font-bold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                   {group.name}
                 </h3>
-                <span className="text-xs font-medium text-[var(--text-muted)]">
+                <span className="text-[13px] font-medium text-[var(--text-muted)]">
                   {group.tasks.length} tasks
                 </span>
               </div>
@@ -737,16 +714,16 @@ export function TaskList({
           {tableGroups.map((group) => (
             <section key={group.id} className="overflow-hidden rounded-xl border border-[var(--outline-soft)] bg-[var(--background-paper)] shadow-sm">
               <div className="flex items-center justify-between bg-[var(--surface-subtle)] px-4 py-2">
-                <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                <h3 className="text-[13px] font-bold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
                   {group.name}
                 </h3>
-                <span className="text-xs font-medium text-[var(--text-muted)]">
+                <span className="text-[13px] font-medium text-[var(--text-muted)]">
                   {group.tasks.length} tasks
                 </span>
               </div>
               <div className="overflow-x-auto">
                 <div style={{ minWidth: `${tableMinWidth}px` }}>
-                  <div className="grid border-b border-[var(--outline-soft)] bg-[var(--surface-muted)] px-4 py-2" style={{ gridTemplateColumns }}>
+                  <div className="grid border-b border-[var(--outline-soft)] bg-[var(--surface-muted)] px-4 py-1.5 [&>div]:flex [&>div]:items-center [&>div]:border-r [&>div]:border-[var(--outline-soft)] [&>div]:px-2 [&>div:first-child]:pl-0 [&>div:last-child]:border-r-0" style={{ gridTemplateColumns }}>
                     {visibleColumns.map((column) => (
                       <div key={column.id}>{renderHeaderButton(column)}</div>
                     ))}
@@ -761,24 +738,22 @@ export function TaskList({
                           key={task.id}
                           onClick={() => onOpenTask(task.id)}
                           style={{ gridTemplateColumns }}
-                          className={`grid cursor-pointer items-center gap-0 px-4 py-2 text-sm transition hover:bg-[var(--surface-muted)] ${
+                          className={`grid cursor-pointer items-stretch gap-0 px-4 text-[13px] transition hover:bg-[var(--surface-muted)] [&>div]:flex [&>div]:min-h-[38px] [&>div]:items-center [&>div]:border-r [&>div]:border-[var(--outline-soft)] [&>div]:px-2 [&>div:first-child]:pl-0 [&>div:last-child]:border-r-0 ${
                             selectedTaskId === task.id ? 'bg-[var(--surface-subtle)]' : ''
-                          }`}
+                          } ${task.status === 'done' ? 'opacity-55' : ''}`}
                         >
-                          <div className="min-w-0 pr-4 text-left">
-                            <div className="flex items-center gap-2">
-                              <StatusToggle
-                                done={task.status === 'done'}
-                                disabled={updatingStatusTaskId === task.id}
-                                onToggle={() => updateTaskStatus(task.id, task.status === 'done' ? 'not_started' : 'done')}
-                              />
-                              <p className={`truncate font-medium text-[var(--text-primary)] ${task.status === 'done' ? 'line-through opacity-60' : ''}`}>{task.title}</p>
+                          <div className="min-w-0 gap-2 text-left">
+                            <StatusToggle
+                              done={task.status === 'done'}
+                              disabled={updatingStatusTaskId === task.id}
+                              onToggle={() => updateTaskStatus(task.id, task.status === 'done' ? 'not_started' : 'done')}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className={`truncate font-medium text-[var(--text-primary)] ${task.status === 'done' ? 'line-through' : ''}`}>{task.title}</p>
+                              {task.description && (
+                                <p className="truncate text-xs text-[var(--text-muted)]">{task.description}</p>
+                              )}
                             </div>
-                            {task.description && (
-                              <p className="mt-0.5 truncate pl-7 text-xs text-[var(--text-muted)]">
-                                {task.description}
-                              </p>
-                            )}
                           </div>
 
                           {isColumnVisible('status') && (
@@ -788,7 +763,7 @@ export function TaskList({
                               disabled={updatingStatusTaskId === task.id}
                               onClick={(event) => event.stopPropagation()}
                               onChange={(event) => updateTaskStatus(task.id, event.target.value)}
-                              className={`h-8 max-w-[140px] cursor-pointer rounded-full border px-2.5 text-center text-xs font-semibold outline-none ${statusToneClass(task.status)}`}
+                              className={`h-8 max-w-[140px] cursor-pointer rounded-full border px-2.5 text-center text-[13px] font-semibold outline-none ${statusToneClass(task.status)}`}
                             >
                               <StatusOptions />
                             </select>
@@ -802,7 +777,7 @@ export function TaskList({
                               disabled={updatingPriorityTaskId === task.id}
                               onClick={(event) => event.stopPropagation()}
                               onChange={(event) => updateTaskPriority(task.id, event.target.value)}
-                              className={`h-8 max-w-[130px] cursor-pointer rounded-full border px-2.5 text-center text-xs font-semibold outline-none ${getPriorityTone(task.priority)}`}
+                              className={`h-8 max-w-[130px] cursor-pointer rounded-full border px-2.5 text-center text-[13px] font-semibold outline-none ${priorityToneClass(task.priority)}`}
                             >
                               <option value="">No priority</option>
                               {priorityOptions.map((priority) => (
@@ -821,7 +796,7 @@ export function TaskList({
                               disabled={updatingDifficultyTaskId === task.id}
                               onClick={(event) => event.stopPropagation()}
                               onChange={(event) => updateTaskDifficulty(task.id, event.target.value)}
-                              className="h-8 max-w-[140px] cursor-pointer rounded-full border border-[var(--outline)] bg-[var(--surface-muted)] px-2.5 text-center text-xs font-semibold text-[var(--text-secondary)] outline-none"
+                              className="h-8 max-w-[140px] cursor-pointer rounded-full border border-[var(--outline)] bg-[var(--surface-muted)] px-2.5 text-center text-[13px] font-semibold text-[var(--text-secondary)] outline-none"
                             >
                               {difficultyOptions.map((difficulty) => (
                                 <option key={difficulty.value} value={difficulty.value}>
@@ -839,7 +814,7 @@ export function TaskList({
                               disabled={updatingSectionTaskId === task.id || sections.length === 0}
                               onClick={(event) => event.stopPropagation()}
                               onChange={(event) => updateTaskSection(task.id, event.target.value)}
-                              className="h-8 max-w-[140px] cursor-pointer rounded-full border border-[var(--outline)] bg-[var(--surface-muted)] px-2.5 text-center text-xs font-semibold text-[var(--text-secondary)] outline-none"
+                              className="h-8 max-w-[140px] cursor-pointer rounded-full border border-[var(--outline)] bg-[var(--surface-muted)] px-2.5 text-center text-[13px] font-semibold text-[var(--text-secondary)] outline-none"
                             >
                               {sections.length === 0 && <option value="">No section</option>}
                               {sections.map((sectionOption) => (
@@ -852,19 +827,19 @@ export function TaskList({
                           )}
 
                           {isColumnVisible('start') && (
-                          <div className="text-center text-xs text-[var(--text-muted)]">
+                          <div className="justify-center text-center text-[13px] text-[var(--text-muted)]">
                             {formatDate(task.start_date)}
                           </div>
                           )}
 
                           {isColumnVisible('due') && (
-                          <div className="text-center text-xs text-[var(--text-muted)]">
+                          <div className="justify-center text-center text-[13px] text-[var(--text-muted)]">
                             {formatDate(task.due_date)}
                           </div>
                           )}
 
                           {isColumnVisible('subtasks') && (
-                          <div className="text-center text-xs font-medium text-[var(--text-secondary)]">
+                          <div className="justify-center text-center text-[13px] font-medium text-[var(--text-secondary)]">
                             {completedSubtasks}/{subtasks.length}
                           </div>
                           )}
@@ -904,7 +879,7 @@ export function TaskList({
               }`}
             >
               <div className="flex items-center justify-between gap-2 border-b border-[var(--outline-soft)] px-3 py-2.5">
-                <h3 className="truncate text-xs font-bold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+                <h3 className="truncate text-[13px] font-bold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
                   {group.name}
                 </h3>
                 <span className="shrink-0 rounded-full bg-[var(--background-paper)] px-2 py-0.5 text-[11px] font-semibold text-[var(--text-muted)]">

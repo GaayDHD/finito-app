@@ -17,7 +17,7 @@ import { SettingsModal } from './components/SettingsModal'
 import { TaskDetailDrawer } from './components/TaskDetailDrawer'
 import { CalendarView } from './components/CalendarView'
 import { TimelineView } from './components/TimelineView'
-import { StatusOptions, StatusToggle, SubtaskProgress } from './components/ui'
+import { priorityToneClass, statusToneClass, StatusOptions, StatusToggle, SubtaskProgress } from './components/ui'
 import { Icon } from './components/icons'
 import './App.css'
 
@@ -1215,9 +1215,8 @@ function App() {
   }
 
   const pillSelectClass =
-    'h-8 max-w-[160px] cursor-pointer rounded-full border px-2.5 text-xs font-semibold outline-none transition'
+    'h-8 max-w-[160px] cursor-pointer rounded-full border px-2.5 text-[13px] font-semibold outline-none transition'
   const pillToneNeutral = 'border-[var(--outline)] bg-[var(--surface-muted)] text-[var(--text-secondary)]'
-  const pillTonePrimary = 'border-[var(--primary-main)]/30 bg-[var(--primary-light)] text-[var(--primary-dark)]'
 
   function renderTask(task: Task) {
     const blockingTasks = getBlockingTasks(task.id)
@@ -1265,7 +1264,7 @@ function App() {
             disabled={updatingStatusTaskId === task.id}
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => updateTaskStatus(task.id, event.target.value)}
-            className={`${pillSelectClass} ${pillToneNeutral}`}
+            className={`${pillSelectClass} ${statusToneClass(task.status)}`}
           >
             <StatusOptions />
           </select>
@@ -1276,7 +1275,7 @@ function App() {
             disabled={updatingPriorityTaskId === task.id}
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => updateTaskPriority(task.id, event.target.value)}
-            className={`${pillSelectClass} ${task.priority ? pillTonePrimary : pillToneNeutral}`}
+            className={`${pillSelectClass} ${task.priority ? priorityToneClass(task.priority) : pillToneNeutral}`}
           >
             <option value="">No priority</option>
             {priorityOptions.map((priority) => (
@@ -1620,7 +1619,7 @@ function App() {
                   openMobileTool(item.tool)
                 }
               }}
-              className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold transition ${
+              className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-semibold transition ${
                 isActive ? 'text-[var(--primary)]' : 'text-[var(--text-muted)]'
               }`}
             >
@@ -1635,7 +1634,7 @@ function App() {
             setIsMobileSheetOpen(false)
             setIsSettingsOpen(true)
           }}
-          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold text-[var(--text-muted)]"
+          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-semibold text-[var(--text-muted)]"
         >
           <span aria-hidden="true">{settingsIcon}</span>
           Settings
@@ -1643,7 +1642,7 @@ function App() {
         <button
           type="button"
           onClick={toggleCreateTaskForm}
-          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold text-[var(--primary)]"
+          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-semibold text-[var(--primary)]"
         >
           <span aria-hidden="true">
             <Icon name="add" className="h-[22px] w-[22px]" />

@@ -1,5 +1,8 @@
-import type { ReactNode } from 'react'
+import { useState } from 'react'
+import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react'
 import { statusGroups } from '../constants'
+import { Icon } from './icons'
+import type { IconName } from './icons'
 
 /** Shared status pill colours so every view (table, card, timeline, calendar) matches (Law of Similarity). */
 export function statusToneClass(status: string) {
@@ -14,6 +17,25 @@ export function statusToneClass(status: string) {
   }
   if (status === 'in_progress' || status === 'planning') {
     return 'border-[var(--info-main)]/25 bg-[var(--info-light)] text-[var(--info-dark)]'
+  }
+  return 'border-[var(--outline)] bg-[var(--surface-muted)] text-[var(--text-secondary)]'
+}
+
+/** Shared priority pill colours, per the design-system data-display card:
+ *  critical/overdue = high-emphasis neutral (solid dark outline),
+ *  high = error, medium = warning, low = success, else neutral. */
+export function priorityToneClass(priority: string | null | undefined) {
+  if (priority === 'critical' || priority === 'overdue') {
+    return 'border-[var(--text-primary)] bg-[var(--surface-subtle)] text-[var(--text-primary)]'
+  }
+  if (priority === 'high') {
+    return 'border-[var(--error-main)]/25 bg-[var(--error-light)] text-[var(--error-dark)]'
+  }
+  if (priority === 'medium') {
+    return 'border-[var(--warning-main)]/25 bg-[var(--warning-light)] text-[var(--warning-dark)]'
+  }
+  if (priority === 'low') {
+    return 'border-[var(--success-main)]/25 bg-[var(--success-light)] text-[var(--success-dark)]'
   }
   return 'border-[var(--outline)] bg-[var(--surface-muted)] text-[var(--text-secondary)]'
 }
@@ -134,6 +156,262 @@ export function StatusToggle({
         </>
       )}
     </button>
+  )
+}
+
+// ---- Buttons (design-system primitives) ----
+type ButtonVariant = 'primary' | 'secondary' | 'soft' | 'ghost' | 'danger'
+type ButtonSize = 'sm' | 'md' | 'lg'
+
+const BTN_SIZE: Record<ButtonSize, string> = {
+  sm: 'h-8 gap-1.5 px-3.5',
+  md: 'h-10 gap-2 px-5',
+  lg: 'h-12 gap-2 px-[26px]',
+}
+const BTN_FONT: Record<ButtonSize, number> = { sm: 13, md: 13, lg: 15 }
+const BTN_ICON: Record<ButtonSize, string> = { sm: 'h-[15px] w-[15px]', md: 'h-4 w-4', lg: 'h-[18px] w-[18px]' }
+const BTN_VARIANT: Record<ButtonVariant, string> = {
+  primary: 'border border-transparent bg-[var(--primary-main)] text-[var(--primary-contrast)] shadow-sm hover:bg-[var(--primary-dark)]',
+  secondary: 'border border-[var(--outline)] bg-[var(--background-paper)] text-[var(--text-primary)] shadow-sm hover:bg-[var(--primary-light)]',
+  soft: 'border border-transparent bg-[var(--primary-light)] text-[var(--primary-dark)] hover:opacity-90',
+  ghost: 'border border-transparent bg-transparent text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]',
+  danger: 'border border-transparent bg-[var(--error-main)] text-[var(--error-contrast)] shadow-sm hover:opacity-90',
+}
+
+/** Pill button — brand-purple primary plus secondary, soft, ghost and danger
+ *  variants, three sizes. Mirrors the design system's Button. */
+export function Button({
+  children,
+  variant = 'primary',
+  size = 'md',
+  icon,
+  iconRight,
+  fullWidth = false,
+  type = 'button',
+  className = '',
+  ...rest
+}: {
+  children?: ReactNode
+  variant?: ButtonVariant
+  size?: ButtonSize
+  icon?: IconName
+  iconRight?: IconName
+  fullWidth?: boolean
+  className?: string
+} & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'>) {
+  return (
+    <button
+      type={type}
+      className={`inline-flex items-center justify-center whitespace-nowrap rounded-full transition disabled:cursor-not-allowed disabled:opacity-55 ${BTN_SIZE[size]} ${BTN_VARIANT[variant]} ${fullWidth ? 'w-full' : ''} ${className}`}
+      style={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: BTN_FONT[size], lineHeight: 1 }}
+      {...rest}
+    >
+      {icon && <Icon name={icon} className={`${BTN_ICON[size]} shrink-0`} strokeWidth={2.2} />}
+      {children}
+      {iconRight && <Icon name={iconRight} className={`${BTN_ICON[size]} shrink-0`} strokeWidth={2.2} />}
+    </button>
+  )
+}
+
+type IconButtonVariant = 'ghost' | 'outline' | 'soft' | 'primary'
+type IconButtonSize = 'xs' | 'sm' | 'md' | 'lg'
+const ICONBTN_SIZE: Record<IconButtonSize, string> = { xs: 'h-5 w-5', sm: 'h-7 w-7', md: 'h-[34px] w-[34px]', lg: 'h-10 w-10' }
+const ICONBTN_GLYPH: Record<IconButtonSize, string> = { xs: 'h-3.5 w-3.5', sm: 'h-[15px] w-[15px]', md: 'h-[18px] w-[18px]', lg: 'h-5 w-5' }
+const ICONBTN_VARIANT: Record<IconButtonVariant, string> = {
+  ghost: 'border border-transparent bg-transparent text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]',
+  outline: 'border border-[var(--outline)] bg-[var(--background-paper)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]',
+  soft: 'border border-transparent bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]',
+  primary: 'border border-transparent bg-[var(--primary-main)] text-[var(--primary-contrast)] hover:bg-[var(--primary-dark)]',
+}
+
+/** Square, pill-rounded icon-only control — close buttons, clear-search, toolbar. */
+export function IconButton({
+  icon,
+  variant = 'ghost',
+  size = 'md',
+  type = 'button',
+  className = '',
+  ...rest
+}: {
+  icon: IconName
+  variant?: IconButtonVariant
+  size?: IconButtonSize
+  className?: string
+} & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'>) {
+  return (
+    <button
+      type={type}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-50 ${ICONBTN_SIZE[size]} ${ICONBTN_VARIANT[variant]} ${className}`}
+      {...rest}
+    >
+      <Icon name={icon} className={ICONBTN_GLYPH[size]} />
+    </button>
+  )
+}
+
+/** Text input — 'field' (8px radius) or 'pill' (full radius) shape, optional
+ *  leading icon and label/micro-label. Focus deepens border + adds a ring. */
+export function Input({
+  shape = 'field',
+  icon,
+  label,
+  microLabel,
+  fullWidth = true,
+  style,
+  ...rest
+}: {
+  shape?: 'field' | 'pill'
+  icon?: IconName
+  label?: string
+  microLabel?: string
+  fullWidth?: boolean
+} & Omit<InputHTMLAttributes<HTMLInputElement>, 'size'>) {
+  const [focused, setFocused] = useState(false)
+  const { onFocus, onBlur, ...inputRest } = rest
+  const radius = shape === 'pill' ? 'var(--radius-full)' : 'var(--radius-sm)'
+
+  const field = (
+    <div className="relative" style={{ width: fullWidth ? '100%' : undefined }}>
+      {icon && (
+        <span className="pointer-events-none absolute left-3 top-1/2 flex -translate-y-1/2 text-[var(--text-muted)]">
+          <Icon name={icon} className="h-4 w-4" />
+        </span>
+      )}
+      <input
+        onFocus={(event) => {
+          setFocused(true)
+          onFocus?.(event)
+        }}
+        onBlur={(event) => {
+          setFocused(false)
+          onBlur?.(event)
+        }}
+        style={{
+          width: '100%',
+          height: 38,
+          padding: icon ? '0 14px 0 36px' : '0 14px',
+          borderRadius: radius,
+          border: `1px solid ${focused ? 'var(--primary-main)' : 'var(--outline)'}`,
+          background: 'var(--background-paper)',
+          color: 'var(--text-primary)',
+          fontFamily: 'var(--font-sans)',
+          fontSize: 14,
+          outline: 'none',
+          boxShadow: focused ? 'var(--ring-primary)' : 'none',
+          transition: 'border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard)',
+          ...style,
+        }}
+        {...inputRest}
+      />
+    </div>
+  )
+
+  if (!label && !microLabel) return field
+
+  return (
+    <label className="flex flex-col gap-1.5" style={{ width: fullWidth ? '100%' : undefined }}>
+      {microLabel && (
+        <span className="text-[10px] font-medium uppercase tracking-[0.6px] text-[var(--auth-field-label)]">{microLabel}</span>
+      )}
+      {label && <span className="text-[13px] font-semibold text-[var(--text-secondary)]">{label}</span>}
+      {field}
+    </label>
+  )
+}
+
+/** Square, 4px-radius custom checkbox with a brand-purple tick. Controlled. */
+export function Checkbox({
+  checked = false,
+  onChange,
+  size = 20,
+  disabled = false,
+  ariaLabel,
+  label,
+  className = '',
+}: {
+  checked?: boolean
+  onChange?: (next: boolean) => void
+  size?: number
+  disabled?: boolean
+  ariaLabel?: string
+  label?: ReactNode
+  className?: string
+}) {
+  const boxClass = 'flex shrink-0 items-center justify-center rounded-[4px] border transition'
+  const boxStyle = {
+    width: size,
+    height: size,
+    borderColor: checked ? 'var(--primary-main)' : 'var(--auth-input-border)',
+    background: checked ? 'var(--primary-soft)' : 'var(--auth-input-bg)',
+  }
+  const glyph = checked ? (
+    <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary-main)" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" style={{ width: size * 0.66, height: size * 0.66 }}>
+      <path d="M5 12l5 5l9 -9" />
+    </svg>
+  ) : null
+
+  if (!label) {
+    return (
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={checked}
+        aria-label={ariaLabel}
+        disabled={disabled}
+        onClick={() => onChange?.(!checked)}
+        className={`${boxClass} disabled:cursor-not-allowed disabled:opacity-50`}
+        style={boxStyle}
+      >
+        {glyph}
+      </button>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={ariaLabel}
+      disabled={disabled}
+      onClick={() => onChange?.(!checked)}
+      className={`inline-flex items-center gap-2 text-left disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+    >
+      <span className={boxClass} style={boxStyle}>{glyph}</span>
+      <span className="text-[13px] text-[var(--text-secondary)]">{label}</span>
+    </button>
+  )
+}
+
+type BadgeTone = 'neutral' | 'primary' | 'success' | 'warning' | 'error' | 'info'
+const BADGE_TONE: Record<BadgeTone, { bg: string; text: string; dot: string }> = {
+  neutral: { bg: 'bg-[var(--surface-subtle)]', text: 'text-[var(--text-secondary)]', dot: 'bg-[var(--text-disabled)]' },
+  primary: { bg: 'bg-[var(--primary-light)]', text: 'text-[var(--primary-dark)]', dot: 'bg-[var(--primary-main)]' },
+  success: { bg: 'bg-[var(--success-light)]', text: 'text-[var(--success-dark)]', dot: 'bg-[var(--success-main)]' },
+  warning: { bg: 'bg-[var(--warning-light)]', text: 'text-[var(--warning-dark)]', dot: 'bg-[var(--warning-main)]' },
+  error: { bg: 'bg-[var(--error-light)]', text: 'text-[var(--error-dark)]', dot: 'bg-[var(--error-main)]' },
+  info: { bg: 'bg-[var(--info-light)]', text: 'text-[var(--info-dark)]', dot: 'bg-[var(--info-main)]' },
+}
+
+/** Small rounded pill — counter / label badge with a semantic tone and an
+ *  optional leading dot. Mirrors the design system's Badge. */
+export function Badge({
+  children,
+  tone = 'neutral',
+  dot = false,
+  className = '',
+}: {
+  children: ReactNode
+  tone?: BadgeTone
+  dot?: boolean
+  className?: string
+}) {
+  const t = BADGE_TONE[tone]
+  return (
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold ${t.bg} ${t.text} ${className}`}>
+      {dot && <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${t.dot}`} />}
+      {children}
+    </span>
   )
 }
 
