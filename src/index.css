@@ -416,11 +416,15 @@ h6 {
   font-weight: var(--weight-semibold);
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
+/* In a layer so Tailwind text and font utilities win on form controls.
+   Controls inherit the app font by default; a utility class overrides it. */
+@layer base {
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
 }
 
 a {

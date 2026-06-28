@@ -60,8 +60,7 @@ export function WorkspaceSidebar({
         <button
           type="button"
           onClick={onClick}
-          style={{ fontSize: 13 }}
-          className={`group flex w-full items-center gap-3 rounded-full p-3 font-semibold transition-all ease-linear ${
+          className={`group flex w-full items-center gap-3 rounded-full p-3 text-[13px] font-semibold transition-all ease-linear ${
             isActive
               ? 'bg-[var(--primary-main)] text-white shadow-sm'
               : 'text-[var(--text-secondary)] hover:bg-[var(--primary-light)] hover:text-[var(--primary-dark)] hover:shadow-inner'
@@ -144,7 +143,7 @@ export function WorkspaceSidebar({
                       }
                     }}
                     placeholder="Workspace name"
-                    className="min-w-0 flex-1 bg-transparent text-xs font-normal text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
+                    className="min-w-0 flex-1 bg-transparent text-[13px] font-normal text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
                     autoFocus
                   />
 
@@ -160,8 +159,7 @@ export function WorkspaceSidebar({
                 <button
                   type="button"
                   onClick={() => setIsAddingWorkspace(true)}
-                  style={{ fontSize: 13 }}
-                  className="flex min-h-9 w-full items-center justify-between rounded-xl border border-dashed border-[var(--outline)] bg-transparent px-3 py-2 text-left font-semibold text-[var(--text-muted)] transition hover:border-[var(--primary-main)]/35 hover:text-[var(--primary-main)]"
+                  className="flex min-h-9 w-full items-center justify-between rounded-xl border border-dashed border-[var(--outline)] bg-transparent px-3 py-2 text-left text-[13px] font-semibold text-[var(--text-muted)] transition hover:border-[var(--primary-main)]/35 hover:text-[var(--primary-main)]"
                   title="Add workspace"
                 >
                   <span>Add workspace</span>

@@ -543,8 +543,7 @@ export function TaskList({
         <button
           type="button"
           onClick={() => setOpenHeaderMenu((currentValue) => (currentValue === column.id ? null : column.id))}
-          style={{ fontSize: 13 }}
-          className="group/h inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 font-medium text-[var(--text-muted)] transition hover:bg-[var(--surface-subtle)] hover:text-[var(--text-secondary)]"
+          className="group/h inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[13px] font-medium text-[var(--text-muted)] transition hover:bg-[var(--surface-subtle)] hover:text-[var(--text-secondary)]"
         >
           {column.icon && <Icon name={column.icon} className="h-3.5 w-3.5 shrink-0 text-[var(--text-disabled)]" />}
           {column.label}
@@ -612,8 +611,7 @@ export function TaskList({
                   key={option.value}
                   type="button"
                   onClick={() => setGroupBy(option.value)}
-                  style={{ fontSize: 13 }}
-                  className={`rounded-full px-2.5 py-1 font-semibold transition ${
+                  className={`rounded-full px-2.5 py-1 text-[13px] font-semibold transition ${
                     groupBy === option.value
                       ? 'bg-[var(--primary-main)] text-white shadow-sm'
                       : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
@@ -628,8 +626,7 @@ export function TaskList({
             <button
               type="button"
               onClick={clearTableControls}
-              style={{ fontSize: 13 }}
-              className="rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-3 py-1 font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
+              className="rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-3 py-1 text-[13px] font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
             >
               Clear table controls
             </button>
@@ -639,8 +636,7 @@ export function TaskList({
               <button
                 type="button"
                 onClick={() => setColumnsMenuOpen((open) => !open)}
-                style={{ fontSize: 13 }}
-                className="flex items-center gap-1.5 rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-3 py-1 font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
+                className="flex items-center gap-1.5 rounded-full border border-[var(--outline)] bg-[var(--background-paper)] px-3 py-1 text-[13px] font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)]"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
                   <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -767,7 +763,7 @@ export function TaskList({
                               disabled={updatingStatusTaskId === task.id}
                               onClick={(event) => event.stopPropagation()}
                               onChange={(event) => updateTaskStatus(task.id, event.target.value)}
-                              className={`h-8 max-w-[140px] cursor-pointer rounded-full border px-2.5 text-center text-xs font-semibold outline-none ${statusToneClass(task.status)}`}
+                              className={`h-8 max-w-[140px] cursor-pointer rounded-full border px-2.5 text-center text-[13px] font-semibold outline-none ${statusToneClass(task.status)}`}
                             >
                               <StatusOptions />
                             </select>
@@ -781,7 +777,7 @@ export function TaskList({
                               disabled={updatingPriorityTaskId === task.id}
                               onClick={(event) => event.stopPropagation()}
                               onChange={(event) => updateTaskPriority(task.id, event.target.value)}
-                              className={`h-8 max-w-[130px] cursor-pointer rounded-full border px-2.5 text-center text-xs font-semibold outline-none ${priorityToneClass(task.priority)}`}
+                              className={`h-8 max-w-[130px] cursor-pointer rounded-full border px-2.5 text-center text-[13px] font-semibold outline-none ${priorityToneClass(task.priority)}`}
                             >
                               <option value="">No priority</option>
                               {priorityOptions.map((priority) => (
@@ -800,7 +796,7 @@ export function TaskList({
                               disabled={updatingDifficultyTaskId === task.id}
                               onClick={(event) => event.stopPropagation()}
                               onChange={(event) => updateTaskDifficulty(task.id, event.target.value)}
-                              className="h-8 max-w-[140px] cursor-pointer rounded-full border border-[var(--outline)] bg-[var(--surface-muted)] px-2.5 text-center text-xs font-semibold text-[var(--text-secondary)] outline-none"
+                              className="h-8 max-w-[140px] cursor-pointer rounded-full border border-[var(--outline)] bg-[var(--surface-muted)] px-2.5 text-center text-[13px] font-semibold text-[var(--text-secondary)] outline-none"
                             >
                               {difficultyOptions.map((difficulty) => (
                                 <option key={difficulty.value} value={difficulty.value}>
@@ -818,7 +814,7 @@ export function TaskList({
                               disabled={updatingSectionTaskId === task.id || sections.length === 0}
                               onClick={(event) => event.stopPropagation()}
                               onChange={(event) => updateTaskSection(task.id, event.target.value)}
-                              className="h-8 max-w-[140px] cursor-pointer rounded-full border border-[var(--outline)] bg-[var(--surface-muted)] px-2.5 text-center text-xs font-semibold text-[var(--text-secondary)] outline-none"
+                              className="h-8 max-w-[140px] cursor-pointer rounded-full border border-[var(--outline)] bg-[var(--surface-muted)] px-2.5 text-center text-[13px] font-semibold text-[var(--text-secondary)] outline-none"
                             >
                               {sections.length === 0 && <option value="">No section</option>}
                               {sections.map((sectionOption) => (

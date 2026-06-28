@@ -1215,7 +1215,7 @@ function App() {
   }
 
   const pillSelectClass =
-    'h-8 max-w-[160px] cursor-pointer rounded-full border px-2.5 text-xs font-semibold outline-none transition'
+    'h-8 max-w-[160px] cursor-pointer rounded-full border px-2.5 text-[13px] font-semibold outline-none transition'
   const pillToneNeutral = 'border-[var(--outline)] bg-[var(--surface-muted)] text-[var(--text-secondary)]'
 
   function renderTask(task: Task) {
@@ -1619,8 +1619,7 @@ function App() {
                   openMobileTool(item.tool)
                 }
               }}
-              style={{ fontSize: 11 }}
-              className={`flex flex-1 flex-col items-center gap-1 py-2.5 font-semibold transition ${
+              className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-semibold transition ${
                 isActive ? 'text-[var(--primary)]' : 'text-[var(--text-muted)]'
               }`}
             >
@@ -1635,8 +1634,7 @@ function App() {
             setIsMobileSheetOpen(false)
             setIsSettingsOpen(true)
           }}
-          style={{ fontSize: 11 }}
-          className="flex flex-1 flex-col items-center gap-1 py-2.5 font-semibold text-[var(--text-muted)]"
+          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-semibold text-[var(--text-muted)]"
         >
           <span aria-hidden="true">{settingsIcon}</span>
           Settings
@@ -1644,8 +1642,7 @@ function App() {
         <button
           type="button"
           onClick={toggleCreateTaskForm}
-          style={{ fontSize: 11 }}
-          className="flex flex-1 flex-col items-center gap-1 py-2.5 font-semibold text-[var(--primary)]"
+          className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-semibold text-[var(--primary)]"
         >
           <span aria-hidden="true">
             <Icon name="add" className="h-[22px] w-[22px]" />
